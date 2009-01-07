@@ -1,7 +1,7 @@
 ###############################################################################
-# TWiki WikiClone ($wikiversion has version info)
+# Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# Copyright (C) 2003-2008 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2009 MichaelDaum http://michaeldaumconsulting.com
 #
 # Based on photonsearch
 # Copyright (C) 2001 Esteban Manchado Velázquez, zoso@foton.es
@@ -63,15 +63,8 @@ sub new {
   my $class = shift;
   my $session = shift;
 
-  my $sandbox;
-  unless (defined &TWiki::Sandbox::new) {
-    writeDebug("this is this");
-    eval "use TWiki::Contrib::DakarContrib;";
-    $sandbox = new TWiki::Sandbox();
-  } else {
-    $sandbox = $TWiki::sharedSandbox # 4.0 - 4.1.2
-      || $TWiki::sandbox; # 4.2
-  }
+  require TWiki::Sandbox;
+  my $sandbox = new TWiki::Sandbox();
 
   my $this = {
     session => $session,
@@ -271,7 +264,7 @@ sub search {
     $result .= $this->formatSearchResult($tmplTable, \%results, $theSearchString);
   } else {
     my $text;
-    if (TWiki::isValidTopicName($theSearchString)) { # SMELL
+    if (isValidTopicName($theSearchString)) { # SMELL
       $text = TWiki::Plugins::NatSkinPlugin::getWebComponent('WebNothingFound', $web);
     } else {
       $text = '<div class="natSearch twikiAlert">%TMPL:P{"NOTHING_FOUND"}%</div>';
@@ -425,7 +418,7 @@ sub contentSearch {
 	eval {
 	  my ($result, $code) = 
 	    $this->{sandbox}->sysCommand($cmdTemplate, PATTERN => $pattern, FILES => \@bag); 
-	  #writeDebug("code=$code, result=$result");
+	  writeDebug("code=$code, result=$result");
 	  @bag = split(/\r?\n/, $result);
 	};
 	if ($@) {
@@ -680,6 +673,21 @@ sub getModificationTime {
 
   $this->{modificationTime}{$web.$topic} = $date;
   return $date;
+}
+
+# imported from TWiki.pm
+sub isValidAbbrev {
+  my $name = shift || '';
+  my $abbrevRegex = TWiki::Func::getRegularExpression('abbrevRegex');
+  return ( $name =~ m/^$abbrevRegex$/o );
+}
+sub isValidWikiWord {
+  my $name = shift || '';
+  my $wikiWordRegex = TWiki::Func::getRegularExpression('wikiWordRegex');
+  return ( $name =~ m/^$wikiWordRegex$/o );
+}
+sub isValidTopicName {
+  return isValidWikiWord(@_) || isValidAbbrev(@_);
 }
 
 1;

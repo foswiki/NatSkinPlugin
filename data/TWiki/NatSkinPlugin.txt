@@ -32,7 +32,7 @@ been implemented. Have a look at the NatSkin topic for more information.
 ---+++ CURREV
 *Syntax*: =%<nop>CURREV%= 
 
-returns the current topic revision (compatible among all TWiki engines)
+returns the current topic revision
 
 see also: 
 [[#NATMAXREV][NATMAXREV]], 
@@ -151,7 +151,7 @@ and Dakar. This version grants to behave the same.
 *Syntax*: =%<nop>NATREVISIONS%= 
 
 substitute for the =%<nop>REVISIONS%= tag which only works on 
-the Foswiki:Extensions/PatternSkin.
+the <nop>PatternSkin.
 
 ---+++ NATWEBLOGO
 *Syntax*: =%<nop>NATWEBLOGO%=
@@ -164,7 +164,7 @@ NATWEBLOGO will check for a couple of preference variables in the following orde
    1 return =%<nop>NATWEBLOGOIMG%= if defined
    1 return =%<nop>WEBLOGOIMG%= if defined
    1 return =%<nop>WIKITOOLNAME%= if defined
-   1 or return the string 'TWiki' otherwise
+   1 or return the string 'Foswiki' otherwise
 
 The =...IMG%= cases will return a full =&lt;img src="..." ... /&gt;= tag whereas
 the =...NAME%= cases will return the string only.
@@ -194,7 +194,7 @@ preference variables in the order given and return the value of the first one de
    1 WIKILOGOURL
 
 If none of them is defined NATWEBLOGOURL defaults to
-<verbatim>%SCRIPTURL{"view"}%/%MAINWEB%/%HOMETOPIC%</verbatim>
+<verbatim>%SCRIPTURL{"view"}%/%USERSWEB%/%HOMETOPIC%</verbatim>
 
 ---+++ PREVREV
 *Syntax*: =%<nop>PREVREV%= 
@@ -243,7 +243,7 @@ The "guest" and "format" format strings can use the following variables
    * $logout: link to log out
    * $more: link to more dialog
    * $move: link to move dialog
-   * $pdf: link to export pdf using the Foswiki:Extensions/GenPDFAddOn
+   * $pdf: link to export pdf using the <nop>GenPDFAddOn
    * $print: link to print action
    * $raw: link to display topic in raw format
    * $register: link to registration
@@ -262,16 +262,16 @@ The "guest" and "format" format strings can use the following variables
 
 display a web component. A web component "<nop>MyComponent" is searched looking for
    1 <nop>MyComponent in the current web,
-   2 <nop>TWikiMyComponent in the %MAINWEB% web,
+   2 <nop>TWikiMyComponent in the %USERSWEB% web,
    3 <nop>TWikiMyComponent in the %SYSTEMWEB% web and
    4 <nop>MyComponent in the %SYSTEMWEB% web.
 
 The WEBCOMPONENT tag will retrieve the component where it was found
 first. Thereby every web can define a component of its own but if it is
 not defined locally a predefined component will be returned. Components
-can be predefined in the %MAINWEB% and the %SYSTEMWEB% where the name
+can be predefined in the %USERSWEB% and the %SYSTEMWEB% where the name
 of the component is prefix with "TWiki" to distinguish them from the
-local web components that may be present in the %MAINWEB% and the %SYSTEMWEB%.
+local web components that may be present in the %USERSWEB% and the %SYSTEMWEB%.
 As a last resort the local components of the %SYSTEMWEB% are used.
 
 By default the NatSkin comes with predefined components 
@@ -317,13 +317,12 @@ The following variables can be used in the format string:
      | *File:* | *Description:* |
 %$MANIFEST%
    * Optionally, run ==%TOPIC%_installer== to automatically check and
-     install other TWiki modules that this module depends on. You can also do
+     install other modules that this module depends on. You can also do
      this step manually.
    * Alternatively, manually make sure the dependencies listed in the table
      below are resolved.
 %$DEPENDENCIES%
-   * Optionally install the Foswiki:Extensions/RedDotPlugin to ease editing the sidebar navigation
-   * Visit =configure= in your TWiki installation, and enable the plugin in the {Plugins} section.
+   * Visit =configure= in your installation, and enable the plugin in the {Plugins} section.
    * Edit [[%SYSTEMWEB%.DefaultPreferences]] or better [[%USERSWEB%.SitePreferences]] and change the SKIN variable to "nat";
      customize the default style adding the variables SKINSTYLE, STYLEBORDER,
      STYLEBUTTONS and STYLESIDEBAR (see NatSkin)
@@ -342,13 +341,21 @@ The following variables can be used in the format string:
 
 ---++ Plugin Info
 <!-- provided for compatibility only
-   * Set SHORTDESCRIPTION = Supplements the bare bones NatSkin theme for TWiki
+   * Set SHORTDESCRIPTION = Theming engine for NatSkin
 -->
-|  Plugin Author: | TWiki:Main/MichaelDaum |
-|  Copyright &copy;: | 2003-2008, Michael Daum http://michaeldaumconsulting.com |
+|  Plugin Author: | Michael Daum |
+|  Copyright &copy;: | 2003-2009, Michael Daum http://michaeldaumconsulting.com |
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
-|  Plugin Version: | v3.00-pre25 |
+|  Plugin Version: | v3.00-pre26 |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  07 Jan 2009: | added workaround to trick in <nop>NatSkin css into <nop>TinyMCE; \
+                  several workarounds to be a hybrid skin for twiki&foswiki; \
+                  added "show on screen" topic settings to ease hiding form, attachments and meta:comments; \
+                  removed topicactions from style engine now that they are show-on-screen settings; \
+                  added tape-recorder-like navigation to USERACTIONS to browse around revisions; \
+                  support for <nop>CompareRevisionsAddOn; \
+                  removed twiki/dakar support from natsearch; \
+                  removed old natlogon feature from old beijing days |
 |  12 Nov 2008: | fixed use of uninitialised variable |
 |  11 Nov 2008: | added topic actions to edit form and text data |
 |  05 Nov 2008: | added NATWEBLOGOURL; \
@@ -500,5 +507,5 @@ The following variables can be used in the format string:
 |  28 Apr 2005: | pre-release to fix installation on TWiki/Cairo |
 |  16 Mar 2005: | Initial version |
 |  Perl Version: | >=5.6 |
-|  Plugin Home: | http://nextwiki.org/Extensions/NatSkinPlugin |
-|  Feedback: | http://nextwiki.org/Extensions/NatSkinPluginDev  |
+|  Plugin Home: | http://foswiki.org/Extensions/NatSkinPlugin |
+|  Feedback: | http://foswiki.org/Extensions/NatSkinPluginDev  |

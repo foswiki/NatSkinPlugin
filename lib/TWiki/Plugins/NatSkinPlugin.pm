@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 # 
-# Copyright (C) 2003-2008 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2009 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -50,7 +50,7 @@ $STARTWW = qr/^|(?<=[\s\(])/m;
 $ENDWW = qr/$|(?=[\s\,\.\;\:\!\?\)])/m;
 
 $VERSION = '$Rev$';
-$RELEASE = '3.00-pre25';
+$RELEASE = '3.00-pre26';
 $NO_PREFS_IN_TOPIC = 1;
 $SHORTDESCRIPTION = 'Theming engine for NatSkin';
 
@@ -72,6 +72,20 @@ sub writeDebug {
   #TWiki::Func::writeDebug("- NatSkinPlugin - $_[0]");
 }
 
+###############################################################################
+sub earlyInitPlugin {
+  # hack patternskin variables
+
+  my $skin = TWiki::Func::getSkin();
+  if ($skin =~ /\bnat\b/) {
+    TWiki::Func::setPreferencesValue('TWIKISTYLEURL', '%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseStyle.css');
+    TWiki::Func::setPreferencesValue('TWIKICOLORSURL', '%NATSTYLEURL%');
+    TWiki::Func::setPreferencesValue('FOSWIKI_STYLE_URL', '%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseStyle.css');
+    TWiki::Func::setPreferencesValue('FOSWIKI_COLORS_URL', '%NATSTYLEURL%');
+  }
+
+  return 0;
+}
 
 ###############################################################################
 sub initPlugin {
@@ -85,6 +99,7 @@ sub initPlugin {
   TWiki::Func::registerTagHandler('USERACTIONS', \&renderUserActions);
   TWiki::Func::registerTagHandler('NATWEBLOGO', \&renderNatWebLogo);
   TWiki::Func::registerTagHandler('NATWEBLOGOURL', \&renderNatWebLogoUrl);
+  TWiki::Func::registerTagHandler('NATSTYLEURL', \&renderNatStyleUrl);
   TWiki::Func::registerTagHandler('KNOWNSTYLES', \&renderKnownStyles);
   TWiki::Func::registerTagHandler('KNOWNVARIATIONS', \&renderKnownVariations);
   TWiki::Func::registerTagHandler('WEBCOMPONENT', \&renderWebComponent);
@@ -117,7 +132,9 @@ sub initPlugin {
 
   # get name of hometopic
   $homeTopic = TWiki::Func::getPreferencesValue('HOMETOPIC') 
-    || $TWiki::cfg{HomeTopicName} || 'WebHome';
+    || $TWiki::cfg{HomeTopicName} 
+    || $Foswiki::cfg{HomeTopicName} 
+    || 'WebHome';
 
   # get skin state from session
   initKnownStyles();
@@ -297,8 +314,6 @@ sub initSkinState {
       ($isFinalButtons = grep(/^STYLEBUTTONS$/, @finalPreferences));
     push @{$skinState{final}}, 'sidebar' if 
       ($isFinalSideBar = grep(/^STYLESIDEBAR$/, @finalPreferences));
-    push @{$skinState{final}}, 'topicactions' if 
-      ($isFinalTopicActions = grep(/^STYLETOPICACTIONS$/, @finalPreferences));
     push @{$skinState{final}}, 'variation' if 
       ($isFinalVariation = grep(/^STYLEVARIATION$/, @finalPreferences));
     push @{$skinState{final}}, 'searchbox' if 
@@ -482,20 +497,6 @@ sub initSkinState {
   $theToggleSideBar = undef
     if $theToggleSideBar && $theToggleSideBar !~ /^(left|right|both|off)$/;
 
-  # topic actions
-  my $prefStyleTopicActions = TWiki::Func::getPreferencesValue('STYLETOPICACTIONS') || 
-    $defaultStyleTopicActions;
-  $prefStyleTopicActions =~ s/^\s*(.*)\s*$/$1/go;
-  if ($theStyleTopicActions && !$isFinalTopicActions) {
-    $theStyleTopicActions =~ s/^\s*(.*)\s*$/$1/go;
-    $doStickyTopicActions = 1 if $theStyleTopicActions ne $prefStyleTopicActions;
-  } else {
-    $theStyleTopicActions = $prefStyleTopicActions;
-  }
-  $theStyleTopicActions = $defaultStyleTopicActions
-    if $theStyleTopicActions !~ /^(on|off|allowed)$/;
-  $skinState{'topicactions'} = $theStyleTopicActions;
-
   # handle searchbox
   my $prefStyleSearchBox = TWiki::Func::getPreferencesValue('STYLESEARCHBOX') ||
     $defaultStyleSearchBox;
@@ -576,13 +577,22 @@ sub initSkinState {
   # misc
   $skinState{'action'} = getRequestAction();
 
+  # switch on history context
+  my $curRev = ($request)?$request->param('rev'):'';
+  if ($curRev || $skinState{"action"} =~ /rdiff|compare/) {
+    $skinState{"history"} = 1;
+  } else {
+    $skinState{"history"} = 0;
+  }
+
   # temporary toggles
   $theToggleSideBar = 'off' if $skinState{'action'} =~ 
-    /^(edit|editsection|genpdf|manage|rdiff|changes|(.*search)|login|logon|oops)$/;
+    /^(edit|genpdf|manage|changes|(.*search)|login|logon|oops)$/;
 
   # switch the sidebar off if we need to authenticate
+  my $authScripts = $TWiki::cfg{AuthScripts};
   if ($skinState{'action'} ne 'publish' && # SMELL to please PublishContrib
-      $TWiki::cfg{AuthScripts} =~ /\b$skinState{'action'}\b/ &&
+      $authScripts =~ /\b$skinState{'action'}\b/ &&
       !TWiki::Func::getContext()->{authenticated}) {
       $theToggleSideBar = 'off';
   }
@@ -607,13 +617,18 @@ sub initSkinState {
     # not using TWiki::Func::getSkin() to prevent 
     # getting the cover as well
 
-  my $prefix = lc($skinState{style}).'.nat';
-  $skin = "$prefix,$skin" unless $skin =~ /\b$prefix\b/;
-  #writeDebug("setting skin to $skin");
+  if ($skin =~ /\bnat\b/) {
+    my $prefix = lc($skinState{style}).'.nat';
+    $skin = "$prefix,$skin" unless $skin =~ /\b$prefix\b/;
+    #writeDebug("setting skin to $skin");
 
-  # store to session and request
-  $TWiki::Plugins::SESSION->{prefs}->pushPreferenceValues('SESSION', { SKIN => $skin } );      	
-  
+    # store to session and request
+    if ($TWiki::Plugins::SESSION) {  
+      my $prefs = $TWiki::Plugins::SESSION->{prefs} || $Foswiki::Plugins::SESSION->{prefs};
+      $prefs->pushPreferenceValues('SESSION', { SKIN => $skin } );
+    }
+  }
+
   return 1;
 }
 
@@ -711,7 +726,7 @@ sub renderHtmlTitle {
   my $theSource = $params->{source} || '%TOPICTITLE%';
 
   if ($theWikiToolName eq 'on') {
-    $theWikiToolName = TWiki::Func::getPreferencesValue("WIKITOOLNAME") || 'TWiki';
+    $theWikiToolName = TWiki::Func::getPreferencesValue("WIKITOOLNAME") || 'Wiki';
     $theWikiToolName = $theSep.$theWikiToolName;
   } elsif ($theWikiToolName eq 'off') {
     $theWikiToolName = '';
@@ -726,7 +741,7 @@ sub renderHtmlTitle {
 
   $theWeb =~ s/^.*[\.\/]//g;
 
-  # the source can be a preference variable or a TWikiTag
+  # the source can be a preference variable or a WikiTag
   escapeParameter($theSource);
   $htmlTitle = TWiki::Func::expandCommonVariables($theSource, $theTopic, $theWeb);
   if ($htmlTitle && $htmlTitle ne $theSource) {
@@ -752,16 +767,18 @@ sub renderIfSkinState {
   my $theSearchBox = $params->{searchbox};
   my $theAction = $params->{action};
   my $theFinal = $params->{final};
+  my $theHistory = $params->{history};
 
   # SMELL do a ifSkinStateImpl
-  if ((!$theStyle || $skinState{'style'} =~ /$theStyle/i) &&
-      (!$theVariation || $skinState{'variation'} =~ /$theVariation/i) &&
-      (!$theBorder || $skinState{'border'} =~ /$theBorder/) &&
-      (!$theButtons || $skinState{'buttons'} =~ /$theButtons/) &&
-      (!$theSideBar || $skinState{'sidebar'} =~ /$theSideBar/) &&
-      (!$theSearchBox || $skinState{'searchbox'} =~ /$theSearchBox/) &&
-      (!$theAction || $skinState{'action'} =~ /$theAction/) &&
-      (!$theFinal || grep(/$theFinal/, @{$skinState{'final'}}))) {
+  if ((!defined($theStyle) || $skinState{'style'} =~ /$theStyle/i) &&
+      (!defined($theVariation) || $skinState{'variation'} =~ /$theVariation/i) &&
+      (!defined($theBorder) || $skinState{'border'} =~ /$theBorder/) &&
+      (!defined($theButtons) || $skinState{'buttons'} =~ /$theButtons/) &&
+      (!defined($theSideBar) || $skinState{'sidebar'} =~ /$theSideBar/) &&
+      (!defined($theSearchBox) || $skinState{'searchbox'} =~ /$theSearchBox/) &&
+      (!defined($theAction) || $skinState{'action'} =~ /$theAction/) &&
+      (!defined($theHistory) || $skinState{'history'} eq $theHistory) &&
+      (!defined($theFinal) || grep(/$theFinal/, @{$skinState{'final'}}))) {
 
     escapeParameter($theThen);
     if ($theThen) {
@@ -883,6 +900,8 @@ sub renderUserActions {
 
   my $sepString = $params->{sep} || $params->{separator} || '<span class="natSep"> | </span>';
 
+  my $header = $params->{header} || '';
+  my $footer = $params->{footer} || '';
   my $text = $params->{_DEFAULT} || $params->{format};
   $text = '<div class="natTopicActions">$new$sep$edit$sep$attach$sep$raw$sep$delete$sep$diff$sep$print$sep$more</div>'
       unless defined $text;
@@ -890,6 +909,11 @@ sub renderUserActions {
   unless (TWiki::Func::getContext()->{authenticated}) {
     my $guestText = $params->{guest};
     $text = $guestText if defined $guestText;
+  }
+
+  if ($skinState{"history"}) {
+    my $historyText = $params->{history};
+    $text = $historyText if defined $historyText;
   }
 
   return '' unless $text;
@@ -902,6 +926,8 @@ sub renderUserActions {
   my $deleteString = '';
   my $moveString = '';
   my $rawString = '';
+  my $doneString = '';
+  my $historyString = '';
   my $diffString = '';
   my $moreString = '';
   my $printString = '';
@@ -911,6 +937,10 @@ sub renderUserActions {
   my $registerString = '';
   my $userString = '';
   my $helpString = '';
+  my $firstString = '';
+  my $lastString = '';
+  my $nextString = '';
+  my $prevString = '';
 
   my $restrictedActions = $params->{restrictedactions};
   $restrictedActions = 'new, edit, attach, move, delete, diff, more, raw' unless defined $restrictedActions;
@@ -920,20 +950,22 @@ sub renderUserActions {
   %isRestrictedAction = () if $gotAccess;
 
   # get change strings (edit, attach, move)
-  my $curRev = '';
-  my $theRaw;
-  if ($request) {
-    $curRev = $request->param('rev') || '';
-    $theRaw = $request->param('raw');
-  }
-  $curRev =~ s/r?1\.//go;
-  my $maxRev = getMaxRevision();
-  if ($curRev && $curRev < $maxRev) {
-    $isRestrictedAction{'edit'} = 1;
-    $isRestrictedAction{'attach'} = 1;
-    $isRestrictedAction{'move'} = 1;
-  }
+  my $maxRev = getMaxRevision($baseWeb, $baseTopic);
+  my $curRev = getCurRevision($baseWeb, $baseTopic);
+  $curRev ||= $maxRev || 1;
 
+  my $nrRev;
+  if ($request) {
+    my $rev1 = $request->param('rev1') || 1;
+    my $rev2 = $request->param('rev2') || 1;
+    $nrRev = abs($rev1 - $rev2);
+  }
+  $nrRev = 1 unless $nrRev;
+  my $isCompare = $skinState{'action'} eq 'compare';
+  my $isRaw = ($request)?$request->param('raw'):'';
+  my $renderMode = ($request)?$request->param('render'):'';
+  $renderMode = $isCompare?'interweave':'sequential' unless defined $renderMode;
+  my $diffCommand = $isCompare?'compare':'rdiff';
 
   # new
   if ($isRestrictedAction{'new'}) {
@@ -948,21 +980,31 @@ sub renderUserActions {
         ) 
       . '" accesskey="n" title="%TMPL:P{"NEW_HELP"}%"><span>%TMPL:P{"NEW"}%</span></a>';
   }
+
     
   # edit
   if ($isRestrictedAction{'edit'}) {
     $editString = '<span class="natTopicAction natEditTopicAction natDisabledTopicAction"><span>%TMPL:P{"EDIT"}%</span></span>';
   } else {
     my $whiteBoard = TWiki::Func::getPreferencesValue('WHITEBOARD');
-    $whiteBoard = TWiki::isTrue($whiteBoard, 1); # too bad getPreferencesFlag does not have a default param
-    my $editUrlParams = '';
-    $editUrlParams = '&action=form' unless $whiteBoard;
-    $editString = 
-      '<a class="natTopicAction natEditTopicAction" rel="nofollow" href="'
-      . TWiki::Func::getScriptUrl($baseWeb, $baseTopic, "edit") 
-      . '?t=' . time() 
-      . $editUrlParams
-      . '" accesskey="e" title="%TMPL:P{"EDIT_HELP"}%"><span>%TMPL:P{"EDIT"}%</span></a>';
+    $whiteBoard = isTrue($whiteBoard, 1); # too bad getPreferencesFlag does not have a default param
+    if ($skinState{"history"}) {
+      $editString = 
+        '<a class="natTopicAction natEditTopicAction" rel="nofollow" href="'
+        . TWiki::Func::getScriptUrl($baseWeb, $baseTopic, "manage") 
+        . '?t=' . time() 
+        . '&action=restoreRevision&rev='.$curRev
+        . '" accesskey="e" title="%TMPL:P{"RESTORE_HELP"}%"><span>%TMPL:P{"RESTORE"}%</span></a>';
+    } else {
+      my $editUrlParams = '';
+      $editUrlParams = '&action=form' unless $whiteBoard;
+      $editString = 
+        '<a class="natTopicAction natEditTopicAction" rel="nofollow" href="'
+        . TWiki::Func::getScriptUrl($baseWeb, $baseTopic, "edit") 
+        . '?t=' . time() 
+        . $editUrlParams
+        . '" accesskey="e" title="%TMPL:P{"EDIT_HELP"}%"><span>%TMPL:P{"EDIT"}%</span></a>';
+    }
   }
 
   # edit form
@@ -1003,9 +1045,10 @@ sub renderUserActions {
   if ($isRestrictedAction{'delete'}) {
     $deleteString = '<span class="natTopicAction natDeleteTopicAction natDisabledTopicAction"><span>%TMPL:P{"DELETE"}%</span></span>';
   } else {
+    my $trashWebName = $TWiki::cfg{TrashWebName};
     $deleteString =
       '<a class="natTopicAction natDeleteTopicAction" rel="nofollow" href="'
-      . TWiki::Func::getScriptUrl($baseWeb, $baseTopic, "rename", 'currentwebonly'=>'on', 'newweb'=>$TWiki::cfg{TrashWebName})
+      . TWiki::Func::getScriptUrl($baseWeb, $baseTopic, "rename", 'currentwebonly'=>'on', 'newweb'=>$trashWebName)
       . '" accesskey="t" title="%TMPL:P{"DELETE_HELP"}%"><span>%TMPL:P{"DELETE"}%</span></a>';
 
   }
@@ -1020,38 +1063,50 @@ sub renderUserActions {
 
   }
 
+  # done
+  if ($isRestrictedAction{'done'}) {
+    $doneString = '<span class="natTopicAction natDoneTopicAction natDisabledTopicAction"><span>%TMPL:P{"DONE"}%</span></span>';
+  } else {
+    $doneString =
+      '<a class="natTopicAction natDoneTopicAction" rel="nofollow" href="' . 
+      TWiki::Func::getScriptUrl($baseWeb, $baseTopic, "view") . 
+      '" accesskey="x" title="%TMPL:P{"DONE_HELP"}%"><span>%TMPL:P{"DONE"}%</span></a>';
+  }
+
   # raw
   if ($isRestrictedAction{'raw'}) {
-    if ($theRaw) {
+    if ($isRaw) {
       $rawString = '<span class="natTopicAction natViewTopicAction natDisabledTopicAction"><span>%TMPL:P{"VIEW"}%</span></span>';
     } else {
       $rawString = '<span class="natTopicAction natRawTopicAction natDisabledTopicAction"><span>%TMPL:P{"RAW"}%</span></span>';
     }
   } else {
-    my $rev = getCurRevision($baseWeb, $baseTopic, $curRev);
-    if ($theRaw) {
+    my $revParam = $skinState{"history"}?"?rev=$curRev":'';
+    if ($isRaw) {
       $rawString =
-        '<a class="natTopicAction natViewTopicAction" href="' . 
+        '<a class="natTopicAction natViewTopicAction" rel="nofollow" href="' . 
         TWiki::Func::getScriptUrl($baseWeb, $baseTopic, "view") . 
-        '?rev='.$rev.'" accesskey="r" title="%TMPL:P{"VIEW_HELP"}%"><span>%TMPL:P{"VIEW"}%</span></a>';
+        $revParam .
+        '" accesskey="r" title="%TMPL:P{"VIEW_HELP"}%"><span>%TMPL:P{"VIEW"}%</span></a>';
     } else {
+      my $rawParam = $skinState{"history"}?"&rev=$curRev":'';
       $rawString =
-        '<a class="natTopicAction natRawTopicAction" href="' .  
+        '<a class="natTopicAction natRawTopicAction" rel="nofollow" href="' .  
         TWiki::Func::getScriptUrl($baseWeb, $baseTopic, "view") .  
-        '?raw=on&rev='.$rev.'" accesskey="r" title="%TMPL:P{"RAW_HELP"}%"><span>%TMPL:P{"RAW"}%</span></a>';
+        '?raw=on'.$rawParam.'" accesskey="r" title="%TMPL:P{"RAW_HELP"}%"><span>%TMPL:P{"RAW"}%</span></a>';
     }
   }
   
-  # diff
-  if ($isRestrictedAction{'diff'}) {
-    $diffString = '<span class="natTopicAction natDiffTopicAction natDisabledTopicAction"><span>%TMPL:P{"DIFF"}%</span></span>';
+  # history
+  if ($isRestrictedAction{'history'}) {
+    $historyString = '<span class="natTopicAction natHistoryTopicAction natDisabledTopicAction"><span>%TMPL:P{"HISTORY"}%</span></span>';
   } else {
-    my $diffUrl = getDiffUrl($session);
-    $diffString =
-        '<a class="natTopicAction natDiffTopicAction" rel="nofollow" href="' . 
-        $diffUrl.
+    my $historyUrl = getDiffUrl($session);
+    $historyString =
+        '<a class="natTopicAction natHistoryTopicAction" rel="nofollow" href="' . 
+        $historyUrl.
         '" accesskey="d" title="'.
-        '%TMPL:P{"DIFF_HELP"}%"><span>%TMPL:P{"DIFF"}%</span></a>';
+        '%TMPL:P{"HISTORY_HELP"}%"><span>%TMPL:P{"HISTORY"}%</span></a>';
   }
 
   # more
@@ -1122,7 +1177,7 @@ sub renderUserActions {
       $registerString = '<span class="natUserAction natRegisterUserAction natDisabledUserAction"><span>%TMPL:P{"LOG_OUT"}%</span></span>';
     } else {
       $registerString =
-        '<a class="natUserAction natRegisterUserAction" href="%SCRIPTURLPATH{"view"}%/'.
+        '<a class="natUserAction natRegisterUserAction" rel="nofollow" href="%SCRIPTURLPATH{"view"}%/'.
         $userRegistrationTopic.
         '" accesskey="r" title="%TMPL:P{"REGISTER_HELP"}%"><span>%TMPL:P{"REGISTER"}%</span></a>';
     }
@@ -1140,7 +1195,7 @@ sub renderUserActions {
     ($helpWeb, $helpTopic) = TWiki::Func::normalizeWebTopicName($twikiWeb, $helpTopic);
     my $helpUrl = TWiki::Func::getScriptUrl($helpWeb, $helpTopic, 'view');
     $helpString = 
-      '<a class="natTopicAction natHelpTopicAction" href="'.$helpUrl.'" title="%TMPL:P{"HELP_HELP"}%"><span>%TMPL:P{"HELP"}%</span></a>';
+      '<a class="natTopicAction natHelpTopicAction" rel="nofollow" href="'.$helpUrl.'" title="%TMPL:P{"HELP_HELP"}%"><span>%TMPL:P{"HELP"}%</span></a>';
   }
 
   # user string
@@ -1149,9 +1204,62 @@ sub renderUserActions {
   if (TWiki::Func::topicExists($mainWeb,$wikiName)) {
     my $userUrl = TWiki::Func::getScriptUrl($mainWeb, $wikiName, "view");
     $userString =
-      '<a class="natUserAction natHomePageUserAction" href="'.$userUrl.'" title="%TMPL:P{"GO_HOME"}%"><span>%SPACEOUT{"%WIKINAME%"}%</span></a>';
+      '<a class="natUserAction natHomePageUserAction" rel="nofollow" href="'.$userUrl.'" title="%TMPL:P{"GO_HOME"}%"><span>%SPACEOUT{"%WIKINAME%"}%</span></a>';
   } else {
     $userString = "<nop>$wikiName";
+  }
+
+  # first revision
+  if ($isRestrictedAction{'first'} || $curRev == 1+$nrRev) {
+    $firstString = '<span class="natTopicAction natFirstTopicAction natDisabledTopicAction"><span>%TMPL:P{"FIRST"}%</span></span>';
+  } else {
+    $firstString =
+      '<a class="natTopicAction natFirstTopicAction" rel="nofollow" href="' .  
+      TWiki::Func::getScriptUrl($baseWeb, $baseTopic, $diffCommand) .  
+      '?rev1='.(1+$nrRev).'&rev2=1&render='.$renderMode.'" accesskey="f" title="%TMPL:P{"FIRST_HELP"}%"><span>%TMPL:P{"FIRST"}%</span></a>';
+  }
+
+  # next revision
+  my $nextRev = $curRev + $nrRev;
+  if ($isRestrictedAction{'next'} || $nextRev > $maxRev) {
+    $nextString = '<span class="natTopicAction natNextTopicAction natDisabledTopicAction"><span>%TMPL:P{"NEXT"}%</span></span>';
+  } else {
+    $nextString =
+      '<a class="natTopicAction natNextTopicAction" rel="nofollow" href="' .  
+      TWiki::Func::getScriptUrl($baseWeb, $baseTopic, $diffCommand) .  
+      '?rev1='.$nextRev.'&rev2='.$curRev.'&render='.$renderMode.'" accesskey="n" title="%TMPL:P{"NEXT_HELP"}%"><span>%TMPL:P{"NEXT"}%</span></a>';
+  }
+
+  # prev revision
+  my $prevRev = $curRev - 2*$nrRev;
+  if ($isRestrictedAction{'prev'} || $prevRev < 1) {
+    $prevString = '<span class="natTopicAction natPrevTopicAction natDisabledTopicAction"><span>%TMPL:P{"PREV"}%</span></span>';
+  } else {
+    $prevString =
+      '<a class="natTopicAction natPrevTopicAction" rel="nofollow" href="' .  
+      TWiki::Func::getScriptUrl($baseWeb, $baseTopic, $diffCommand) .  
+      '?rev1='.($curRev-$nrRev).'&rev2='.$prevRev.'&render='.$renderMode.'" accesskey="p" title="%TMPL:P{"PREV_HELP"}%"><span>%TMPL:P{"PREV"}%</span></a>';
+  }
+
+
+  # last revision
+  if ($isRestrictedAction{'last'} || $curRev == $maxRev) {
+    $lastString = '<span class="natTopicAction natLastTopicAction natDisabledTopicAction"><span>%TMPL:P{"LAST"}%</span></span>';
+  } else {
+    $lastString =
+      '<a class="natTopicAction natLastTopicAction" rel="nofollow" href="' .  
+      TWiki::Func::getScriptUrl($baseWeb, $baseTopic, $diffCommand) .  
+      '?rev1='.$maxRev.'&rev2='.($maxRev-$nrRev).'&render='.$renderMode.'" accesskey="l" title="%TMPL:P{"LAST_HELP"}%"><span>%TMPL:P{"LAST"}%</span></a>';
+  }
+
+  # rdiff
+  if ($isRestrictedAction{'diff'} || $prevRev < 1) {
+    $diffString = '<span class="natTopicAction natDiffTopicAction natDisabledTopicAction"><span>%TMPL:P{"DIFF"}%</span></span>';
+  } else {
+    $diffString =
+      '<a class="natTopicAction natDiffTopicAction" rel="nofollow" href="' .  
+      TWiki::Func::getScriptUrl($baseWeb, $baseTopic, $diffCommand) .  
+      '?rev1='.$prevRev.'&rev2='.$curRev.'&render='.$renderMode.'" accesskey="d" title="%TMPL:P{"DIFF_HELP"}%"><span>%TMPL:P{"DIFF"}%</span></a>';
   }
 
   $text =~ s/\$new/$newString/go;
@@ -1162,7 +1270,7 @@ sub renderUserActions {
   $text =~ s/\$move/$moveString/go;
   $text =~ s/\$delete/$deleteString/go;
   $text =~ s/\$raw/$rawString/go;
-  $text =~ s/\$diff/$diffString/go;
+  $text =~ s/\$history/$historyString/go;
   $text =~ s/\$more/$moreString/go;
   $text =~ s/\$print/$printString/go;
   $text =~ s/\$pdf/$pdfString/go;
@@ -1171,9 +1279,15 @@ sub renderUserActions {
   $text =~ s/\$register/$registerString/go;
   $text =~ s/\$user/$userString/go;
   $text =~ s/\$help/$helpString/go;
+  $text =~ s/\$first/$firstString/go;
+  $text =~ s/\$last/$lastString/go;
+  $text =~ s/\$next/$nextString/go;
+  $text =~ s/\$prev/$prevString/go;
+  $text =~ s/\$done/$doneString/go;
+  $text =~ s/\$diff/$diffString/go;
   $text =~ s/\$sep/$sepString/go;
 
-  return $text;
+  return $header.$text.$footer;
 }
 
 ###############################################################################
@@ -1184,7 +1298,9 @@ sub getLoginUrl {
 
   my $loginManager = $session->{loginManager} || # TWiki-4.2
     $session->{users}->{loginManager} || # TWiki-4.???
-    $session->{client}; # TWiki-4.0
+    $session->{client} || # TWiki-4.0
+    $Foswiki::Plugins::SESSION->{users}->{loginManager}; # Foswiki
+
   return $loginManager->loginUrl();
 }
 
@@ -1197,7 +1313,8 @@ sub getLogoutUrl {
   # return $loginManager->logoutUrl();
   #
   # but for now the "best" we can do is this:
-  if ($TWiki::cfg{LoginManager} =~ /ApacheLogin/) {
+  my $loginManager = $TWiki::cfg{LoginManager};
+  if ($loginManager =~ /ApacheLogin/) {
     return '';
   } 
   
@@ -1440,7 +1557,7 @@ sub renderEmailObfuscator {
 #    * return %NATWEBLOGOIMG% if defined
 #    * return %WEBLOGOIMG% if defined
 #    * return %WIKITOOLNAME% if defined
-#    * or return 'TWiki'
+#    * or return 'Foswiki'
 #
 # the *IMG cases will return a full <img src /> tag
 #
@@ -1462,7 +1579,7 @@ sub renderNatWebLogo {
   $natWebLogo = TWiki::Func::getPreferencesValue('WIKITOOLNAME');
   return '<span class="natWebLogo">'.$natWebLogo.'</span>' if $natWebLogo;
 
-  return 'TWiki';
+  return 'Foswiki';
 }
 
 #############################################################################
@@ -1471,7 +1588,7 @@ sub renderNatWebLogo {
 #    * return %NATWEBLOGOURL% if defined
 #    * return %WEBLOGOURL% if defined
 #    * return %WIKITLOGOURL% if defined
-#    * or return url to %MAINWEB%/%HOMETOPIC%
+#    * or return url to %USERSWEB%/%HOMETOPIC%
 #
 sub renderNatWebLogoUrl {
 
@@ -1479,10 +1596,14 @@ sub renderNatWebLogoUrl {
     TWiki::Func::getPreferencesValue('NATWEBLOGOURL') ||
     TWiki::Func::getPreferencesValue('WEBLOGOURL') ||
     TWiki::Func::getPreferencesValue('WIKILOGOURL') ||
-    TWiki::Func::getPreferencesValue('%SCRIPTURL{"view"}%/%MAINWEB%/%HOMETOPIC%');
+    TWiki::Func::getPreferencesValue('%SCRIPTURL{"view"}%/%USERSWEB%/%HOMETOPIC%');
 
 }
 
+#############################################################################
+sub renderNatStyleUrl {
+  return TWiki::Func::getPubUrlPath.'/'.$knownStyles{$skinState{style}};
+}
 
 ###############################################################################
 sub renderRevisions {
@@ -1591,7 +1712,18 @@ sub getCurRevision {
 
   my ($date, $user, $rev);
 
-  $rev = $request->param("rev") if $request;
+  if ($request) {
+    $rev = $request->param("rev");
+    unless (defined $rev) {
+      if ($skinState{'action'} =~ /compare|rdiff/) {
+        my $rev1 = $request->param("rev1");
+        my $rev2 = $request->param("rev2");
+        if (defined $rev1 && defined $rev2) {
+          $rev = ($rev1 > $rev2)?$rev1:$rev2;
+        }
+      }
+    }
+  }
 
   if ($rev) {
     $rev =~ s/r?1\.//go;
@@ -1632,7 +1764,9 @@ sub getMaxRevision {
   my $maxRev = $maxRevs{"$thisWeb.$thisTopic"};
   return $maxRev if defined $maxRev;
 
-  $maxRev = $TWiki::Plugins::SESSION->{store}->getRevisionNumber($thisWeb, $thisTopic);
+  my $store = $TWiki::Plugins::SESSION->{store} || $Foswiki::Plugins::SESSION->{store};
+
+  $maxRev = $store->getRevisionNumber($thisWeb, $thisTopic);
   $maxRev =~ s/r?1\.//go;  # cut 'r' and major
   $maxRevs{"$thisWeb.$thisTopic"} = $maxRev;
   return $maxRev;
@@ -1683,6 +1817,22 @@ sub escapeParameter {
   $_[0] =~ s/\\%/%/g;
   $_[0] =~ s/\\"/"/g;
   $_[0] =~ s/\$dollar/\$/g;
+}
+
+###############################################################################
+# from TWiki.pm
+sub isTrue {
+    my ( $value, $default ) = @_;
+
+    $default ||= 0;
+
+    return $default unless defined($value);
+
+    $value =~ s/^\s*(.*?)\s*$/$1/gi;
+    $value =~ s/off//gi;
+    $value =~ s/no//gi;
+    $value =~ s/false//gi;
+    return ($value) ? 1 : 0;
 }
 
 1;
