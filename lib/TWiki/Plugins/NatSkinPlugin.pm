@@ -50,7 +50,7 @@ $STARTWW = qr/^|(?<=[\s\(])/m;
 $ENDWW = qr/$|(?=[\s\,\.\;\:\!\?\)])/m;
 
 $VERSION = '$Rev$';
-$RELEASE = '3.00-pre26';
+$RELEASE = '3.00-pre30';
 $NO_PREFS_IN_TOPIC = 1;
 $SHORTDESCRIPTION = 'Theming engine for NatSkin';
 
@@ -78,9 +78,9 @@ sub earlyInitPlugin {
 
   my $skin = TWiki::Func::getSkin();
   if ($skin =~ /\bnat\b/) {
-    TWiki::Func::setPreferencesValue('TWIKISTYLEURL', '%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseStyle.css');
+    TWiki::Func::setPreferencesValue('TWIKISTYLEURL', '%PUBURLPATH%/%TWIKIWEB%/NatSkin/BaseStyle.css');
     TWiki::Func::setPreferencesValue('TWIKICOLORSURL', '%NATSTYLEURL%');
-    TWiki::Func::setPreferencesValue('FOSWIKI_STYLE_URL', '%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseStyle.css');
+    TWiki::Func::setPreferencesValue('FOSWIKI_STYLE_URL', '%PUBURLPATH%/%TWIKIWEB%/NatSkin/BaseStyle.css');
     TWiki::Func::setPreferencesValue('FOSWIKI_COLORS_URL', '%NATSTYLEURL%');
   }
 
@@ -208,7 +208,7 @@ sub initKnownStyles {
   #writeDebug("called initKnownStyles");
   #writeDebug("stylePath=$stylePath, lastStylePath=$lastStylePath");
 
-  my $twikiWeb = TWiki::Func::getTwikiWebname();
+  my $twikiWeb = (defined %Foswiki::cfg)?'TWiki':TWiki::Func::getTwikiWebname();
   my $stylePath = TWiki::Func::getPreferencesValue('STYLEPATH') 
     || "$twikiWeb.NatSkin";
 
@@ -1524,7 +1524,7 @@ sub renderEmailObfuscator {
   #writeDebug("called renderEmailObfuscator()");
 
   my $text = "\n".
-    '<script type="text/javascript" src="%PUBURLPATH%/%SYSTEMWEB%/NatSkin/obfuscator.js"></script>'."\n".
+    '<script type="text/javascript" src="%PUBURLPATH%/%TWIKIWEB%/NatSkin/obfuscator.js"></script>'."\n".
     '<script type="text/javascript">'."\n".
     "<!--\n".
     "function initEMO() {\n".

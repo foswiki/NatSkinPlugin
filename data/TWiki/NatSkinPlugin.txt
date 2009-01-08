@@ -312,18 +312,9 @@ The following variables can be used in the format string:
    * $tooltip: tooltip for the link, mostly used in a =title= argument of an anchor
 
 ---++ Installation Instructions
-   * [[http://twiki.org/p/pub/Plugins/%TOPIC%/%TOPIC%.zip][Download]] the ZIP file
-   * Unzip it in your twiki installation directory. Content: 
-     | *File:* | *Description:* |
-%$MANIFEST%
-   * Optionally, run ==%TOPIC%_installer== to automatically check and
-     install other modules that this module depends on. You can also do
-     this step manually.
-   * Alternatively, manually make sure the dependencies listed in the table
-     below are resolved.
-%$DEPENDENCIES%
-   * Visit =configure= in your installation, and enable the plugin in the {Plugins} section.
-   * Edit [[%SYSTEMWEB%.DefaultPreferences]] or better [[%USERSWEB%.SitePreferences]] and change the SKIN variable to "nat";
+%$INSTALL_INSTRUCTIONS%
+
+   * Edit [[%LOCALSITEPREFS%]] and change the SKIN variable to "nat";
      customize the default style adding the variables SKINSTYLE, STYLEBORDER,
      STYLEBUTTONS and STYLESIDEBAR (see NatSkin)
    * If you have set up ssl for your server add the following variable to your <nop>SitePreferences:
@@ -346,7 +337,7 @@ The following variables can be used in the format string:
 |  Plugin Author: | Michael Daum |
 |  Copyright &copy;: | 2003-2009, Michael Daum http://michaeldaumconsulting.com |
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
-|  Plugin Version: | v3.00-pre26 |
+|  Plugin Version: | v3.00-pre30 |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
 |  07 Jan 2009: | added workaround to trick in <nop>NatSkin css into <nop>TinyMCE; \
                   several workarounds to be a hybrid skin for twiki&foswiki; \
