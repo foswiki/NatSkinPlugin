@@ -50,7 +50,7 @@ $STARTWW = qr/^|(?<=[\s\(])/m;
 $ENDWW = qr/$|(?=[\s\,\.\;\:\!\?\)])/m;
 
 $VERSION = '$Rev$';
-$RELEASE = '3.00-pre30';
+$RELEASE = '3.00-pre31';
 $NO_PREFS_IN_TOPIC = 1;
 $SHORTDESCRIPTION = 'Theming engine for NatSkin';
 
@@ -70,21 +70,6 @@ sub writeDebug {
   return unless DEBUG;
   print STDERR "- NatSkinPlugin - " . $_[0] . "\n";
   #TWiki::Func::writeDebug("- NatSkinPlugin - $_[0]");
-}
-
-###############################################################################
-sub earlyInitPlugin {
-  # hack patternskin variables
-
-  my $skin = TWiki::Func::getSkin();
-  if ($skin =~ /\bnat\b/) {
-    TWiki::Func::setPreferencesValue('TWIKISTYLEURL', '%PUBURLPATH%/%TWIKIWEB%/NatSkin/BaseStyle.css');
-    TWiki::Func::setPreferencesValue('TWIKICOLORSURL', '%NATSTYLEURL%');
-    TWiki::Func::setPreferencesValue('FOSWIKI_STYLE_URL', '%PUBURLPATH%/%TWIKIWEB%/NatSkin/BaseStyle.css');
-    TWiki::Func::setPreferencesValue('FOSWIKI_COLORS_URL', '%NATSTYLEURL%');
-  }
-
-  return 0;
 }
 
 ###############################################################################
@@ -112,6 +97,14 @@ sub initPlugin {
   TWiki::Func::registerTagHandler('PREVREV', \&renderPrevRevision);
   TWiki::Func::registerTagHandler('CURREV', \&renderCurRevision);
   TWiki::Func::registerTagHandler('NATMAXREV', \&renderMaxRevision);
+
+  my $skin = TWiki::Func::getSkin();
+  if ($skin =~ /\bnat\b/) {
+    TWiki::Func::setPreferencesValue('TWIKISTYLEURL', '%PUBURLPATH%/%TWIKIWEB%/NatSkin/BaseStyle.css');
+    TWiki::Func::setPreferencesValue('TWIKICOLORSURL', '%NATSTYLEURL%');
+    TWiki::Func::setPreferencesValue('FOSWIKI_STYLE_URL', '%PUBURLPATH%/%TWIKIWEB%/NatSkin/BaseStyle.css');
+    TWiki::Func::setPreferencesValue('FOSWIKI_COLORS_URL', '%NATSTYLEURL%');
+  }
 
   # preference values
   $detectExternalLinks = TWiki::Func::getPreferencesFlag('EXTERNALLINKS');
@@ -148,9 +141,8 @@ sub initPlugin {
     } else {
       # disable during register context
       my $theContentType = $request->param('contenttype');
-      my $skin = TWiki::Func::getSkin();
       if ($skinState{'action'} =~ /^(register|mailnotif|resetpasswd)/ || 
-	  $skin =~ /^rss/ ||
+	  $skin =~ /^(rss|atom)/ ||
 	  $theContentType) {
 	$useEmailObfuscator = 0;
       }
