@@ -50,7 +50,7 @@ $STARTWW = qr/^|(?<=[\s\(])/m;
 $ENDWW = qr/$|(?=[\s\,\.\;\:\!\?\)])/m;
 
 $VERSION = '$Rev$';
-$RELEASE = '3.00-pre31';
+$RELEASE = '3.00-pre34';
 $NO_PREFS_IN_TOPIC = 1;
 $SHORTDESCRIPTION = 'Theming engine for NatSkin';
 
@@ -961,7 +961,7 @@ sub renderUserActions {
 
   # new
   if ($isRestrictedAction{'new'}) {
-    $newString = '<span class="natTopicAction natNewTopicAction natDisabledTopicAction"><span>%TMPL:P{"NEW"}%</span></span>';
+    $newString = '<span class="natTopicAction natNewTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"NEW"}%</span></span>';
   } else {
     my $topicFactory = TWiki::Func::getPreferencesValue('TOPICFACTORY') || 'WebCreateNewTopic';
     $newString = 
@@ -976,7 +976,7 @@ sub renderUserActions {
     
   # edit
   if ($isRestrictedAction{'edit'}) {
-    $editString = '<span class="natTopicAction natEditTopicAction natDisabledTopicAction"><span>%TMPL:P{"EDIT"}%</span></span>';
+    $editString = '<span class="natTopicAction natEditTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"EDIT"}%</span></span>';
   } else {
     my $whiteBoard = TWiki::Func::getPreferencesValue('WHITEBOARD');
     $whiteBoard = isTrue($whiteBoard, 1); # too bad getPreferencesFlag does not have a default param
@@ -1001,7 +1001,7 @@ sub renderUserActions {
 
   # edit form
   if ($isRestrictedAction{'edit'}) {
-    $editFormString = '<span class="natTopicAction natEditFormTopicAction natDisabledTopicAction"><span>%TMPL:P{"EDITFORM"}%</span></span>';
+    $editFormString = '<span class="natTopicAction natEditFormTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"EDITFORM"}%</span></span>';
   } else {
     $editFormString = 
       '<a class="natTopicAction natEditFormTopicAction" rel="nofollow" href="'
@@ -1013,7 +1013,7 @@ sub renderUserActions {
 
   # edit text
   if ($isRestrictedAction{'edit'}) {
-    $editTextString = '<span class="natTopicAction natEditTextTopicAction natDisabledTopicAction"><span>%TMPL:P{"EDITTEXT"}%</span></span>';
+    $editTextString = '<span class="natTopicAction natEditTextTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"EDITTEXT"}%</span></span>';
   } else {
     $editTextString = 
       '<a class="natTopicAction natEditTextTopicAction" rel="nofollow" href="'
@@ -1025,7 +1025,7 @@ sub renderUserActions {
 
   # attach
   if ($isRestrictedAction{'attach'}) {
-    $attachString = '<span class="natTopicAction natAttachTopicAction natDisabledTopicAction"><span>%TMPL:P{"ATTACH"}%</span></span>';
+    $attachString = '<span class="natTopicAction natAttachTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"ATTACH"}%</span></span>';
   } else {
     $attachString =
       '<a class="natTopicAction natAttachTopicAction" rel="nofollow" href="'
@@ -1035,7 +1035,7 @@ sub renderUserActions {
 
   # delete
   if ($isRestrictedAction{'delete'}) {
-    $deleteString = '<span class="natTopicAction natDeleteTopicAction natDisabledTopicAction"><span>%TMPL:P{"DELETE"}%</span></span>';
+    $deleteString = '<span class="natTopicAction natDeleteTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"DELETE"}%</span></span>';
   } else {
     my $trashWebName = $TWiki::cfg{TrashWebName};
     $deleteString =
@@ -1046,7 +1046,7 @@ sub renderUserActions {
   }
   # move/rename
   if ($isRestrictedAction{'move'}) {
-    $moveString = '<span class="natTopicAction natMoveTopicAction natDisabledTopicAction"><span>%TMPL:P{"MOVE"}%</span></span>';
+    $moveString = '<span class="natTopicAction natMoveTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"MOVE"}%</span></span>';
   } else {
     $moveString =
       '<a class="natTopicAction natMoveTopicAction" rel="nofollow" href="'
@@ -1057,7 +1057,7 @@ sub renderUserActions {
 
   # done
   if ($isRestrictedAction{'done'}) {
-    $doneString = '<span class="natTopicAction natDoneTopicAction natDisabledTopicAction"><span>%TMPL:P{"DONE"}%</span></span>';
+    $doneString = '<span class="natTopicAction natDoneTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"DONE"}%</span></span>';
   } else {
     $doneString =
       '<a class="natTopicAction natDoneTopicAction" rel="nofollow" href="' . 
@@ -1068,9 +1068,9 @@ sub renderUserActions {
   # raw
   if ($isRestrictedAction{'raw'}) {
     if ($isRaw) {
-      $rawString = '<span class="natTopicAction natViewTopicAction natDisabledTopicAction"><span>%TMPL:P{"VIEW"}%</span></span>';
+      $rawString = '<span class="natTopicAction natViewTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"VIEW"}%</span></span>';
     } else {
-      $rawString = '<span class="natTopicAction natRawTopicAction natDisabledTopicAction"><span>%TMPL:P{"RAW"}%</span></span>';
+      $rawString = '<span class="natTopicAction natRawTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"RAW"}%</span></span>';
     }
   } else {
     my $revParam = $skinState{"history"}?"?rev=$curRev":'';
@@ -1091,7 +1091,7 @@ sub renderUserActions {
   
   # history
   if ($isRestrictedAction{'history'}) {
-    $historyString = '<span class="natTopicAction natHistoryTopicAction natDisabledTopicAction"><span>%TMPL:P{"HISTORY"}%</span></span>';
+    $historyString = '<span class="natTopicAction natHistoryTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"HISTORY"}%</span></span>';
   } else {
     my $historyUrl = getDiffUrl($session);
     $historyString =
@@ -1103,7 +1103,7 @@ sub renderUserActions {
 
   # more
   if ($isRestrictedAction{'more'}) {
-    $moreString = '<span class="natTopicAction natMoreTopicAction natDisabledTopicAction"><span>%TMPL:P{"MORE"}%</span></span>';
+    $moreString = '<span class="natTopicAction natMoreTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"MORE"}%</span></span>';
   } else {
     $moreString =
         '<a class="natTopicAction natMoreTopicAction" rel="nofollow" href="' . 
@@ -1114,7 +1114,7 @@ sub renderUserActions {
 
   # print
   if ($isRestrictedAction{'print'}) {
-    $printString = '<span class="natTopicAction natPrintTopicAction natDisabledTopicAction"><span>%TMPL:P{"PRINT"}%</span></span>';
+    $printString = '<span class="natTopicAction natPrintTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"PRINT"}%</span></span>';
   } else {
     $printString =
       '<a class="natTopicAction natPrintTopicAction" rel="nofollow" href="'.
@@ -1124,7 +1124,7 @@ sub renderUserActions {
 
   # pdf
   if ($isRestrictedAction{'pdf'}) {
-    $pdfString = '<span class="natTopicAction natPdfTopicAction natDisabledTopicAction"><span>%TMPL:P{"PDF"}%</span></span>';
+    $pdfString = '<span class="natTopicAction natPdfTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"PDF"}%</span></span>';
   } else {
     $pdfString =
       '<a class="natTopicAction natPdfTopicAction" rel="nofollow" href="'.
@@ -1179,7 +1179,7 @@ sub renderUserActions {
 
   # help
   if ($isRestrictedAction{'help'}) {
-    $helpString = '<span class="natTopicAction natHelpTopicAction natDisabledTopicAction"><span>%TMPL:P{"HELP"}%</span></span>';
+    $helpString = '<span class="natTopicAction natHelpTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"HELP"}%</span></span>';
   } else {
     my $twikiWeb = TWiki::Func::getTwikiWebname();
     my $helpTopic = $params->{help} || "UsersGuide";
@@ -1203,7 +1203,7 @@ sub renderUserActions {
 
   # first revision
   if ($isRestrictedAction{'first'} || $curRev == 1+$nrRev) {
-    $firstString = '<span class="natTopicAction natFirstTopicAction natDisabledTopicAction"><span>%TMPL:P{"FIRST"}%</span></span>';
+    $firstString = '<span class="natTopicAction natFirstTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"FIRST"}%</span></span>';
   } else {
     $firstString =
       '<a class="natTopicAction natFirstTopicAction" rel="nofollow" href="' .  
@@ -1214,7 +1214,7 @@ sub renderUserActions {
   # next revision
   my $nextRev = $curRev + $nrRev;
   if ($isRestrictedAction{'next'} || $nextRev > $maxRev) {
-    $nextString = '<span class="natTopicAction natNextTopicAction natDisabledTopicAction"><span>%TMPL:P{"NEXT"}%</span></span>';
+    $nextString = '<span class="natTopicAction natNextTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"NEXT"}%</span></span>';
   } else {
     $nextString =
       '<a class="natTopicAction natNextTopicAction" rel="nofollow" href="' .  
@@ -1225,7 +1225,7 @@ sub renderUserActions {
   # prev revision
   my $prevRev = $curRev - 2*$nrRev;
   if ($isRestrictedAction{'prev'} || $prevRev < 1) {
-    $prevString = '<span class="natTopicAction natPrevTopicAction natDisabledTopicAction"><span>%TMPL:P{"PREV"}%</span></span>';
+    $prevString = '<span class="natTopicAction natPrevTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"PREV"}%</span></span>';
   } else {
     $prevString =
       '<a class="natTopicAction natPrevTopicAction" rel="nofollow" href="' .  
@@ -1236,7 +1236,7 @@ sub renderUserActions {
 
   # last revision
   if ($isRestrictedAction{'last'} || $curRev == $maxRev) {
-    $lastString = '<span class="natTopicAction natLastTopicAction natDisabledTopicAction"><span>%TMPL:P{"LAST"}%</span></span>';
+    $lastString = '<span class="natTopicAction natLastTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"LAST"}%</span></span>';
   } else {
     $lastString =
       '<a class="natTopicAction natLastTopicAction" rel="nofollow" href="' .  
@@ -1246,7 +1246,7 @@ sub renderUserActions {
 
   # rdiff
   if ($isRestrictedAction{'diff'} || $prevRev < 1) {
-    $diffString = '<span class="natTopicAction natDiffTopicAction natDisabledTopicAction"><span>%TMPL:P{"DIFF"}%</span></span>';
+    $diffString = '<span class="natTopicAction natDiffTopicActionDisabled natDisabledTopicAction"><span>%TMPL:P{"DIFF"}%</span></span>';
   } else {
     $diffString =
       '<a class="natTopicAction natDiffTopicAction" rel="nofollow" href="' .  

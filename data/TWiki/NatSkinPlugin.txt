@@ -329,6 +329,8 @@ The following variables can be used in the format string:
 </verbatim>
      Note, that you might need to accommodate the =/bin= url path above to your installation!
 
+---++ Dependencies
+%$DEPENDENCIES%
 
 ---++ Plugin Info
 <!-- provided for compatibility only
@@ -337,8 +339,9 @@ The following variables can be used in the format string:
 |  Plugin Author: | Michael Daum |
 |  Copyright &copy;: | 2003-2009, Michael Daum http://michaeldaumconsulting.com |
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
-|  Plugin Version: | v3.00-pre31 |
+|  Plugin Version: | v3.00-pre34 |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  15 Jan 2009: | more IE6 fixes |
 |  07 Jan 2009: | added workaround to trick in <nop>NatSkin css into <nop>TinyMCE; \
                   several workarounds to be a hybrid skin for twiki&foswiki; \
                   added "show on screen" topic settings to ease hiding form, attachments and meta:comments; \
