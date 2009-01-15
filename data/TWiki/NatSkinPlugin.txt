@@ -339,9 +339,9 @@ The following variables can be used in the format string:
 |  Plugin Author: | Michael Daum |
 |  Copyright &copy;: | 2003-2009, Michael Daum http://michaeldaumconsulting.com |
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
-|  Plugin Version: | v3.00-pre34 |
+|  Plugin Version: | v3.00-pre36 |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
-|  15 Jan 2009: | more IE6 fixes |
+|  15 Jan 2009: | more IE6 fixes; fixed natsearch on foswiki; simplified jump+search behavior to be more search-engine-like |
 |  07 Jan 2009: | added workaround to trick in <nop>NatSkin css into <nop>TinyMCE; \
                   several workarounds to be a hybrid skin for twiki&foswiki; \
                   added "show on screen" topic settings to ease hiding form, attachments and meta:comments; \

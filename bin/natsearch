@@ -27,6 +27,7 @@ BEGIN {
         chdir $1;
     }
     # Set library paths in @INC, at compile time
+    $ENV{FOSWIKI_ACTION} = 'natsearch';
     unshift @INC, '.';
     require 'setlib.cfg';
 }

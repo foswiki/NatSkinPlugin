@@ -172,66 +172,38 @@ sub search {
   # (2) do a topic search; if there's only one match then go there
   # (3) merge a content search into the results of the topic search
 
-  my $nrHits = 0;
   my %results = ();
 
   # allow quotes in search strings
   $theSearchString =~ s/\$quote/"/go;
 
-  # upper case
-
-  if ($theSearchString =~ /^[A-Z]/) {
-    if ($theSearchString =~ /^(.*)\.(.*?)$/) {  # Special web.topic notation
-      @webList = ($1);
-      $theSearchString = $2;
-    }
-    # (1) try a jump
-    writeDebug("(1) try a jump");
-    foreach my $thisWeb (@webList) {
-      if (TWiki::Func::topicExists($thisWeb, $theSearchString)) {
-	my $viewUrl = TWiki::Func::getViewUrl($thisWeb, $theSearchString);
-	writeDebug("(1) jump");
-	TWiki::Func::redirectCgiQuery($query, $viewUrl);
-	return '';
-      } 
-    }
-
-    # (2) to topic search
-    writeDebug("(2.1) topic search");
-    $this->topicSearch($theSearchString, \@webList, \%results);
-    foreach my $topics (values %results) {
-      $nrHits += scalar(keys %$topics);
-    }
-    writeDebug("found $nrHits hits");
-
-    # If there is only one result, redirect to that node
-    if ($nrHits == 1) {
-      my $resultWeb = (keys %results)[0];
-      my $resultTopic = (keys %{$results{$resultWeb}})[0];
-      my $viewUrl = TWiki::Func::getViewUrl($resultWeb, $resultTopic);
-      writeDebug("(2) jump");
-      TWiki::Func::redirectCgiQuery($query, $viewUrl);
-      return '';
-    }
-    # (3) add content search
-    writeDebug("(3.1) content search");
-    $this->contentSearch($theSearchString, \@webList, \%results);
-  } 
-  
-  # lowercase
-  else {
-
-    # (2) to topic search
-    writeDebug("(2.2) topic search");
-    $this->topicSearch($theSearchString, \@webList, \%results);
-
-    # (3) add content search
-    writeDebug("(3.2) content search");
-    $this->contentSearch($theSearchString, \@webList, \%results);
+  # parsing web.topic notation
+  if ($theSearchString =~ /^(.*)\.(.*?)$/) { 
+    @webList = ($1);
+    $theSearchString = $2;
   }
 
-  # count hits (again)
-  $nrHits = 0;
+  # (1) try a jump
+  writeDebug("(1) try a jump");
+  foreach my $thisWeb (@webList) {
+    if (TWiki::Func::topicExists($thisWeb, $theSearchString)) {
+      my $viewUrl = TWiki::Func::getViewUrl($thisWeb, $theSearchString);
+      writeDebug("(1) jump");
+      TWiki::Func::redirectCgiQuery($query, $viewUrl);
+      return '';
+    } 
+  }
+
+  # (2) to topic search
+  writeDebug("(2) topic search");
+  $this->topicSearch($theSearchString, \@webList, \%results);
+
+  # (3) add content search
+  writeDebug("(3) content search");
+  $this->contentSearch($theSearchString, \@webList, \%results);
+  
+  # count hits
+  my $nrHits = 0;
   foreach my $topics (values %results) {
     $nrHits += scalar(keys %$topics);
   }
