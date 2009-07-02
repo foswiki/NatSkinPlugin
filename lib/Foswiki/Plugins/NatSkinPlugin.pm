@@ -54,12 +54,12 @@ $SHORTDESCRIPTION = 'Theming engine for NatSkin';
 
 # TODO generalize and reduce the ammount of variables 
 $defaultSkin    = 'nat';
-$defaultStyle   = 'bluenote';
+$defaultStyle   = 'jazzynote';
+$defaultVariation = 'blue';
 $defaultStyleBorder = 'off';
 $defaultStyleButtons = 'off';
 $defaultStyleSideBar = 'left';
 $defaultStyleTopicActions = 'on';
-$defaultVariation = 'off';
 $defaultStyleSearchBox = 'top';
 
 
@@ -230,7 +230,7 @@ sub initKnownStyles {
 
   my $systemWeb = $Foswiki::cfg{SystemWebName};
   my $stylePath = Foswiki::Func::getPreferencesValue('STYLEPATH') 
-    || "$systemWeb.NatSkin";
+    || "$systemWeb.JazzyNoteTheme";
 
   $stylePath =~ s/\%SYSTEMWEB\%/$systemWeb/go;
   $stylePath =~ s/\%TWIKIWEB\%/TWiki/go;

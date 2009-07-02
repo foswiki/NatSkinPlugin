@@ -21,7 +21,8 @@
 package Foswiki::Plugins::NatSkinPlugin::Search;
 
 use strict;
-use Foswiki::Plugins::NatSkinPlugin;
+use Foswiki::Plugins::NatSkinPlugin ();
+use Foswiki::Sandbox ();
 use constant DEBUG => 0; # toggle me
 
 ###############################################################################
@@ -63,15 +64,11 @@ sub new {
   my $class = shift;
   my $session = shift;
 
-  require Foswiki::Sandbox;
-  my $sandbox = new Foswiki::Sandbox();
-
   my $this = {
     session => $session,
     dataDir => $Foswiki::cfg{DataDir},
     userName => Foswiki::Func::getWikiName(),
     homeTopic => $Foswiki::Plugins::NatSkinPlugin::homeTopic,
-    sandbox => $sandbox,
     includeWeb => Foswiki::Func::getPreferencesValue('NATSEARCHINCLUDEWEB') || '',
     excludeWeb => Foswiki::Func::getPreferencesValue('NATSEARCHEXCLUDEWEB') || '',
     includeTopic => Foswiki::Func::getPreferencesValue('NATSEARCHINCLUDETOPIC') || '',
@@ -374,7 +371,7 @@ sub contentSearch {
       if ($pattern =~ s/^-//) {
 	my @notfiles = "";
 	eval {
-	  my ($result, $code) = $this->{sandbox}->sysCommand($cmdTemplate,
+	  my ($result, $code) = Foswiki::Sandbox::sysCommand(undef, $cmdTemplate,
 	    PATTERN => $pattern, FILES => \@bag);
 	  writeDebug("code=$code, result=$result");
 	  @notfiles = split(/\r?\n/, $result);
@@ -394,7 +391,7 @@ sub contentSearch {
       } else {
 	eval {
 	  my ($result, $code) = 
-	    $this->{sandbox}->sysCommand($cmdTemplate, PATTERN => $pattern, FILES => \@bag); 
+	    Foswiki::Sandbox::sysCommand(undef, $cmdTemplate, PATTERN => $pattern, FILES => \@bag); 
 	  writeDebug("code=$code, result=$result");
 	  @bag = split(/\r?\n/, $result);
 	};
