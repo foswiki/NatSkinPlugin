@@ -80,7 +80,6 @@ sub initPlugin {
   Foswiki::Func::registerTagHandler('WEBLINK', \&renderWebLink);
   Foswiki::Func::registerTagHandler('USERACTIONS', \&renderUserActions);
   Foswiki::Func::registerTagHandler('NATWEBLOGO', \&renderNatWebLogo);
-  Foswiki::Func::registerTagHandler('NATWEBLOGOURL', \&renderNatWebLogoUrl);
   Foswiki::Func::registerTagHandler('NATSTYLEURL', \&renderNatStyleUrl);
   Foswiki::Func::registerTagHandler('KNOWNSTYLES', \&renderKnownStyles);
   Foswiki::Func::registerTagHandler('KNOWNVARIATIONS', \&renderKnownVariations);
@@ -1540,55 +1539,71 @@ sub renderWebLink {
 # this will check for a couple of preferences:
 #    * return %NATWEBLOGONAME% if defined
 #    * return %NATWEBLOGOIMG% if defined
+#    * return %WIKILOGOIMG% if defined
 #    * return %WEBLOGOIMG% if defined
 #    * return %WIKITOOLNAME% if defined
 #    * or return 'Foswiki'
 #
+# the ...IMG% settings are urls to images where the following variables 
+# are substituted:
+#    * $style: the lower case id of the current style 
+#    * $variation: the lower case id of the current variation
+#
+# this allows to switch the logo while switching the style and/or variation.
+# 
 # the *IMG cases will return a full <img src /> tag
 #
 sub renderNatWebLogo {
   my ($session, $params) = @_;
 
-  my $natWebLogo;
+  my $name = Foswiki::Func::getPreferencesValue('NATWEBLOGONAME');
+  
+  my $wikiLogoImage = Foswiki::Func::getPreferencesValue('WIKILOGOIMG');
+  my $image = 
+    Foswiki::Func::getPreferencesValue('NATWEBLOGOIMG') || 
+    Foswiki::Func::getPreferencesValue('WEBLOGOIMG') || 
+    $wikiLogoImage;
 
-  $natWebLogo = Foswiki::Func::getPreferencesValue('NATWEBLOGONAME');
-  return '<span class="natWebLogo">'.$natWebLogo.'</span>' if $natWebLogo;
+  # HACK: override ProjectLogos with own version
+  $image =~ s/\%WIKILOGOIMG%/$wikiLogoImage/g;
+  $image =~ s/ProjectLogos/NatSkin/o; 
 
-  $natWebLogo = Foswiki::Func::getPreferencesValue('NATWEBLOGOIMG');
-  return '<img class="natWebLogo" src="'.$natWebLogo.'" alt="%WEBLOGOALT%" border="0" />'
-    if $natWebLogo;
-
-  $natWebLogo = Foswiki::Func::getPreferencesValue('WEBLOGOIMG');
-  if ($natWebLogo) {
-    $natWebLogo = Foswiki::Func::expandCommonVariables($natWebLogo);
-    # HACK: override with own version
-    my $systemWeb = $Foswiki::cfg{SystemWebName}; 
-    $natWebLogo =~ s/System\/ProjectLogos/$systemWeb\/NatSkin/o; 
-    return '<img class="natWebLogo" src="'.$natWebLogo.'" alt="%WEBLOGOALT%" border="0" />'
-  }
-
-  $natWebLogo = Foswiki::Func::getPreferencesValue('WIKITOOLNAME');
-  return '<span class="natWebLogo">'.$natWebLogo.'</span>' if $natWebLogo;
-
-  return 'Foswiki';
-}
-
-#############################################################################
-# returns the logo url in the header bar.
-# this will check for a couple of preferences:
-#    * return %NATWEBLOGOURL% if defined
-#    * return %WEBLOGOURL% if defined
-#    * return %WIKITLOGOURL% if defined
-#    * or return url to %USERSWEB%/%HOMETOPIC%
-#
-sub renderNatWebLogoUrl {
-
-  return 
-    Foswiki::Func::getPreferencesValue('NATWEBLOGOURL') ||
+  my $alt = 
+    Foswiki::Func::getPreferencesValue('WEBLOGOALT') || 
+    Foswiki::Func::getPreferencesValue('WIKILOGOALT') || 
+    Foswiki::Func::getPreferencesValue('WIKITOOLNAME') || 
+    'Foswiki';
+  
+  my $url = Foswiki::Func::getPreferencesValue('NATWEBLOGOURL') ||
     Foswiki::Func::getPreferencesValue('WEBLOGOURL') ||
     Foswiki::Func::getPreferencesValue('WIKILOGOURL') ||
     Foswiki::Func::getPreferencesValue('%SCRIPTURL{"view"}%/%USERSWEB%/%HOMETOPIC%');
 
+  my $variation = lc $skinState{variation};
+  my $style = lc $skinState{style};
+
+  my $format = $params->{format};
+  $format = '<a href="$url" title="$alt">$logo</a>' unless defined $format;
+
+  my $logo;
+  if ($name) {
+    $logo = '<span class="natWebLogo">$name</span>';
+  } elsif ($image) {
+    $logo = '<img class="natWebLogo" src="$src" alt="$alt" border="0" />';
+  } else {
+    $logo = '<span class="natWebLogo">Foswiki</span>';
+  }
+  
+  my $result = $format;
+  $result =~ s/\$logo/$logo/g;
+  $result =~ s/\$src/$image/g;
+  $result =~ s/\$url/$url/g;
+  $result =~ s/\$variation/$variation/g;
+  $result =~ s/\$style/$style/g;
+  $result =~ s/\$alt/$alt/g;
+  $result =~ s/\$name/$name/g;
+
+  return $result;
 }
 
 #############################################################################
