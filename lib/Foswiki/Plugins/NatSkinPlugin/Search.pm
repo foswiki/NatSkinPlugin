@@ -18,10 +18,10 @@
 # http://www.gnu.org/copyleft/gpl.html
 #
 ###############################################################################
-package TWiki::Plugins::NatSkinPlugin::Search;
+package Foswiki::Plugins::NatSkinPlugin::Search;
 
 use strict;
-use TWiki::Plugins::NatSkinPlugin;
+use Foswiki::Plugins::NatSkinPlugin;
 use constant DEBUG => 0; # toggle me
 
 ###############################################################################
@@ -30,27 +30,27 @@ sub writeDebug {
 }
 
 ##############################################################################
-# wrapper for dakar's TWiki::UI:run interface
+# wrapper for dakar's Foswiki::UI:run interface
 sub searchCgi {
   my $session = shift;
 
-  $TWiki::Plugins::SESSION = $session;
+  $Foswiki::Plugins::SESSION = $session;
 
   my $searcher;
-  my $context = TWiki::Func::getContext();
-  my $systemWeb = TWiki::Func::getTwikiWebname();
+  my $context = Foswiki::Func::getContext();
+  my $systemWeb = $Foswiki::cfg{SystemWebName};
 
   # get search engine impl
-  my $searchEngine = TWiki::Func::getPreferencesValue('NATSEARCHENGINE') || 'native';
+  my $searchEngine = Foswiki::Func::getPreferencesValue('NATSEARCHENGINE') || 'native';
 
   if ($searchEngine =~ /(SearchEngine)?KinoSearch(AddOn)?/i) {
-    require TWiki::Contrib::SearchEngineKinoSearchAddOn::Search;
-    $searcher = new TWiki::Contrib::SearchEngineKinoSearchAddOn::Search('search');
+    require Foswiki::Contrib::SearchEngineKinoSearchAddOn::Search;
+    $searcher = new Foswiki::Contrib::SearchEngineKinoSearchAddOn::Search('search');
   } elsif ($searchEngine =~ /(SearchEngine)?Plucene(AddOn)?/i) {
-    require TWiki::Contrib::SearchEngine::Plucene::Search;
-    $searcher = new TWiki::Contrib::SearchEngine::Plucene::Search($session);
+    require Foswiki::Contrib::SearchEngine::Plucene::Search;
+    $searcher = new Foswiki::Contrib::SearchEngine::Plucene::Search($session);
   } else {
-    $searcher = new TWiki::Plugins::NatSkinPlugin::Search($session);
+    $searcher = new Foswiki::Plugins::NatSkinPlugin::Search($session);
   }
 
   my $text = $searcher->search();
@@ -63,25 +63,25 @@ sub new {
   my $class = shift;
   my $session = shift;
 
-  require TWiki::Sandbox;
-  my $sandbox = new TWiki::Sandbox();
+  require Foswiki::Sandbox;
+  my $sandbox = new Foswiki::Sandbox();
 
   my $this = {
     session => $session,
-    dataDir => TWiki::Func::getDataDir(),
-    userName => TWiki::Func::getWikiName(),
-    homeTopic => $TWiki::Plugins::NatSkinPlugin::homeTopic,
+    dataDir => $Foswiki::cfg{DataDir},
+    userName => Foswiki::Func::getWikiName(),
+    homeTopic => $Foswiki::Plugins::NatSkinPlugin::homeTopic,
     sandbox => $sandbox,
-    includeWeb => TWiki::Func::getPreferencesValue('NATSEARCHINCLUDEWEB') || '',
-    excludeWeb => TWiki::Func::getPreferencesValue('NATSEARCHEXCLUDEWEB') || '',
-    includeTopic => TWiki::Func::getPreferencesValue('NATSEARCHINCLUDETOPIC') || '',
-    excludeTopic => TWiki::Func::getPreferencesValue('NATSEARCHEXCLUDETOPIC') || '',
-    searchTemplate => TWiki::Func::getPreferencesValue('NATSEARCHTEMPLATE') || '',
-    ignoreCase => TWiki::Func::getPreferencesValue('NATSEARCHIGNORECASE'),
-    limit => TWiki::Func::getPreferencesFlag('NATSEARCHLIMIT') || 0,
-    globalSearch => TWiki::Func::getPreferencesFlag('NATSEARCHGLOBAL'),
-    keywordSearch => TWiki::Func::getPreferencesFlag('NATSEARCHKEYWORDS'),
-    egrepCmd=> $TWiki::cfg{NatSearch}{EgrepCmd} || '/bin/egrep',
+    includeWeb => Foswiki::Func::getPreferencesValue('NATSEARCHINCLUDEWEB') || '',
+    excludeWeb => Foswiki::Func::getPreferencesValue('NATSEARCHEXCLUDEWEB') || '',
+    includeTopic => Foswiki::Func::getPreferencesValue('NATSEARCHINCLUDETOPIC') || '',
+    excludeTopic => Foswiki::Func::getPreferencesValue('NATSEARCHEXCLUDETOPIC') || '',
+    searchTemplate => Foswiki::Func::getPreferencesValue('NATSEARCHTEMPLATE') || '',
+    ignoreCase => Foswiki::Func::getPreferencesValue('NATSEARCHIGNORECASE'),
+    limit => Foswiki::Func::getPreferencesFlag('NATSEARCHLIMIT') || 0,
+    globalSearch => Foswiki::Func::getPreferencesFlag('NATSEARCHGLOBAL'),
+    keywordSearch => Foswiki::Func::getPreferencesFlag('NATSEARCHKEYWORDS'),
+    egrepCmd=> $Foswiki::cfg{NatSearch}{EgrepCmd} || '/bin/egrep',
     @_
   };
   $this->{includeWeb} =~ s/^\s*(.*)\s*$/$1/o;
@@ -93,8 +93,6 @@ sub new {
   $this->{ignoreCase} = ($this->{ignoreCase} =~ /1|on|yes/)?1:0;
   $this->{modificationTime} = ();
 
-  writeDebug("ignoreCase=$this->{ignoreCase}");
-
   return bless ($this, $class);
 }
 
@@ -105,8 +103,8 @@ sub search {
 
   writeDebug("called search()");
 
-  $TWiki::Plugins::SESSION = $this->{session};
-  my $query = TWiki::Func::getCgiQuery();
+  $Foswiki::Plugins::SESSION = $this->{session};
+  my $query = Foswiki::Func::getCgiQuery();
   my $topic = $this->{session}->{topicName};
   my $web = $this->{session}->{webName};
 
@@ -124,10 +122,11 @@ sub search {
   }
   $this->{limit} = 0 unless $this->{limit};
   writeDebug("limit=$this->{limit}");
-
   writeDebug("theWeb=$theWeb");
+  writeDebug("theSearchString=$theSearchString");
+
   $searchTemplate = $this->{searchTemplate} || 'search';
-  $searchTemplate = TWiki::Func::readTemplate($searchTemplate);
+  $searchTemplate = Foswiki::Func::readTemplate($searchTemplate);
   $searchTemplate =~ s/^\s*(.*)\s*$/$1/os;
   
   # separate and process options
@@ -137,22 +136,26 @@ sub search {
 
   # check for topic actions
   if ($options =~ /^e(dit)?$/) {
-    my ($editWeb, $editTopic) = TWiki::Func::normalizeWebTopicName($web, $theSearchString);
-    if (TWiki::Func::webExists($editWeb)) {
-      my $editUrl = TWiki::Func::getScriptUrl($editWeb, $editTopic, 'edit', 't', time());
-      TWiki::Func::redirectCgiQuery($query, $editUrl);
+    my ($editWeb, $editTopic) = Foswiki::Func::normalizeWebTopicName($web, $theSearchString);
+    if (Foswiki::Func::webExists($editWeb)) {
+      my $editUrl = Foswiki::Func::getScriptUrl($editWeb, $editTopic, 'edit', 't', time());
+      Foswiki::Func::redirectCgiQuery($query, $editUrl);
       return '';
     }
   }
   if ($options =~ /^n(ew)?$/) {
-    my ($editWeb, $editTopic) = TWiki::Func::normalizeWebTopicName($web, $theSearchString);
-    if (TWiki::Func::webExists($editWeb)) {
-      my $editUrl = TWiki::Func::getScriptUrl($editWeb, $editTopic, 'edit', 'onlynewtopic', 'on', 't', time());
-      TWiki::Func::redirectCgiQuery($query, $editUrl);
+    my ($editWeb, $editTopic) = Foswiki::Func::normalizeWebTopicName($web, $theSearchString);
+    if (Foswiki::Func::webExists($editWeb)) {
+      my $editUrl = Foswiki::Func::getScriptUrl($editWeb, $editTopic, 'edit', 'onlynewtopic', 'on', 't', time());
+      Foswiki::Func::redirectCgiQuery($query, $editUrl);
       return '';
     }
   }
   $this->{keywordSearch} = ($options =~ /k/ || $this->{keywordSearch}) ? 1 : 0;
+
+  $this->{ignoreCase} = 1 if $options =~ /i/;
+  $this->{ignoreCase} = 0 if $options =~ /c/;
+  writeDebug("ignoreCase=$this->{ignoreCase}");
 
   # construct the list of webs to search in
   $this->{globalSearch} = 1 if $theWeb eq 'all';
@@ -160,10 +163,10 @@ sub search {
   my @webList;
   if (($options =~ /g/ || $this->{globalSearch}) && $options !~ /l/) {
     writeDebug("getting public weblist ");
-    @webList = TWiki::Func::getPublicWebList();
+    @webList = Foswiki::Func::getPublicWebList();
     @webList = grep (/^$this->{includeWeb}$/, @webList) if $this->{includeWeb};
     @webList = grep (!/^$this->{excludeWeb}$/, @webList) if $this->{excludeWeb};
-    @webList = grep (!/$TWiki::cfg{TrashWebName}/, @webList);
+    @webList = grep (!/$Foswiki::cfg{TrashWebName}/, @webList);
   }
   unshift(@webList, $web) unless grep (/^$web$/, @webList);
   writeDebug("webList=@webList");
@@ -179,17 +182,19 @@ sub search {
 
   # parsing web.topic notation
   if ($theSearchString =~ /^(.*)\.(.*?)$/) { 
-    @webList = ($1);
-    $theSearchString = $2;
+    if (Foswiki::Func::webExists($1)) {
+      @webList = ($1);
+      $theSearchString = $2;
+    }
   }
 
   # (1) try a jump
   writeDebug("(1) try a jump");
   foreach my $thisWeb (@webList) {
-    if (TWiki::Func::topicExists($thisWeb, $theSearchString)) {
-      my $viewUrl = TWiki::Func::getViewUrl($thisWeb, $theSearchString);
+    if (Foswiki::Func::topicExists($thisWeb, $theSearchString)) {
+      my $viewUrl = Foswiki::Func::getViewUrl($thisWeb, $theSearchString);
       writeDebug("(1) jump");
-      TWiki::Func::redirectCgiQuery($query, $viewUrl);
+      Foswiki::Func::redirectCgiQuery($query, $viewUrl);
       return '';
     } 
   }
@@ -220,8 +225,8 @@ sub search {
   #writeDebug("tmplNumber='$tmplNumber'");
   #writeDebug("tmplTail='$tmplTail'");
 
-  $tmplHead = TWiki::Func::expandCommonVariables($tmplHead, $topic, $web);
-  $tmplHead = TWiki::Func::renderText($tmplHead);
+  $tmplHead = Foswiki::Func::expandCommonVariables($tmplHead, $topic, $web);
+  $tmplHead = Foswiki::Func::renderText($tmplHead);
   $tmplHead =~ s|</*nop/*>||goi;
   $tmplHead =~ s/%TOPIC%/$topic/go;
   $tmplHead =~ s/%SEARCHSTRING%/$origSearch/go;
@@ -230,25 +235,25 @@ sub search {
   if ($nrHits) {
     $tmplNumber =~ s/%NTOPICS%/$nrHits/go;
     $tmplNumber .= $tmplSearch if $theSearchBox eq 'on';
-    $tmplNumber = TWiki::Func::expandCommonVariables($tmplNumber, $topic, $web);
-    $tmplNumber = TWiki::Func::renderText($tmplNumber);
+    $tmplNumber = Foswiki::Func::expandCommonVariables($tmplNumber, $topic, $web);
+    $tmplNumber = Foswiki::Func::renderText($tmplNumber);
     $result .= $tmplNumber;
     $result .= $this->formatSearchResult($tmplTable, \%results, $theSearchString);
   } else {
     my $text;
     if (isValidTopicName($theSearchString)) { # SMELL
-      $text = TWiki::Plugins::NatSkinPlugin::getWebComponent('WebNothingFound', $web);
+      $text = Foswiki::Plugins::NatSkinPlugin::getWebComponent('WebNothingFound', $web);
     } else {
-      $text = '<div class="natSearch twikiAlert">%TMPL:P{"NOTHING_FOUND"}%</div>';
+      $text = '<div class="natSearch foswikiAlert">%TMPL:P{"NOTHING_FOUND"}%</div>';
     }
     $text .= $tmplSearch if $theSearchBox eq 'on';
-    $text = TWiki::Func::expandCommonVariables($text, $theSearchString, $web);
-    $result .= TWiki::Func::renderText($text);
+    $text = Foswiki::Func::expandCommonVariables($text, $theSearchString, $web);
+    $result .= Foswiki::Func::renderText($text);
   }
 
   # get last part of full HTML page
-  $tmplTail = TWiki::Func::expandCommonVariables($tmplTail, $topic, $web);
-  $tmplTail = TWiki::Func::renderText($tmplTail);
+  $tmplTail = Foswiki::Func::expandCommonVariables($tmplTail, $topic, $web);
+  $tmplTail = Foswiki::Func::renderText($tmplTail);
   $tmplTail =~ s|</*nop/*>||goi;   # remove <nop> tag
   $result .= $tmplTail;
 
@@ -275,7 +280,7 @@ sub topicSearch {
   foreach my $thisWebName (@$theWebList) {
     # get all topics
     $thisWebName =~ s/\./\//go;
-    my $webDir = TWiki::Sandbox::normalizeFileName("$this->{dataDir}/$thisWebName");
+    my $webDir = Foswiki::Sandbox::normalizeFileName("$this->{dataDir}/$thisWebName");
     unless (-d $webDir) {
       #writeDebug("no such directory");
       return;
@@ -306,14 +311,14 @@ sub topicSearch {
 	}
       };
       if ($@) {
-	TWiki::Func::writeWarning("natsearch: pattern=$pattern failed to compile");
+	Foswiki::Func::writeWarning("natsearch: pattern=$pattern failed to compile");
 	return;
       }
     }
 
     # filter out non-viewable topics
     @topics = 
-      grep {TWiki::Func::checkAccessPermission("view", $this->{userName}, undef, $_, $thisWebName);}
+      grep {Foswiki::Func::checkAccessPermission("view", $this->{userName}, undef, $_, $thisWebName);}
       @topics;
 
     foreach my $topic (@topics) {
@@ -345,7 +350,7 @@ sub contentSearch {
 
     # get all topics
     $thisWebName =~ s/\./\//go;
-    my $webDir = TWiki::Sandbox::normalizeFileName("$this->{dataDir}/$thisWebName");
+    my $webDir = Foswiki::Sandbox::normalizeFileName("$this->{dataDir}/$thisWebName");
     unless (-d $webDir) {
       writeDebug("no such directory");
       return;
@@ -375,7 +380,7 @@ sub contentSearch {
 	  @notfiles = split(/\r?\n/, $result);
 	};
 	if ($@) {
-	  TWiki::Func::writeWarning("natsearch: pattern=$pattern files=@bag - $@");
+	  Foswiki::Func::writeWarning("natsearch: pattern=$pattern files=@bag - $@");
 	  return;
 	}
 	chomp(@notfiles);
@@ -394,7 +399,7 @@ sub contentSearch {
 	  @bag = split(/\r?\n/, $result);
 	};
 	if ($@) {
-	  TWiki::Func::writeWarning("natsearch: pattern=$pattern files=@bag - $@");
+	  Foswiki::Func::writeWarning("natsearch: pattern=$pattern files=@bag - $@");
 	  return;
 	}
 	chomp(@bag);
@@ -408,7 +413,7 @@ sub contentSearch {
 
     # filter out non-viewable topics
     @bag = 
-      grep {TWiki::Func::checkAccessPermission("view", $this->{userName}, "", $_, $thisWebName);} @bag;
+      grep {Foswiki::Func::checkAccessPermission("view", $this->{userName}, "", $_, $thisWebName);} @bag;
 
     foreach my $topic (@bag) {
       $results->{$thisWebName}{$topic} = 1;
@@ -422,7 +427,7 @@ sub contentSearch {
 sub formatSearchResult {
   my ($this, $theTemplate, $theResults, $theSearchString) = @_;
 
-  my $noSpamPadding = $TWiki::cfg{AntiSpam}{EmailPadding};
+  my $noSpamPadding = $Foswiki::cfg{AntiSpam}{EmailPadding};
   my $result = '';
 
   # collect hit set
@@ -462,25 +467,26 @@ sub formatSearchResult {
 
     # get web header
     $beforeText =~ s/%WEB%/$thisWeb/o;
-    $beforeText = TWiki::Func::expandCommonVariables($beforeText, $this->{homeTopic}, $thisWeb);
-    $afterText  = TWiki::Func::expandCommonVariables($afterText, $this->{homeTopic}, $thisWeb);
-    $beforeText = TWiki::Func::renderText($beforeText, $thisWeb);
+    $beforeText = Foswiki::Func::expandCommonVariables($beforeText, $this->{homeTopic}, $thisWeb);
+    $afterText  = Foswiki::Func::expandCommonVariables($afterText, $this->{homeTopic}, $thisWeb);
+    $beforeText = Foswiki::Func::renderText($beforeText, $thisWeb);
     $beforeText =~ s|</*nop/*>||goi;   # remove <nop> tag
     $result .= $beforeText;
 
 
     # get topic information
-    my ($meta, $text) = TWiki::Func::readTopic($thisWeb, $thisTopic);
-    my ($revDate, $revUser, $revNum ) = $meta->getRevisionInfo();
-    $revDate = TWiki::Func::formatTime($revDate);
+    my (undef, $text) = Foswiki::Func::readTopic($thisWeb, $thisTopic);
+    my ($revDate, $revUser, $revNum ) = Foswiki::Func::getRevisionInfo($thisWeb, $thisTopic);
+    $revDate = Foswiki::Func::formatTime($revDate);
     $revUser ||= 'UnknownUser';
-    $revUser = TWiki::Func::getWikiUserName($revUser);
+    $revUser = Foswiki::Func::getWikiUserName($revUser);
 
     # insert the topic information into the template
     my $tempVal = $repeatText;
     $tempVal =~ s/%WEB%/$thisWeb/go;
     $tempVal =~ s/%TIME%/$revDate/go;
     $tempVal =~ s/%TOPICNAME%/$thisTopic/go;
+    $revNum ||= 0;
     if ($revNum > 1) {
       $revNum = "r1.$revNum";
     } else {
@@ -489,9 +495,9 @@ sub formatSearchResult {
     $tempVal =~ s/%REVISION%/$revNum/go;
     $tempVal =~ s/%AUTHOR%/$revUser/go;
 
-    # render twiki markup
-    $tempVal = TWiki::Func::expandCommonVariables($tempVal, $thisTopic, $thisWeb);
-    $tempVal = TWiki::Func::renderText($tempVal);
+    # render topic markup
+    $tempVal = Foswiki::Func::expandCommonVariables($tempVal, $thisTopic, $thisWeb);
+    $tempVal = Foswiki::Func::renderText($tempVal);
 
     # remove mail trace
     $text =~ s/([A-Za-z0-9\.\+\-\_]+)\@([A-Za-z0-9\.\-]+\..+?)/$1$noSpamPadding$2/go;
@@ -510,7 +516,7 @@ sub formatSearchResult {
     # get this hit
     $result .= $tempVal;
 
-    $afterText = TWiki::Func::renderText($afterText, $thisWeb);
+    $afterText = Foswiki::Func::renderText($afterText, $thisWeb);
     $afterText =~ s|</*nop/*>||goi;   # remove <nop> tag
     $result .= $afterText;
   }
@@ -522,8 +528,8 @@ sub makeTopicSummary {
   my ($this, $theText, $theTopic, $theWeb, $theSearchString) = @_;
 
   my @searchTerms = parseQuery($theSearchString);
-  my $wikiToolName = TWiki::Func::getWikiToolName() || '';
-  my $linkProtocolPattern = TWiki::Func::getRegularExpression('linkProtocolPattern');
+  my $wikiToolName = $Foswiki::cfg{WikiToolName} || '';
+  my $linkProtocolPattern = $Foswiki::regex{'linkProtocolPattern'};
 
   #writeDebug("before, text=$theText");
 
@@ -539,7 +545,7 @@ sub makeTopicSummary {
   $theText =~ s/<[^>]*>//go;           # remove all HTML tags
   $theText =~ s/%WEB%/$theWeb/go;      # resolve web
   $theText =~ s/%TOPIC%/$theTopic/go;  # resolve topic
-  $theText =~ s/%WIKITOOLNAME%/$wikiToolName/go; # resolve TWiki tool
+  $theText =~ s/%WIKITOOLNAME%/$wikiToolName/go; # resolve wiki tool
   $theText =~ s/%META:.*?%//go;        # Remove meta data variables
   $theText =~ s/[\%\[\]\*\|=_]/ /go;   # remove Wiki formatting chars & defuse %VARS%
   $theText =~ s/\-\-\-+\+*/ /go;       # remove heading formatting
@@ -559,7 +565,7 @@ sub makeTopicSummary {
       }
     };
     if ($@) {
-      TWiki::Func::writeWarning("natsearch: pattern=$pattern failed to compile");
+      Foswiki::Func::writeWarning("natsearch: pattern=$pattern failed to compile");
       $errorFound = 1;
       last;
     }
@@ -583,9 +589,9 @@ sub makeTopicSummary {
   foreach my $term (@searchTerms) {
     $term = '\b'.$term.'\b' if $this->{keywordSearch};
     if ($this->{ignoreCase}) {
-      $theText =~ s:($term):<span class="twikiAlert">$1</span>:gi;
+      $theText =~ s:($term):<span class="foswikiAlert">$1</span>:gi;
     } else {
-      $theText =~ s:($term):<span class="twikiAlert">$1</span>:g;
+      $theText =~ s:($term):<span class="foswikiAlert">$1</span>:g;
     }
   }
 
@@ -647,15 +653,15 @@ sub getModificationTime {
   return $date;
 }
 
-# imported from TWiki.pm
+# imported from Foswiki.pm
 sub isValidAbbrev {
   my $name = shift || '';
-  my $abbrevRegex = TWiki::Func::getRegularExpression('abbrevRegex');
+  my $abbrevRegex = $Foswiki::regex{'abbrevRegex'};
   return ( $name =~ m/^$abbrevRegex$/o );
 }
 sub isValidWikiWord {
   my $name = shift || '';
-  my $wikiWordRegex = TWiki::Func::getRegularExpression('wikiWordRegex');
+  my $wikiWordRegex = $Foswiki::regex{'wikiWordRegex'};
   return ( $name =~ m/^$wikiWordRegex$/o );
 }
 sub isValidTopicName {

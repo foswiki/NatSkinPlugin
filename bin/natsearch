@@ -4,7 +4,7 @@
 # Copyright (C) 2003-2009 Michael Daum http://michaeldaumconsulting.com
 # 
 # based on photonsearch
-# Copyright (C) 2001 Esteban Manchado Velázquez, zoso@foton.es
+# Copyright (C) 2001 Esteban Manchado VelÃ¡zquez, zoso@foton.es
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -32,6 +32,6 @@ BEGIN {
     require 'setlib.cfg';
 }
 
-use TWiki::UI;
-use TWiki::Plugins::NatSkinPlugin::Search;
-TWiki::UI::run(\&TWiki::Plugins::NatSkinPlugin::Search::searchCgi, 'natsearch' => 1);
+use Foswiki::UI;
+use Foswiki::Plugins::NatSkinPlugin::Search;
+Foswiki::UI::run(\&Foswiki::Plugins::NatSkinPlugin::Search::searchCgi, 'natsearch' => 1);

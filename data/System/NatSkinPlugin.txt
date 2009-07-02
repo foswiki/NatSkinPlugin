@@ -68,55 +68,6 @@ get the current skin style; the priority is
       (b) the WebPreferences or 
       (c) %SYSTEMWEB%.DefaultPreferences or %USERSWEB%.SitePreferences 
 
----+++ IFSKINSTATE
-*Syntax*: =%<nop>IFSKINSTATE{&lt;tests> then="..." else="..."}%= 
-
-conditionally returns content depending on the current skin state; 
-&lt;tests> can be 
-
-   * =style="&lt;name>"=: test if the current style is &lt;name> 
-   * =variation="&lt;name>"=: test if the style variation is &lt;name> 
-   * =border="on,off,thin"=: test if the current border is on, off or "thin" 
-   * =buttons="on,off"=: test if the web buttons are currently on or off 
-   * =sidebar="left,right,off"=: 
-    test if the sidebar is currently on the right, left or off 
-   * =searchbox="top,pos1,pos2,pos3,off"=: 
-    test if the searchbox is currently on given position or off
-   * =release="beijing,cairo,dakar"=: test if the twiki release this plugin is installed on
-            is Beijing, Cairo or Dakar
-   * =action="view,edit,preview,..."=: test the current topic action
-   * =glue="on,off"=: control wether to eat surrounding whitespaces or not
-   * =final="&lt;name>"=: test if a skin state variable
-       called &lt;name> is set to be changeable
-       or not using the the FINALPREFERENCES setting;
-       known names are are "style", "sidebar", "buttons", "border", "variation" or "searchbox";
-       "all" tests wether you can vary the skin at all; "switches" tests of you can change at least one
-       of "sidebar", "buttons", "border" or "searchbox"
-
-The tag will render the "then" content if all tests evaluate to true and 
-the "else" content otherwise. Tested strings can be regular expressions. 
-
----+++ Sectional IFSKINSTATETHEN
-*Syntax*: 
-<verbatim>
-%IFSKINSTATETHEN{<tests>}% 
-  <then content> 
-[%ELSIFSKINSTATE{<tests>}% 
-  <elsif content>]* 
-[%ELSESKINSTATE% 
-  <else content>]?
-%FISKINSTATE%
-</verbatim>
-
-This is the multi-line version of [[#IFSKINSTATE][IFSKINSTATE]] that uses the
-same tests as above but takes the content from between the sections; thus,
-arbitrary TML might be rendered conditionaly. IFSKINSTATETHEN
-expressions can be nested safely.  Within a single IFSKINSTATETHEN the
-ELSIFSKINSTATE parts can be repeated arbitrarily.  Before rendering the
-=&lt;then|elsif|else condition>= any =$nop= string will be removed first.
-Thereby nested TML expressions can be prevented from being expanded in
-advance.
-
 ---+++ KNOWNSTYLES
 *Syntax*: =%<nop>KNOWNSTYLES%= 
 
@@ -201,27 +152,6 @@ If none of them is defined NATWEBLOGOURL defaults to
 
 returns the previous topic revision taking =NumberOfRevisions= into account 
 
----+++ SETSKINSTATE
-*Syntax*: =%<nop>SETSKINSTATE{...}%
-
-set the skin state using TML. This is different from using topic preference
-variables in three respects: (1) you can set the skin state at any place now, i.e.
-INCLUDEing another topic where that topic's preference variables are not evaluated.
-(2) SETSKINSTATE "may come to late" in the rendering pipeline so that it does
-not take effect throughly; topic preferences are fetched before rendering starts.
-(3) it is not checked if the resulting skinstate is "valid" when you use SETSKINSTATE;
-this _is_ the case if you use preferences values
-
-The following arguments are known and can be used in any combination:
-   * buttons="..."
-   * sidebar="..."
-   * variation="..."
-   * style="..."
-   * searchbox="..."
-   * border="..."
-The values to these keys will be commited into the skin state at once. Multiple
-invokations will override any former setting.
-
 ---+++ USERACTIONS
 *Syntax*: =%<nop>USERACTIONS{"&lt;format>" ...}%= 
 
@@ -261,29 +191,29 @@ The "guest" and "format" format strings can use the following variables
    * =multiple= : If defined WEBCOMPONENT will allow for multiple inclusions of the same web component topic.
 
 display a web component. A web component "<nop>MyComponent" is searched looking for
-   1 <nop>MyComponent in the current web,
-   2 <nop>TWikiMyComponent in the %USERSWEB% web,
-   3 <nop>TWikiMyComponent in the %SYSTEMWEB% web and
-   4 <nop>MyComponent in the %SYSTEMWEB% web.
+   1 <nop>WebMyComponent in the current web,
+   2 <nop>SiteMyComponent in the %USERSWEB% web,
+   3 <nop>SiteMyComponent in the %SYSTEMWEB% web and
+   4 <nop>WebMyComponent in the %SYSTEMWEB% web.
 
 The WEBCOMPONENT tag will retrieve the component where it was found
-first. Thereby every web can define a component of its own but if it is
+first. Thereby the component can be customize for each web separately if required. If it is
 not defined locally a predefined component will be returned. Components
 can be predefined in the %USERSWEB% and the %SYSTEMWEB% where the name
-of the component is prefix with "TWiki" to distinguish them from the
-local web components that may be present in the %USERSWEB% and the %SYSTEMWEB%.
+of the component is prefix with "Site" to distinguish them from the
+local web components that may already be present in the %USERSWEB% and the %SYSTEMWEB%.
 As a last resort the local components of the %SYSTEMWEB% are used.
 
 By default the NatSkin comes with predefined components 
-   * [[%SYSTEMWEB%.TWikiWebSideBar]]
-   * [[%SYSTEMWEB%.TWikiWebButtons]]
-   * [[%SYSTEMWEB%.TWikiWebLinks]]
-   * [[%SYSTEMWEB%.TWikiWebTopicActions]]
-   * [[%SYSTEMWEB%.TWikiWebHtmlHead]]
+   * [[%SYSTEMWEB%.SiteSideBar]]
+   * [[%SYSTEMWEB%.SiteButtons]]
+   * [[%SYSTEMWEB%.SiteLinks]]
+   * [[%SYSTEMWEB%.SiteTopicActions]]
+   * [[%SYSTEMWEB%.SiteHtmlHead]]
 
 Example: 
-   * use =%<nop>WEBCOMPONENT{"WebSideBar"}%= to display a the sidebar component
-   * use %<nop>WEBCOMPONENT{"WebButtons"}% to display the <nop>WebButtons
+   * use =%<nop>WEBCOMPONENT{"SideBar"}%= to display a the sidebar component
+   * use %<nop>WEBCOMPONENT{"Buttons"}% to display the horizontal navigation elements
 
 see also: 
 [[#MYSIDEBAR][MYSIDEBAR]]
@@ -312,22 +242,7 @@ The following variables can be used in the format string:
    * $tooltip: tooltip for the link, mostly used in a =title= argument of an anchor
 
 ---++ Installation Instructions
-%$INSTALL_INSTRUCTIONS%
-
-   * Edit [[%LOCALSITEPREFS%]] and change the SKIN variable to "nat";
-     customize the default style adding the variables SKINSTYLE, STYLEBORDER,
-     STYLEBUTTONS and STYLESIDEBAR (see NatSkin)
-   * If you have set up ssl for your server add the following variable to your <nop>SitePreferences:
-     <verbatim> * Set HTTPSLOGON = on </verbatim>
-     This will prevent passwords being sent in clear-text over a possibly insecure net.
-   * To enable ssl as soon as you logged in use the following rewrite rules in =bin/.htaccess=:
-     <verbatim>
- RewriteEngine On
- RewriteCond %{SERVER_PORT} !443
- RewriteCond %{QUERY_STRING} template=oopslogon
- RewriteRule ^(.*)$ https://%{HTTP_HOST}/bin/$1 [R,L]
-</verbatim>
-     Note, that you might need to accommodate the =/bin= url path above to your installation!
+See NatSkin#Installation_Instructions
 
 ---++ Dependencies
 %$DEPENDENCIES%
@@ -339,7 +254,8 @@ The following variables can be used in the format string:
 |  Plugin Author: | Michael Daum |
 |  Copyright &copy;: | 2003-2009, Michael Daum http://michaeldaumconsulting.com |
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
-|  Plugin Version: | v3.00-pre36 |
+|  Release: | %$RELEASE% |
+|  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
 |  15 Jan 2009: | more IE6 fixes; fixed natsearch on foswiki; simplified jump+search behavior to be more search-engine-like |
 |  07 Jan 2009: | added workaround to trick in <nop>NatSkin css into <nop>TinyMCE; \
@@ -379,7 +295,7 @@ The following variables can be used in the format string:
                   fixed natsearch not to print to STDOUT but use standard apis |
 |  02 Oct 2006: | respect access rights in WEBCOMPONENTs; \
                   prevent deep recursion in WEBCOMPONENTs |
-|  18 Sep 2006: | fixed natlogon to run on current TWiki4.1-svn |
+|  18 Sep 2006: | fixed natlogon to run on current TMwiki4.1-svn |
 |  31 Aug 2006: | don't call getSkin during initPlugin - you may switch off albeit you are needed |
 |  29 Aug 2006: | cleaned up and removed all spaghetti code distinguishing beijing, cairo and dakar; \
                   removed lots of code that got useless now, i.e. NATSCRIPTURL |
@@ -391,7 +307,7 @@ The following variables can be used in the format string:
 		  moved part of the documentation to <nop>NatSkin |
 |  21 Aug 2006: | removed <nop>TablePlugin hack loading plugin preferences into the session store;\
                   instead provide proper css for twikiTables to match the current style now; \
-                  this needs !TablePlugin from TWiki > 4.0.4; \
+                  this needs !TablePlugin from TMwiki > 4.0.4; \
                   alternatively use the attached patch to it; \
                   multiple fixes to email obfuscator; \
                   simplified support for localization ; \
@@ -402,7 +318,7 @@ The following variables can be used in the format string:
                   implemented NATWEBLOGO to circumvent different ways of using WEBLOGO, \
                   WIKITOOLNAME; \
                   added a wrapper for natsearch and natlogon to be called using dakar's \
-                  =TWiki::UI:run()= mechanism; \
+                  =Foswiki::UI:run()= mechanism; \
                   reintroduced the dependency on the <nop>FilterPlugin which is still \
                   used in one place; \
                   load email obfuscator javascript only when needed |
@@ -481,7 +397,7 @@ The following variables can be used in the format string:
                   improved <nop>MySideBarTemplate using Twisties |
 |  09 Nov 2005: | fixed wrong call to =expandCommonVariables()= ... doh |
 |  08 Nov 2005: | fixed use of uninitialized variables; https links to the same site are not external once |
-|  02 Nov 2005: | added OBFUSCATEEMAIL flag to switch off this feature |
+|  02 Nov 2005: | added OBFUSCATEEMAILS flag to switch off this feature |
 |  28 Oct 2005: | add searchbox and style variations to the skin state; \
                   configuring header art is now done using style variations; \
                   fixed the <nop>NatSkinStyleBrowser to only "stick" to changes; \
@@ -498,8 +414,8 @@ The following variables can be used in the format string:
 |  30 Aug 2005: | added external link detection; fixed IFSKINSTYLE; \
                   added style support for the Foswiki:Extensions/TablePlugin |
 |  26 Aug 2005: | new <nop>NatSkin-2.0 release |
-|  28 Apr 2005: | pre-release to fix installation on TWiki/Cairo |
+|  28 Apr 2005: | pre-release to fix installation on TMwiki/Cairo |
 |  16 Mar 2005: | Initial version |
 |  Perl Version: | >=5.6 |
-|  Plugin Home: | http://foswiki.org/Extensions/NatSkinPlugin |
-|  Feedback: | http://foswiki.org/Extensions/NatSkinPluginDev  |
+|  Home: | Foswiki:Extensions/NatSkinPlugin |
+|  Support: | Foswiki:Support/NatSkinPlugin  |
