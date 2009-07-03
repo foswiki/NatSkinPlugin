@@ -105,7 +105,7 @@ substitute for the =%<nop>REVISIONS%= tag which only works on
 the <nop>PatternSkin.
 
 ---+++ NATWEBLOGO
-*Syntax*: =%<nop>NATWEBLOGO%=
+*Syntax*: =%<nop>NATWEBLOGO{format="..."}%=
 
 returns either a textual or a graphical a logo to be used in the header bar
 depending on a set of preference variables.
@@ -117,10 +117,7 @@ NATWEBLOGO will check for a couple of preference variables in the following orde
    1 return =%<nop>WIKITOOLNAME%= if defined
    1 or return the string 'Foswiki' otherwise
 
-The =...IMG%= cases will return a full =&lt;img src="..." ... /&gt;= tag whereas
-the =...NAME%= cases will return the string only.
-
-So given you want to have the string <nop>%WIKITOOLNAME% in the logo position
+Given you want to have the string <nop>%WIKITOOLNAME% in the logo position
 when using NatSkin but not so when using a different skin on the same site.
 Then add the following to the %USERSWEB%.SitePreferences:
 <verbatim>
@@ -134,18 +131,6 @@ then add the following to  the %USERSWEB%.SitePreferences:
   * Set NATWEBLOGOIMG = /path/to/your/natskinlogo.gif
   * Set WEBLOGOIMG = /path/to/your/defaultlogo.gif
 </verbatim>
-
----+++ NATWEBLOGOURL
-*Syntax*: =%<nop>NATWEBLOGOURL%=
-
-returns the hyper link that the logo points to. This will check the following
-preference variables in the order given and return the value of the first one defined:
-   1 NATWEBLOGOURL
-   1 WEBLOGOURL
-   1 WIKILOGOURL
-
-If none of them is defined NATWEBLOGOURL defaults to
-<verbatim>%SCRIPTURL{"view"}%/%USERSWEB%/%HOMETOPIC%</verbatim>
 
 ---+++ PREVREV
 *Syntax*: =%<nop>PREVREV%= 

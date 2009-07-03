@@ -27,7 +27,7 @@ use vars qw(
   $currentUser $VERSION $RELEASE 
   $useEmailObfuscator 
   $request %seenWebComponent
-  $defaultSkin $defaultVariation $defaultStyleSearchBox
+  $defaultSkin $defaultVariation 
   $defaultStyle $defaultStyleBorder $defaultStyleSideBar
   $defaultStyleTopicActions $defaultStyleButtons 
   %maxRevs
@@ -48,19 +48,18 @@ $ENDWW = qr/$|(?=[\s\,\.\;\:\!\?\)])/m;
 $emailRegex = qr/([a-z0-9!+$%&'*+-\/=?^_`{|}~.]+)\@([a-z0-9\-]+)([a-z0-9\-\.]*)/i;
 
 $VERSION = '$Rev$';
-$RELEASE = '3.91';
+$RELEASE = '3.92';
 $NO_PREFS_IN_TOPIC = 1;
 $SHORTDESCRIPTION = 'Theming engine for NatSkin';
 
 # TODO generalize and reduce the ammount of variables 
 $defaultSkin    = 'nat';
 $defaultStyle   = 'jazzynote';
-$defaultVariation = 'blue';
+$defaultVariation = 'off';
 $defaultStyleBorder = 'off';
 $defaultStyleButtons = 'off';
 $defaultStyleSideBar = 'left';
 $defaultStyleTopicActions = 'on';
-$defaultStyleSearchBox = 'top';
 
 
 ###############################################################################
@@ -309,7 +308,6 @@ sub initSkinState {
   my $theStyleSideBar;
   my $theStyleTopicActions;
   my $theStyleVariation;
-  my $theStyleSearchBox;
   my $theToggleSideBar;
   my $theRaw;
   my $theSwitchStyle;
@@ -320,7 +318,6 @@ sub initSkinState {
   my $doStickyButtons = 0;
   my $doStickySideBar = 0;
   my $doStickyTopicActions = 0;
-  my $doStickySearchBox = 0;
   my $doStickyVariation = 0;
   my $found = 0;
 
@@ -353,7 +350,6 @@ sub initSkinState {
       Foswiki::Func::clearSessionValue('STYLEBUTTONS');
       Foswiki::Func::clearSessionValue('STYLESIDEBAR');
       Foswiki::Func::clearSessionValue('STYLEVARIATION');
-      Foswiki::Func::clearSessionValue('STYLESEARCHBOX');
       my $redirectUrl = Foswiki::Func::getViewUrl($baseWeb, $baseTopic);
       Foswiki::Func::redirectCgiQuery($request, $redirectUrl); 
 	# we need to force a new request because the session value preferences
@@ -367,7 +363,6 @@ sub initSkinState {
       $theStyleSideBar = $request->param('stylesidebar');
       $theStyleTopicActions = $request->param('styletopicactions');
       $theStyleVariation = $request->param('stylevariation');
-      $theStyleSearchBox = $request->param('stylesearchbox');
       $theToggleSideBar = $request->param('togglesidebar');
     }
 
@@ -376,7 +371,6 @@ sub initSkinState {
     #writeDebug("urlparam stylebuttons=$theStyleButtons") if $theStyleButtons;
     #writeDebug("urlparam stylesidebar=$theStyleSideBar") if $theStyleSideBar;
     #writeDebug("urlparam stylevariation=$theStyleVariation") if $theStyleVariation;
-    #writeDebug("urlparam stylesearchbox=$theStyleSearchBox") if $theStyleSearchBox;
     #writeDebug("urlparam togglesidebar=$theToggleSideBar") if $theToggleSideBar;
     #writeDebug("urlparam switchvariation=$theSwitchVariation") if $theSwitchVariation;
   }
@@ -488,20 +482,6 @@ sub initSkinState {
   $theToggleSideBar = undef
     if $theToggleSideBar && $theToggleSideBar !~ /^(left|right|both|off)$/;
 
-  # handle searchbox
-  my $prefStyleSearchBox = Foswiki::Func::getPreferencesValue('STYLESEARCHBOX') ||
-    $defaultStyleSearchBox;
-  $prefStyleSearchBox =~ s/^\s*(.*)\s*$/$1/go;
-  if ($theStyleSearchBox) {
-    $theStyleSearchBox =~ s/^\s*(.*)\s*$/$1/go;
-    $doStickySearchBox = 1 if $theStyleSearchBox ne $prefStyleSearchBox;
-  } else {
-    $theStyleSearchBox = $prefStyleSearchBox;
-  }
-  $theStyleSearchBox = $defaultStyleSearchBox
-    if $theStyleSearchBox !~ /^(top|pos1|pos2|pos3|off)$/;
-  $skinState{'searchbox'} = $theStyleSearchBox;
-
   # handle variation 
   my $prefStyleVariation = Foswiki::Func::getPreferencesValue('STYLEVARIATION') ||
     $defaultVariation;
@@ -562,8 +542,6 @@ sub initSkinState {
     if $doStickySideBar;
   Foswiki::Func::setSessionValue('STYLEVARIATION', $skinState{'variation'})
     if $doStickyVariation;
-  Foswiki::Func::setSessionValue('STYLESEARCHBOX', $skinState{'searchbox'})
-    if $doStickySearchBox;
 
   # misc
   $skinState{'action'} = getRequestAction();
@@ -632,6 +610,7 @@ sub renderUserRegistration {
 
   my $userRegistrationTopic = 
     Foswiki::Func::getPreferencesValue('USERREGISTRATION');
+
   $userRegistrationTopic = "$systemWeb.UserRegistration" 
     unless defined $userRegistrationTopic;
   
@@ -707,7 +686,6 @@ sub renderIfSkinState {
   my $theButtons = $params->{buttons};
   my $theVariation = $params->{variation};
   my $theSideBar = $params->{sidebar};
-  my $theSearchBox = $params->{searchbox};
   my $theAction = $params->{action};
   my $theHistory = $params->{history};
 
@@ -717,7 +695,6 @@ sub renderIfSkinState {
       (!defined($theBorder) || $skinState{'border'} =~ /$theBorder/) &&
       (!defined($theButtons) || $skinState{'buttons'} =~ /$theButtons/) &&
       (!defined($theSideBar) || $skinState{'sidebar'} =~ /$theSideBar/) &&
-      (!defined($theSearchBox) || $skinState{'searchbox'} =~ /$theSearchBox/) &&
       (!defined($theAction) || $skinState{'action'} =~ /$theAction/) &&
       (!defined($theHistory) || $skinState{'history'} eq $theHistory)) {
 
@@ -776,7 +753,7 @@ sub renderGetSkinState {
   my ($session, $params) = @_;
 
   my $theFormat = $params->{_DEFAULT} || 
-    '$style, $variation, $sidebar, $border, $buttons, $searchbox';
+    '$style, $variation, $sidebar, $border, $buttons';
   my $theLowerCase = $params->{lowercase} || 0;
   $theLowerCase = ($theLowerCase eq 'on')?1:0;
 
@@ -784,7 +761,6 @@ sub renderGetSkinState {
   $theFormat =~ s/\$variation/$skinState{'variation'}/g;
   $theFormat =~ s/\$border/$skinState{'border'}/g;
   $theFormat =~ s/\$buttons/$skinState{'buttons'}/g;
-  $theFormat =~ s/\$searchbox/$skinState{'searchbox'}/g;
   $theFormat =~ s/\$sidebar/$skinState{'sidebar'}/g;
   $theFormat = lc($theFormat);
 
