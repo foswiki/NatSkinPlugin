@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" date="1139390158" format="1.1" version="$Rev$"}%
+%META:TOPICINFO{author="micha" date="1247226122" format="1.1" reprev="1.2" version="1.2"}%
 <!--
 
    PLEASE DO NOT EDIT THIS TOPIC
@@ -190,15 +190,13 @@ local web components that may already be present in the %USERSWEB% and the %SYST
 As a last resort the local components of the %SYSTEMWEB% are used.
 
 By default the NatSkin comes with predefined components 
-   * [[%SYSTEMWEB%.SiteSideBar]]
-   * [[%SYSTEMWEB%.SiteButtons]]
-   * [[%SYSTEMWEB%.SiteLinks]]
-   * [[%SYSTEMWEB%.SiteTopicActions]]
-   * [[%SYSTEMWEB%.SiteHtmlHead]]
-
-Example: 
-   * use =%<nop>WEBCOMPONENT{"SideBar"}%= to display a the sidebar component
-   * use %<nop>WEBCOMPONENT{"Buttons"}% to display the horizontal navigation elements
+   * [[%SYSTEMWEB%.SiteBottomBar]]: page bottom
+   * [[%SYSTEMWEB%.SiteButtons]]: horizontal navigation
+   * [[%SYSTEMWEB%.SiteLinks]]: link section inside sidebar component
+   * [[%SYSTEMWEB%.SiteSideBar]]: sidebar navigation
+   * [[%SYSTEMWEB%.SiteRightBar]]: right sidebar navigation, used in three columns layout (stylesidebar = both)
+   * [[%SYSTEMWEB%.SiteTopicActions]]: topic actions
+   * [[%SYSTEMWEB%.SiteHtmlHead]] (deprecated)
 
 see also: 
 [[#MYSIDEBAR][MYSIDEBAR]]
@@ -242,6 +240,12 @@ See NatSkin#Installation_Instructions
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  20 Aug 2009: | added support to switch javascript parmeters via templating; \
+                  using relative urls as much as possible; \
+                  be more robust when selecting unknown themes; \
+                  support for <nop>SubscribePlugin; \
+                  adding style variation identifier to skin path as well; \
+                  made natsearch pluggable to use wiki apps for searching |
 |  15 Jan 2009: | more IE6 fixes; fixed natsearch on foswiki; simplified jump+search behavior to be more search-engine-like |
 |  07 Jan 2009: | added workaround to trick in <nop>NatSkin css into <nop>TinyMCE; \
                   several workarounds to be a hybrid skin for twiki&foswiki; \

@@ -43,6 +43,7 @@ sub searchCgi {
 
   # get search engine impl
   my $searchEngine = Foswiki::Func::getPreferencesValue('NATSEARCHENGINE') || 'native';
+  $searchEngine = Foswiki::Func::expandCommonVariables($searchEngine);
 
   if ($searchEngine =~ /(SearchEngine)?KinoSearch(AddOn)?/i) {
     require Foswiki::Contrib::SearchEngineKinoSearchAddOn::Search;
@@ -50,6 +51,11 @@ sub searchCgi {
   } elsif ($searchEngine =~ /(SearchEngine)?Plucene(AddOn)?/i) {
     require Foswiki::Contrib::SearchEngine::Plucene::Search;
     $searcher = new Foswiki::Contrib::SearchEngine::Plucene::Search($session);
+  } elsif ($searchEngine =~ /^\s*(.*)\.(.*?)\s*$/) {
+    $searcher = new Foswiki::Plugins::NatSkinPlugin::Search($session, 
+	implWeb=>$1, 
+	implTopic=>$2
+    );
   } else {
     $searcher = new Foswiki::Plugins::NatSkinPlugin::Search($session);
   }
@@ -79,6 +85,8 @@ sub new {
     globalSearch => Foswiki::Func::getPreferencesFlag('NATSEARCHGLOBAL'),
     keywordSearch => Foswiki::Func::getPreferencesFlag('NATSEARCHKEYWORDS'),
     egrepCmd=> $Foswiki::cfg{NatSearch}{EgrepCmd} || '/bin/egrep',
+    implWeb=>'',
+    implTopic=>'',
     @_
   };
   $this->{includeWeb} =~ s/^\s*(.*)\s*$/$1/o;
@@ -159,6 +167,7 @@ sub search {
   writeDebug("globalSearch=$this->{globalSearch}");
   my @webList;
   if (($options =~ /g/ || $this->{globalSearch}) && $options !~ /l/) {
+    $this->{globalSearch} = 1;
     writeDebug("getting public weblist ");
     @webList = Foswiki::Func::getPublicWebList();
     @webList = grep (/^$this->{includeWeb}$/, @webList) if $this->{includeWeb};
@@ -169,8 +178,9 @@ sub search {
   writeDebug("webList=@webList");
 
   # (1) If the string starts with an uppercase letter, try a jump
-  # (2) do a topic search; if there's only one match then go there
-  # (3) merge a content search into the results of the topic search
+  # (2) do a wiki app search
+  # (3) do a topic search; if there's only one match then go there
+  # (4) merge a content search into the results of the topic search
 
   my %results = ();
 
@@ -180,6 +190,7 @@ sub search {
   # parsing web.topic notation
   if ($theSearchString =~ /^(.*)\.(.*?)$/) { 
     if (Foswiki::Func::webExists($1)) {
+      $this->{implWeb} = $1; # use wiki app search from this web
       @webList = ($1);
       $theSearchString = $2;
     }
@@ -196,12 +207,35 @@ sub search {
     } 
   }
 
-  # (2) to topic search
-  writeDebug("(2) topic search");
+  # (2) do a wikiapp search
+  if (!$this->{globalSearch} && 
+       $this->{implWeb} && 
+       $this->{implTopic} &&
+       Foswiki::Func::topicExists($this->{implWeb}, $this->{implTopic})
+      ) {
+    my %params = (
+      search=>$theSearchString,
+      limit=>$this->{limit}
+    );
+    foreach my $name ($query->param()) {
+      next if $name eq 'search'; 
+      next if $name eq 'limit'; 
+      my $value = $query->param($name);
+      $params{$name} = $value;
+    }
+    
+    my $viewUrl = Foswiki::Func::getScriptUrl($this->{implWeb}, $this->{implTopic}, 'view', %params);
+    writeDebug("(2) wikiapp search");
+    Foswiki::Func::redirectCgiQuery($query, $viewUrl);
+    return ''
+  }
+
+  # (3) to topic search
+  writeDebug("(3) topic search");
   $this->topicSearch($theSearchString, \@webList, \%results);
 
   # (3) add content search
-  writeDebug("(3) content search");
+  writeDebug("(4) content search");
   $this->contentSearch($theSearchString, \@webList, \%results);
   
   # count hits

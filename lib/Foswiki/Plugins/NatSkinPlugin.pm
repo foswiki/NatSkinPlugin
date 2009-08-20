@@ -18,7 +18,8 @@
 
 package Foswiki::Plugins::NatSkinPlugin;
 use strict;
-use Foswiki::Func;
+use Foswiki::Func ();
+use Foswiki::Plugins ();
 use constant DEBUG => 0; # toggle me
 
 ###############################################################################
@@ -48,7 +49,7 @@ $ENDWW = qr/$|(?=[\s\,\.\;\:\!\?\)])/m;
 $emailRegex = qr/([a-z0-9!+$%&'*+-\/=?^_`{|}~.]+)\@([a-z0-9\-]+)([a-z0-9\-\.]*)/i;
 
 $VERSION = '$Rev$';
-$RELEASE = '3.92';
+$RELEASE = '3.93';
 $NO_PREFS_IN_TOPIC = 1;
 $SHORTDESCRIPTION = 'Theming engine for NatSkin';
 
@@ -98,7 +99,7 @@ sub initPlugin {
     Foswiki::Func::setPreferencesValue('FOSWIKI_STYLE_URL', '%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseStyle.css');
     Foswiki::Func::setPreferencesValue('FOSWIKI_COLORS_URL', '%NATSTYLEURL%');
 
-    Foswiki::Func::addToHEAD('NATSKIN', <<'HERE', 'JQUERYPLUGIN::FOSWIKI, JQUERYPLUGIN::SUPERFISH');
+    Foswiki::Func::addToHEAD('NATSKIN', <<'HERE', 'NATSKIN::OPTS, JQUERYPLUGIN::FOSWIKI, JQUERYPLUGIN::SUPERFISH');
 <script type="text/javascript" src="%PUBURLPATH%/%SYSTEMWEB%/JavascriptFiles/foswikilib.js"></script>
 <script type="text/javascript" src="%PUBURL%/%SYSTEMWEB%/NatSkin/natskin.js"></script>
 HERE
@@ -228,7 +229,7 @@ sub initKnownStyles {
 
   my $systemWeb = $Foswiki::cfg{SystemWebName};
   my $stylePath = Foswiki::Func::getPreferencesValue('STYLEPATH') 
-    || "$systemWeb.JazzyNoteTheme";
+    || "$systemWeb.JazzyNoteTheme, $systemWeb.NatSkin";
 
   $stylePath =~ s/\%SYSTEMWEB\%/$systemWeb/go;
   $stylePath =~ s/\%TWIKIWEB\%/TWiki/go;
@@ -320,6 +321,7 @@ sub initSkinState {
   my $doStickyTopicActions = 0;
   my $doStickyVariation = 0;
   my $found = 0;
+  my $session = $Foswiki::Plugins::SESSION;
 
   # from request
   if ($request) {
@@ -350,7 +352,7 @@ sub initSkinState {
       Foswiki::Func::clearSessionValue('STYLEBUTTONS');
       Foswiki::Func::clearSessionValue('STYLESIDEBAR');
       Foswiki::Func::clearSessionValue('STYLEVARIATION');
-      my $redirectUrl = Foswiki::Func::getViewUrl($baseWeb, $baseTopic);
+      my $redirectUrl = $session->getScriptUrl(0, 'view', $baseWeb, $baseTopic);
       Foswiki::Func::redirectCgiQuery($request, $redirectUrl); 
 	# we need to force a new request because the session value preferences
 	# are still loaded in the preferences cache; only clearing them in
@@ -376,7 +378,9 @@ sub initSkinState {
   }
 
   # handle style
-  my $prefStyle = Foswiki::Func::getPreferencesValue('SKINSTYLE') || 
+  my $prefStyle = 
+    Foswiki::Func::getSessionValue('SKINSTYLE') || 
+    Foswiki::Func::getPreferencesValue('SKINSTYLE') || 
     $defaultStyle;
   $prefStyle =~ s/^\s*(.*)\s*$/$1/go;
   if ($theStyle) {
@@ -432,7 +436,9 @@ sub initSkinState {
   #writeDebug("theStyle=$theStyle");
 
   # handle border
-  my $prefStyleBorder = Foswiki::Func::getPreferencesValue('STYLEBORDER') ||
+  my $prefStyleBorder = 
+    Foswiki::Func::getSessionValue('STYLEBORDER') || 
+    Foswiki::Func::getPreferencesValue('STYLEBORDER') ||
     $defaultStyleBorder;
 
   $prefStyleBorder =~ s/^\s*(.*)\s*$/$1/go;
@@ -445,13 +451,15 @@ sub initSkinState {
   $theStyleBorder = $defaultStyleBorder 
     if $theStyleBorder !~ /^(on|off|thin)$/;
   $theStyleBorder = $defaultStyleBorder 
-    if $theStyleBorder eq 'on' && !$themeRecord->{borders}{$theStyle};
+    if $theStyleBorder eq 'on' && $themeRecord && !$themeRecord->{borders}{$theStyle};
   $theStyleBorder = $defaultStyleBorder 
-    if $theStyleBorder eq 'thin' && !$themeRecord->{thins}{$theStyle};
+    if $theStyleBorder eq 'thin' && $themeRecord && !$themeRecord->{thins}{$theStyle};
   $skinState{'border'} = $theStyleBorder;
 
   # handle buttons
-  my $prefStyleButtons = Foswiki::Func::getPreferencesValue('STYLEBUTTONS') ||
+  my $prefStyleButtons = 
+    Foswiki::Func::getSessionValue('STYLEBUTTONS') ||
+    Foswiki::Func::getPreferencesValue('STYLEBUTTONS') ||
     $defaultStyleButtons;
   $prefStyleButtons =~ s/^\s*(.*)\s*$/$1/go;
   if ($theStyleButtons) {
@@ -463,11 +471,13 @@ sub initSkinState {
   $theStyleButtons = $defaultStyleButtons
     if $theStyleButtons !~ /^(on|off)$/;
   $theStyleButtons = $defaultStyleButtons
-    if $theStyleButtons eq 'on' && !$themeRecord->{buttons}{$theStyle};
+    if $theStyleButtons eq 'on' && $themeRecord && !$themeRecord->{buttons}{$theStyle};
   $skinState{'buttons'} = $theStyleButtons;
 
   # handle sidebar 
-  my $prefStyleSideBar = Foswiki::Func::getPreferencesValue('STYLESIDEBAR') ||
+  my $prefStyleSideBar = 
+    Foswiki::Func::getSessionValue('STYLESIDEBAR') ||
+    Foswiki::Func::getPreferencesValue('STYLESIDEBAR') ||
     $defaultStyleSideBar;
   $prefStyleSideBar =~ s/^\s*(.*)\s*$/$1/go;
   if ($theStyleSideBar) {
@@ -483,8 +493,11 @@ sub initSkinState {
     if $theToggleSideBar && $theToggleSideBar !~ /^(left|right|both|off)$/;
 
   # handle variation 
-  my $prefStyleVariation = Foswiki::Func::getPreferencesValue('STYLEVARIATION') ||
+  my $prefStyleVariation = 
+    Foswiki::Func::getSessionValue('STYLEVARIATION') ||
+    Foswiki::Func::getPreferencesValue('STYLEVARIATION') ||
     $defaultVariation;
+
   $prefStyleVariation =~ s/^\s*(.*)\s*$/$1/go;
   if ($theStyleVariation) {
     $theStyleVariation =~ s/^\s*(.*)\s*$/$1/go;
@@ -591,7 +604,7 @@ sub initSkinState {
     $skin = "$prefix,$skin" unless $skin =~ /\b$prefix\b/;
     
     if ($skinState{'variation'} ne 'off') {
-      $prefix = lc($skinState{'variation'}).'.nat';
+      $prefix = lc($skinState{'variation'}.'.'.$skinState{'style'}).'.nat';
       $skin = "$prefix,$skin" unless $skin =~ /\b$prefix\b/;
     }
 
@@ -735,7 +748,8 @@ sub renderKnownVariations {
   my @result;
   foreach my $style (keys %knownStyles) {
     next if $theStyle && $style !~ /^($theStyle)$/i;
-    my $themeRecord = $knownThemes{$knownStyles{$style}};
+    my $themeRecord = getThemeRecord($style);
+    next unless $themeRecord;
     my $vars = join($theVarSep, keys %{$themeRecord->{variations}});
     next unless $vars;
     my $line = $theHeader.$theFormat.$theFooter;
@@ -771,7 +785,14 @@ sub renderGetSkinState {
 sub getThemeRecord {
   my $theStyle = shift;
 
+  $theStyle ||= $defaultStyle;
+  
   $theStyle = $defaultStyle unless $knownStyles{$theStyle};
+  return unless $knownStyles{$theStyle};
+
+  $theStyle = $defaultStyle unless $knownThemes{$knownStyles{$theStyle}};
+  return unless $knownThemes{$knownStyles{$theStyle}};
+
   return $knownThemes{$knownStyles{$theStyle}};
 }
 
@@ -793,6 +814,7 @@ sub renderGetSkinStyle {
   $theVariation = lc $theVariation;
 
   my $themeRecord = getThemeRecord($theStyle);
+  return '' unless $themeRecord;
 
   #writeDebug("theStyle=$theStyle");
   #writeDebug("knownStyle=".join(',', sort keys %knownStyles));
@@ -843,8 +865,11 @@ sub renderUserActions {
   my $header = $params->{header} || '';
   my $footer = $params->{footer} || '';
   my $text = $params->{_DEFAULT} || $params->{format};
-  $text = '<div class="natTopicActions">$new$sep$edit$sep$attach$sep$raw$sep$delete$sep$diff$sep$print$sep$more</div>'
-      unless defined $text;
+  unless ($text) {
+    $text = '<div class="natTopicActions">$edit$sep$attach$sep$new$sep$raw$sep$delete$sep$history$sep';
+    $text .= '$subscribe$sep$' if Foswiki::Func::getContext()->{SubscribePluginEnabled};
+    $text .= 'print$sep$more</div>';
+  }
 
   unless (Foswiki::Func::getContext()->{authenticated}) {
     my $guestText = $params->{guest};
@@ -882,13 +907,20 @@ sub renderUserActions {
   my $lastString = '';
   my $nextString = '';
   my $prevString = '';
+  my $subscribeString = '';
 
   my $restrictedActions = $params->{restrictedactions};
-  $restrictedActions = 'new, edit, attach, move, delete, diff, more, raw' unless defined $restrictedActions;
+  $restrictedActions = 'new, edit, attach, move, delete, diff, more, raw' 
+    unless defined $restrictedActions;
   my %isRestrictedAction = map {$_ => 1} split(/\s*,\s*/, $restrictedActions);
-  #writeDebug("restrictedActions=".join(',', sort keys %restrictedActions));
+
+  $isRestrictedAction{'subscribe'} = 1
+    if Foswiki::Func::isGuest();
+
   my $gotAccess = Foswiki::Func::checkAccessPermission('CHANGE',$currentUser,undef,$baseTopic, $baseWeb);
   %isRestrictedAction = () if $gotAccess;
+
+  #writeDebug("restrictedActions=".join(',', sort keys %isRestrictedAction));
 
   # get change strings (edit, attach, move)
   my $maxRev = getMaxRevision($baseWeb, $baseTopic);
@@ -919,7 +951,7 @@ sub renderUserActions {
       $newString = Foswiki::Func::expandTemplate('NEW_ACTION_RESTRICTED');
     } else {
       my $topicFactory = Foswiki::Func::getPreferencesValue('TOPICFACTORY') || 'WebCreateNewTopic';
-      my $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, 'view', 
+      my $url = $session->getScriptUrl(0, 'view', $baseWeb, $baseTopic, 
         'template' => $topicFactory, 
       );
       $newString = Foswiki::Func::expandTemplate('NEW_ACTION');
@@ -937,7 +969,7 @@ sub renderUserActions {
       }
     } else {
       if ($skinState{"history"}) {
-        my $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, "edit", 
+        my $url = $session->getScriptUrl(0, "edit", $baseWeb, $baseTopic, 
           't'=>time(),
           'rev'=>$prevRev
         );
@@ -945,7 +977,7 @@ sub renderUserActions {
         $editString =~ s/%\$url%/$url/g;
       } else {
         my $whiteBoard = Foswiki::Func::getPreferencesValue('WHITEBOARD');
-        my $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, "edit",
+        my $url = $session->getScriptUrl(0, "edit", $baseWeb, $baseTopic,
           't'=>time(),
         );
         $url .= '&action=form' unless isTrue($whiteBoard, 1);
@@ -960,7 +992,7 @@ sub renderUserActions {
     if ($isRestrictedAction{'edit'}) {
       $editFormString = Foswiki::Func::expandTemplate('EDITFORM_ACTION_RESTRICTED');
     } else {
-      my $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, "edit",
+      my $url = $session->getScriptUrl(0, "edit", $baseWeb, $baseTopic,
         't'=> time(),
         'action'=>'form'
       );
@@ -974,7 +1006,7 @@ sub renderUserActions {
     if ($isRestrictedAction{'edit'}) {
       $editTextString = Foswiki::Func::expandTemplate('EDITTEXT_ACTION_RESTRICTED');
     } else {
-      my $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, "edit",
+      my $url = $session->getScriptUrl(0, "edit", $baseWeb, $baseTopic,
         't'=> time(),
         'action'=>'text'
       );
@@ -988,7 +1020,7 @@ sub renderUserActions {
     if ($isRestrictedAction{'attach'}) {
       $attachString = Foswiki::Func::expandTemplate('ATTACH_ACTION_RESTRICTED');
     } else {
-      my $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, "attach");
+      my $url = $session->getScriptUrl(0, "attach", $baseWeb, $baseTopic);
       $attachString = Foswiki::Func::expandTemplate('ATTACH_ACTION');
       $attachString =~ s/%\$url%/$url/g;
     }
@@ -999,7 +1031,7 @@ sub renderUserActions {
     if ($isRestrictedAction{'delete'}) {
       $deleteString = Foswiki::Func::expandTemplate('DELETE_ACTION_RESTRICTED');
     } else {
-      my $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, "rename", 
+      my $url = $session->getScriptUrl(0, "rename", $baseWeb, $baseTopic, 
         'currentwebonly'=>'on', 'newweb'=>$Foswiki::cfg{TrashWebName});
       $deleteString = Foswiki::Func::expandTemplate('DELETE_ACTION');
       $deleteString =~ s/%\$url%/$url/g;
@@ -1011,7 +1043,7 @@ sub renderUserActions {
     if ($isRestrictedAction{'move'}) {
       $moveString = Foswiki::Func::expandTemplate('MOVE_ACTION_RESTRICTED');
     } else {
-      my $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, "rename", 
+      my $url = $session->getScriptUrl(0, "rename", $baseWeb, $baseTopic, 
         'currentwebonly'=>'on'
       );
       $moveString = Foswiki::Func::expandTemplate('MOVE_ACTION');
@@ -1024,7 +1056,7 @@ sub renderUserActions {
     if ($isRestrictedAction{'close'}) {
       $closeString = Foswiki::Func::expandTemplate('CLOSE_ACTION_RESTRICTED');
     } else {
-      my $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, "view");
+      my $url = $session->getScriptUrl(0, "view", $baseWeb, $baseTopic);
       $closeString = Foswiki::Func::expandTemplate('CLOSE_ACTION');
       $closeString =~ s/%\$url%/$url/g;
     }
@@ -1041,12 +1073,12 @@ sub renderUserActions {
     } else {
       my $revParam = $skinState{"history"}?"?rev=$curRev":'';
       if ($isRaw) {
-        my $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, "view").$revParam;
+        my $url = $session->getScriptUrl(0, "view", $baseWeb, $baseTopic).$revParam;
         $rawString = Foswiki::Func::expandTemplate('VIEW_ACTION');
         $rawString =~ s/%\$url%/$url/g;
       } else {
         my $rawParam = $skinState{"history"}?"&rev=$curRev":'';
-        my $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, "view") .'?raw=on'.$rawParam;
+        my $url = $session->getScriptUrl(0, "view", $baseWeb, $baseTopic) .'?raw=on'.$rawParam;
         $rawString = Foswiki::Func::expandTemplate('RAW_ACTION');
         $rawString =~ s/%\$url%/$url/g;
       }
@@ -1069,7 +1101,7 @@ sub renderUserActions {
     if ($isRestrictedAction{'more'}) {
       $moreString = Foswiki::Func::expandTemplate('MORE_ACTION_RESTRICTED');
     } else {
-      my $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, "oops",
+      my $url = $session->getScriptUrl(0, "oops", $baseWeb, $baseTopic,
         'template'=>'oopsmore'
       );
       $moreString = Foswiki::Func::expandTemplate('MORE_ACTION');
@@ -1082,7 +1114,7 @@ sub renderUserActions {
     if ($isRestrictedAction{'print'}) {
       $printString = Foswiki::Func::expandTemplate('PRINT_ACTION_RESTRICTED');
     } else {
-      my $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, 'view', 
+      my $url = $session->getScriptUrl(0, 'view', $baseWeb, $baseTopic, 
         'cover'=>'print.nat'
       );
       $printString = Foswiki::Func::expandTemplate('PRINT_ACTION');
@@ -1097,17 +1129,26 @@ sub renderUserActions {
     } else {
       my $url;
       if (Foswiki::Func::getContext()->{GenPDFPrincePluginEnabled}) {
-        $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, 'view', 
+        $url = $session->getScriptUrl(0, 'view', $baseWeb, $baseTopic, 
           'contenttype'=>'application/pdf');
       } else {
         # SMELL: can't check for GenPDFAddOn reliably; we'd like to 
         # default to normal printing if no other print helper is installed
-        $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, 'genpdf', 
+        $url = $session->getScriptUrl(0, 'genpdf', $baseWeb, $baseTopic, 
           'cover'=>'print.nat',
         );
       }
       $pdfString = Foswiki::Func::expandTemplate('PDF_ACTION');
       $pdfString =~ s/%\$url%/$url/g;
+    }
+  }
+
+  # subscribe
+  if ($text =~ /\$subscribe\b/) {
+    if ($isRestrictedAction{'subscribe'}) {
+      $subscribeString = Foswiki::Func::expandTemplate('SUBSCRIBE_ACTION_RESTRICTED');
+    } else {
+      $subscribeString = Foswiki::Func::expandTemplate('SUBSCRIBE_ACTION');
     }
   }
 
@@ -1148,7 +1189,7 @@ sub renderUserActions {
       if ($isRestrictedAction{'register'}) {
         $registerString = Foswiki::Func::expandTemplate('REGISTER_ACTION_RESTRICTED');
       } else {
-        my $url = Foswiki::Func::getScriptUrl($baseWeb, $userRegistrationTopic, 'view');
+        my $url = $session->getScriptUrl(0, 'view', $baseWeb, $userRegistrationTopic);
         $registerString = Foswiki::Func::expandTemplate('REGISTER_ACTION');
         $registerString =~ s/%\$url%/$url/g;
       }
@@ -1164,7 +1205,7 @@ sub renderUserActions {
       my $helpTopic = $params->{help} || "UsersGuide";
       my $helpWeb;
       ($helpWeb, $helpTopic) = Foswiki::Func::normalizeWebTopicName($systemWeb, $helpTopic);
-      my $url = Foswiki::Func::getScriptUrl($helpWeb, $helpTopic, 'view');
+      my $url = $session->getScriptUrl(0, 'view', $helpWeb, $helpTopic);
       $helpString = Foswiki::Func::expandTemplate('HELP_ACTION');
       $helpString =~ s/%\$url%/$url/g;
     }
@@ -1175,7 +1216,7 @@ sub renderUserActions {
     my $usersWeb = $Foswiki::cfg{UsersWebName};
     my $wikiName = Foswiki::Func::getWikiName();
     if (Foswiki::Func::topicExists($usersWeb, $wikiName)) {
-      my $url = Foswiki::Func::getScriptUrl($usersWeb, $wikiName, "view");
+      my $url = $session->getScriptUrl(0, "view", $usersWeb, $wikiName);
       $accountString = Foswiki::Func::expandTemplate('ACCOUNT_ACTION');
       $accountString =~ s/%\$url%/$url/g;
     } else {
@@ -1197,7 +1238,7 @@ sub renderUserActions {
     if ($isRestrictedAction{'first'} || $curRev == 1+$nrRev) {
       $firstString = Foswiki::Func::expandTemplate('FIRST_ACTION_RESTRICTION');
     } else {
-      my $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, $diffCommand,
+      my $url = $session->getScriptUrl(0, $diffCommand, $baseWeb, $baseTopic,
         'rev1'=>1,
         'rev2'=>(1+$nrRev),
         'render'=>$renderMode
@@ -1212,7 +1253,7 @@ sub renderUserActions {
     if ($isRestrictedAction{'next'} || $nextRev > $maxRev) {
       $nextString = Foswiki::Func::expandTemplate('NEXT_ACTION_RESTRICTED');
     } else {
-      my $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, $diffCommand,
+      my $url = $session->getScriptUrl(0, $diffCommand, $baseWeb, $baseTopic,
         'rev1'=>$curRev,
         'rev2'=>$nextRev,
         'render'=>$renderMode
@@ -1227,7 +1268,7 @@ sub renderUserActions {
     if ($isRestrictedAction{'prev'} || $prevRev <= 1) {
       $prevString = Foswiki::Func::expandTemplate('PREV_ACTION_RESTRICTED');
     } else {
-      my $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, $diffCommand,
+      my $url = $session->getScriptUrl(0, $diffCommand, $baseWeb, $baseTopic,
         'rev1'=>($prevRev-$nrRev),
         'rev2'=>$prevRev,
         'render'=>$renderMode
@@ -1242,7 +1283,7 @@ sub renderUserActions {
     if ($isRestrictedAction{'last'} || $curRev == $maxRev) {
       $lastString = Foswiki::Func::expandTemplate('LAST_ACTION_RESTRICTED');
     } else {
-      my $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, $diffCommand,
+      my $url = $session->getScriptUrl(0, $diffCommand, $baseWeb, $baseTopic,
         'rev1'=>($maxRev-$nrRev),
         'rev2'=>$maxRev,
         'render'=>$renderMode
@@ -1257,7 +1298,7 @@ sub renderUserActions {
     if ($isRestrictedAction{'diff'} || $prevRev < 1) {
       $diffString = Foswiki::Func::expandTemplate('DIFF_ACTION_RESTRICTED');
     } else {
-      my $url = Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, $diffCommand,
+      my $url = $session->getScriptUrl(0, $diffCommand, $baseWeb, $baseTopic,
         'rev1'=>$prevRev,
         'rev2'=>$curRev,
         'render'=>$renderMode
@@ -1283,6 +1324,7 @@ sub renderUserActions {
   $text =~ s/\$register/$registerString/g;
   $text =~ s/\$account/$accountString/g;
   $text =~ s/\$users/$usersString/g;
+  $text =~ s/\$subscribe/$subscribeString/g;
   $text =~ s/\$help/$helpString/g;
   $text =~ s/\$first/$firstString/g;
   $text =~ s/\$last/$lastString/g;
@@ -1306,7 +1348,7 @@ sub getLoginUrl {
   my $loginManager = $session->{loginManager} || # TMwiki-4.2
     $session->{users}->{loginManager} || # TMwiki-4.???
     $session->{client} || # TMwiki-4.0
-    $Foswiki::Plugins::SESSION->{users}->{loginManager}; # Foswiki
+    $session->{users}->{loginManager}; # Foswiki
 
   return $loginManager->loginUrl();
 }
@@ -1314,6 +1356,8 @@ sub getLoginUrl {
 ###############################################################################
 # display url to logout
 sub getLogoutUrl {
+  my $session = $Foswiki::Plugins::SESSION;
+  return '' unless $session;
 
   # SMELL: I'd like to do this
   # my $loginManager = $session->{users}->{loginManager};
@@ -1325,7 +1369,7 @@ sub getLogoutUrl {
     return '';
   } 
   
-  return Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, 'view', logout=>1);
+  return $session->getScriptUrl(0, 'view', $baseWeb, $baseTopic, logout=>1);
 }
 
 ###############################################################################
@@ -1337,7 +1381,7 @@ sub getDiffUrl {
   my $prevRev = getPrevRevision($baseWeb, $baseTopic);
   my $curRev = getCurRevision($baseWeb, $baseTopic);
   my $maxRev = getMaxRevision($baseWeb, $baseTopic);
-  return Foswiki::Func::getScriptUrl($baseWeb, $baseTopic, "oops") . 
+  return $session->getScriptUrl(0, "oops", $baseWeb, $baseTopic) . 
       '?template='.$diffTemplate.
       "&param1=$prevRev&param2=$curRev&param3=$maxRev";
 }
@@ -1475,7 +1519,7 @@ sub renderWebLink {
     || 'WebHome';
 
   my $theUrl = $params->{url} ||
-    Foswiki::Func::getScriptUrl($theWeb, $homeTopic, 'view');
+    $session->getScriptUrl(0, 'view', $theWeb, $homeTopic);
 
   # unset the marker if this is not the current web 
   $theMarker = '' unless $theWeb eq $baseWeb;
@@ -1545,6 +1589,7 @@ sub renderNatWebLogo {
   $image =~ s/ProjectLogos/NatSkin/o; 
 
   my $alt = 
+    Foswiki::Func::getPreferencesValue('NATWEBLOGOALT') || 
     Foswiki::Func::getPreferencesValue('WEBLOGOALT') || 
     Foswiki::Func::getPreferencesValue('WIKILOGOALT') || 
     Foswiki::Func::getPreferencesValue('WIKITOOLNAME') || 
@@ -1569,11 +1614,15 @@ sub renderNatWebLogo {
   } else {
     $logo = '<span class="natWebLogo">Foswiki</span>';
   }
+
+  my $themeRecord = getThemeRecord($skinState{'style'});
+  my $path = $themeRecord?$themeRecord->{path}:'';
   
   my $result = $format;
   $result =~ s/\$logo/$logo/g;
   $result =~ s/\$src/$image/g;
   $result =~ s/\$url/$url/g;
+  $result =~ s/\$path/$themeRecord->{path}/g;
   $result =~ s/\$variation/$variation/g;
   $result =~ s/\$style/$style/g;
   $result =~ s/\$alt/$alt/g;
