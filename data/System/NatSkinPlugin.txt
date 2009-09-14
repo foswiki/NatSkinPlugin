@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="micha" date="1247226122" format="1.1" reprev="1.2" version="1.2"}%
+%META:TOPICINFO{author="ProjectContributor" date="1247226122" format="1.1" reprev="1.2" version="1.2"}%
 <!--
 
    PLEASE DO NOT EDIT THIS TOPIC
@@ -56,17 +56,6 @@ The optional =%lt;format>= string may contain the following variables
 
 For example =%<nop>FORMBUTTON{"| $1"}%= will generate a pipe and the formbutton
 if possible. See the =edit.nat.tmpl= template file of the !NatSkin.
-
----+++ GETSKINSTYLE
-*Syntax*: =%<nop>GETSKINSTYLE%= 
-
-get the current skin style; the priority is 
-   1 urlparam =style=&lt;name>=, 
-   2 value of the session variable =NATSKIN_STYLE= and 
-   3 preference value =SKINSTYLE= set in 
-      (a) the user preferences 
-      (b) the WebPreferences or 
-      (c) %SYSTEMWEB%.DefaultPreferences or %USERSWEB%.SitePreferences 
 
 ---+++ KNOWNSTYLES
 *Syntax*: =%<nop>KNOWNSTYLES%= 
@@ -240,6 +229,9 @@ See NatSkin#Installation_Instructions
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  14 Sep 2009: | removed GETSKINSTYLE in favour of using ADDTOHEAD; \
+                  ajusted css to latest !TablePlugin; \
+                  using relative urls where possible |
 |  20 Aug 2009: | added support to switch javascript parmeters via templating; \
                   using relative urls as much as possible; \
                   be more robust when selecting unknown themes; \

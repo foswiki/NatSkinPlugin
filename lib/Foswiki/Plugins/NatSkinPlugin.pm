@@ -49,7 +49,7 @@ $ENDWW = qr/$|(?=[\s\,\.\;\:\!\?\)])/m;
 $emailRegex = qr/([a-z0-9!+$%&'*+-\/=?^_`{|}~.]+)\@([a-z0-9\-]+)([a-z0-9\-\.]*)/i;
 
 $VERSION = '$Rev$';
-$RELEASE = '3.93';
+$RELEASE = '3.94';
 $NO_PREFS_IN_TOPIC = 1;
 $SHORTDESCRIPTION = 'Theming engine for NatSkin';
 
@@ -76,7 +76,6 @@ sub initPlugin {
 
   # register tags
   Foswiki::Func::registerTagHandler('GETSKINSTATE', \&renderGetSkinState);
-  Foswiki::Func::registerTagHandler('GETSKINSTYLE', \&renderGetSkinStyle);
   Foswiki::Func::registerTagHandler('WEBLINK', \&renderWebLink);
   Foswiki::Func::registerTagHandler('USERACTIONS', \&renderUserActions);
   Foswiki::Func::registerTagHandler('NATWEBLOGO', \&renderNatWebLogo);
@@ -94,36 +93,16 @@ sub initPlugin {
   Foswiki::Func::registerTagHandler('CURREV', \&renderCurRevision);
   Foswiki::Func::registerTagHandler('NATMAXREV', \&renderMaxRevision);
 
-  my $skin = Foswiki::Func::getSkin();
-  if ($skin =~ /\bnat\b/) {
-    Foswiki::Func::setPreferencesValue('FOSWIKI_STYLE_URL', '%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseStyle.css');
-    Foswiki::Func::setPreferencesValue('FOSWIKI_COLORS_URL', '%NATSTYLEURL%');
-
-    Foswiki::Func::addToHEAD('NATSKIN', <<'HERE', 'NATSKIN::OPTS, JQUERYPLUGIN::FOSWIKI, JQUERYPLUGIN::SUPERFISH');
-<script type="text/javascript" src="%PUBURLPATH%/%SYSTEMWEB%/JavascriptFiles/foswikilib.js"></script>
-<script type="text/javascript" src="%PUBURL%/%SYSTEMWEB%/NatSkin/natskin.js"></script>
-HERE
-
-  }
-
   # preference values
   $useEmailObfuscator = $Foswiki::cfg{NatSkin}{ObfuscateEmails};
-
   $doneInitSkinState = 0;
-
-  # don't initialize the following two to keep them in memory using perl accelerators
-  #$doneInitKnownStyles = 0;
-  #$lastStylePath = '';
 
   %emailCollection = (); # collected email addrs
   $nrEmails = 0; # number of collected addrs
   %maxRevs = (); # cache for getMaxRevision()
   %seenWebComponent = (); # used to prevent deep recursion
   $request = Foswiki::Func::getCgiQuery();
-
-  # get skin state from session
-  initKnownStyles();
-  initSkinState();
+  my $skin = Foswiki::Func::getSkin();
 
   if ($useEmailObfuscator) {
     my $isScripted = Foswiki::Func::getContext()->{'command_line'}?1:0;
@@ -142,7 +121,29 @@ HERE
   }
   #writeDebug("useEmailObfuscator=$useEmailObfuscator");
 
-  #writeDebug("done doInit");
+  my $doRefresh = $request->param('refresh') || ''; # refresh internal caches
+  $doRefresh = ($doRefresh eq 'on')?1:0;
+  if ($doRefresh) {
+    $doneInitKnownStyles = 0;
+    $lastStylePath = '';
+  }
+
+  # get skin state from session
+  initKnownStyles();
+  initSkinState();
+
+  if ($skin =~ /\bnat\b/) {
+    Foswiki::Func::setPreferencesValue('FOSWIKI_STYLE_URL', '%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseStyle.css');
+    Foswiki::Func::setPreferencesValue('FOSWIKI_COLORS_URL', '%NATSTYLEURL%');
+
+    Foswiki::Func::addToHEAD('NATSKIN::JS', <<'HERE', 'NATSKIN, NATSKIN::OPTS, JQUERYPLUGIN::FOSWIKI, JQUERYPLUGIN::SUPERFISH');
+<script type="text/javascript" src="%PUBURLPATH%/%SYSTEMWEB%/JavascriptFiles/foswikilib.js"></script>
+<script type="text/javascript" src="%PUBURLPATH%/%SYSTEMWEB%/NatSkin/natskin.js"></script>
+HERE
+
+    Foswiki::Func::addToHEAD('NATSKIN', "\n".getSkinStyle(), 'TABLEPLUGIN_default');
+  }
+
   return 1;
 }
 ###############################################################################
@@ -331,13 +332,9 @@ sub initSkinState {
     $theStyle = $request->param('style') || $request->param('skinstyle') || '';
 
     my $theReset = $request->param('resetstyle') || ''; # get back to site defaults
-    my $theRefresh = $request->param('refresh') || ''; # refresh internal caches
-    $theRefresh = ($theRefresh eq 'on')?1:0;
     $theReset = ($theReset eq 'on')?1:0;
 
-    #writeDebug("theReset=$theReset, theRefresh=$theRefresh");
-
-    if ($theRefresh || $theReset || $theStyle eq 'reset') {
+    if ($theReset || $theStyle eq 'reset') {
       # clear the style cache
       $doneInitKnownStyles = 0; 
       $lastStylePath = '';
@@ -431,7 +428,7 @@ sub initSkinState {
     $skinState{'style'} = $firstStyle if $state == 1;
   }
 
-  $skinState{'style'} = $theStyle;
+  $skinState{'style'} = $theStyle; ## SMELL: seems to override cycle styles
   my $themeRecord = getThemeRecord($theStyle);
   #writeDebug("theStyle=$theStyle");
 
@@ -607,6 +604,9 @@ sub initSkinState {
       $prefix = lc($skinState{'variation'}.'.'.$skinState{'style'}).'.nat';
       $skin = "$prefix,$skin" unless $skin =~ /\b$prefix\b/;
     }
+
+    # auto-add natedit
+    $skin = "natedit,$skin" unless $skin =~ /\b(natedit)\b/;
 
     #writeDebug("setting skin to $skin");
 
@@ -797,7 +797,7 @@ sub getThemeRecord {
 }
 
 ###############################################################################
-sub renderGetSkinStyle {
+sub getSkinStyle {
 
   my $theStyle;
   $theStyle = $skinState{'style'} || 'off';
@@ -820,33 +820,33 @@ sub renderGetSkinStyle {
   #writeDebug("knownStyle=".join(',', sort keys %knownStyles));
 
   $text = <<"HERE";
-<link rel='stylesheet' href='%PUBURLPATH%/%SYSTEMWEB%/NatSkin/print.css' type='text/css' media='print' />
-<link rel='stylesheet' href='%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseStyle.css' type='text/css' media='all' />
-<link rel='stylesheet' href='$themeRecord->{styles}{$theStyle}' type='text/css' media='all' />
+<link rel=\"stylesheet\" href=\"%PUBURLPATH%/%SYSTEMWEB%/NatSkin/print.css\" type=\"text/css\" media=\"print\" />
+<link rel=\"stylesheet\" href=\"%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseStyle.css\" type=\"text/css\" media=\"all\" />
+<link rel=\"stylesheet\" href=\"$themeRecord->{styles}{$theStyle}\" type=\"text/css\" media=\"all\" />
 HERE
 
   if ($skinState{'border'} eq 'on' && $themeRecord->{borders}{$theStyle}) {
     $text .= <<"HERE";
-<link rel='stylesheet' href='%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseBorder.css' type='text/css' media='all' />
-<link rel='stylesheet' href='$themeRecord->{borders}{$theStyle}' type='text/css' media='all' />
+<link rel=\"stylesheet\" href=\"%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseBorder.css\" type=\"text/css\" media=\"all\" />
+<link rel=\"stylesheet\" href=\"$themeRecord->{borders}{$theStyle}\" type=\"text/css\" media=\"all\" />
 HERE
   } elsif ($skinState{'border'} eq 'thin' && $themeRecord->{thins}{$theStyle}) {
     $text .= <<"HERE";
-<link rel='stylesheet' href='%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseThin.css' type='text/css' media='all' />
-<link rel='stylesheet' href='$themeRecord->{thins}{$theStyle}' type='text/css' media='all' />
+<link rel=\"stylesheet\" href=\"%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseThin.css\" type=\"text/css\" media=\"all\" />
+<link rel=\"stylesheet\" href=\"$themeRecord->{thins}{$theStyle}\" type=\"text/css\" media=\"all\" />
 HERE
   }
 
   if ($skinState{'buttons'} eq 'on' && $themeRecord->{buttons}{$theStyle}) {
     $text .= <<"HERE";
-<link rel='stylesheet' href='%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseButtons.css' type='text/css' media='all' />
-<link rel='stylesheet' href='$themeRecord->{buttons}{$theStyle}' type='text/css' media='all' />
+<link rel=\"stylesheet\" href=\"%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseButtons.css\" type=\"text/css\" media=\"all\" />
+<link rel=\"stylesheet\" href=\"$themeRecord->{buttons}{$theStyle}\" type=\"text/css\" media=\"all\" />
 HERE
   }
 
   if ($theVariation && $themeRecord->{variations}{$theVariation}) {
     $text .= <<"HERE";
-<link rel='stylesheet' href='$themeRecord->{variations}{$theVariation}' type='text/css' media='all' />
+<link rel=\"stylesheet\" href=\"$themeRecord->{variations}{$theVariation}\" type=\"text/css\" media=\"all\" />
 HERE
   }
 
@@ -1128,7 +1128,9 @@ sub renderUserActions {
       $pdfString = Foswiki::Func::expandTemplate('PDF_ACTION_RESTRICTED');
     } else {
       my $url;
-      if (Foswiki::Func::getContext()->{GenPDFPrincePluginEnabled}) {
+      my $context = Foswiki::Func::getContext();
+      if ($context->{GenPDFPrincePluginEnabled} ||
+          $context->{GenPDFWebkitPluginEnabled}) {
         $url = $session->getScriptUrl(0, 'view', $baseWeb, $baseTopic, 
           'contenttype'=>'application/pdf');
       } else {
@@ -1598,7 +1600,7 @@ sub renderNatWebLogo {
   my $url = Foswiki::Func::getPreferencesValue('NATWEBLOGOURL') ||
     Foswiki::Func::getPreferencesValue('WEBLOGOURL') ||
     Foswiki::Func::getPreferencesValue('WIKILOGOURL') ||
-    Foswiki::Func::getPreferencesValue('%SCRIPTURL{"view"}%/%USERSWEB%/%HOMETOPIC%');
+    Foswiki::Func::getPreferencesValue('%SCRIPTURLPATH{"view"}%/%USERSWEB%/%HOMETOPIC%');
 
   my $variation = lc $skinState{variation};
   my $style = lc $skinState{style};
@@ -1633,7 +1635,9 @@ sub renderNatWebLogo {
 
 #############################################################################
 sub renderNatStyleUrl {
-  return Foswiki::Func::getPubUrlPath.'/'.$knownStyles{$skinState{style}};
+  my $theStyle = lc($skinState{'style'});
+  my $themeRecord = getThemeRecord($theStyle);
+  return $themeRecord->{styles}{$theStyle};
 }
 
 ###############################################################################
