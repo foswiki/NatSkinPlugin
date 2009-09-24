@@ -977,10 +977,15 @@ sub renderUserActions {
         $editString =~ s/%\$url%/$url/g;
       } else {
         my $whiteBoard = Foswiki::Func::getPreferencesValue('WHITEBOARD');
+        my $editAction = Foswiki::Func::expandCommonVariables('%EDITACTION%', $baseTopic, $baseWeb);
         my $url = $session->getScriptUrl(0, "edit", $baseWeb, $baseTopic,
           't'=>time(),
         );
-        $url .= '&action=form' unless isTrue($whiteBoard, 1);
+        if ($editAction eq '%EDITACTION%') {
+          $url .= '&action=form' unless isTrue($whiteBoard, 1);
+        } else {
+          $url .= '&action=' . $editAction;
+        }
         $editString = Foswiki::Func::expandTemplate('EDIT_ACTION');
         $editString =~ s/%\$url%/$url/g;
       }
