@@ -49,7 +49,7 @@ $ENDWW = qr/$|(?=[\s\,\.\;\:\!\?\)])/m;
 $emailRegex = qr/([a-z0-9!+$%&'*+-\/=?^_`{|}~.]+)\@([a-z0-9\-]+)([a-z0-9\-\.]*)/i;
 
 $VERSION = '$Rev$';
-$RELEASE = '3.94';
+$RELEASE = '3.95';
 $NO_PREFS_IN_TOPIC = 1;
 $SHORTDESCRIPTION = 'Theming engine for NatSkin';
 
@@ -104,6 +104,17 @@ sub initPlugin {
   $request = Foswiki::Func::getCgiQuery();
   my $skin = Foswiki::Func::getSkin();
 
+  my $doRefresh = $request->param('refresh') || ''; # refresh internal caches
+  $doRefresh = ($doRefresh eq 'on')?1:0;
+  if ($doRefresh) {
+    $doneInitKnownStyles = 0;
+    $lastStylePath = '';
+  }
+
+  # get skin state from session
+  initKnownStyles();
+  initSkinState();
+
   if ($useEmailObfuscator) {
     my $isScripted = Foswiki::Func::getContext()->{'command_line'}?1:0;
     if ($isScripted || !$request) { # are we in cgi mode?
@@ -121,17 +132,6 @@ sub initPlugin {
   }
   #writeDebug("useEmailObfuscator=$useEmailObfuscator");
 
-  my $doRefresh = $request->param('refresh') || ''; # refresh internal caches
-  $doRefresh = ($doRefresh eq 'on')?1:0;
-  if ($doRefresh) {
-    $doneInitKnownStyles = 0;
-    $lastStylePath = '';
-  }
-
-  # get skin state from session
-  initKnownStyles();
-  initSkinState();
-
   if ($skin =~ /\bnat\b/) {
     Foswiki::Func::setPreferencesValue('FOSWIKI_STYLE_URL', '%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseStyle.css');
     Foswiki::Func::setPreferencesValue('FOSWIKI_COLORS_URL', '%NATSTYLEURL%');
@@ -141,11 +141,12 @@ sub initPlugin {
 <script type="text/javascript" src="%PUBURLPATH%/%SYSTEMWEB%/NatSkin/natskin.js"></script>
 HERE
 
-    Foswiki::Func::addToHEAD('NATSKIN', "\n".getSkinStyle(), 'TABLEPLUGIN_default');
+    Foswiki::Func::addToHEAD('NATSKIN', "\n".getSkinStyle(), 'TABLEPLUGIN_default, JQUERYPLUGIN::THEME');
   }
 
   return 1;
 }
+
 ###############################################################################
 sub preRenderingHandler { 
   if ($useEmailObfuscator) {
@@ -565,8 +566,8 @@ sub initSkinState {
   }
 
   # temporary toggles
-  $theToggleSideBar = 'off' if $skinState{'action'} =~ 
-    /^(edit|genpdf|manage|changes|(.*search)|login|logon|oops)$/;
+  $theToggleSideBar = 'off' 
+    if $skinState{'action'} =~ /^(edit|manage|login|logon|oops)$/;
 
   # switch the sidebar off if we need to authenticate
   my $authScripts = $Foswiki::cfg{AuthScripts};
@@ -578,16 +579,6 @@ sub initSkinState {
 
   $skinState{'sidebar'} = $theToggleSideBar 
     if $theToggleSideBar && $theToggleSideBar ne '';
-
-  # set context
-  my $context = Foswiki::Func::getContext();
-  foreach my $key (keys %skinState) {
-    my $val = $skinState{$key};
-    next unless defined($val);
-    my $var = lc('natskin_'.$key.'_'.$val);
-    writeDebug("setting context $var");
-    $context->{$var} = 1;
-  }
 
   # prepend style to template search path
 
@@ -612,6 +603,30 @@ sub initSkinState {
 
     # store session prefs
     Foswiki::Func::setPreferencesValue('SKIN', $skin);
+  }
+
+  if ($skinState{"action"} eq 'view') {
+    Foswiki::Func::loadTemplate('sidebar');
+    my $viewTemplate =
+        $request->param('template') ||
+        Foswiki::Func::getPreferencesValue('VIEW_TEMPLATE');
+
+    Foswiki::Func::loadTemplate($viewTemplate)
+      if $viewTemplate;
+
+    # check if 'sidebar' is empty. if so then switch it off in the skinState
+    my $sidebar = Foswiki::Func::expandTemplate('sidebar', $baseTopic, $baseWeb);
+    $skinState{'sidebar'} = 'off' unless $sidebar;
+  }
+
+  # set context
+  my $context = Foswiki::Func::getContext();
+  foreach my $key (keys %skinState) {
+    my $val = $skinState{$key};
+    next unless defined($val);
+    my $var = lc('natskin_'.$key.'_'.$val);
+    writeDebug("setting context $var");
+    $context->{$var} = 1;
   }
 
   return 1;
@@ -976,15 +991,15 @@ sub renderUserActions {
         $editString = Foswiki::Func::expandTemplate('RESTORE_ACTION');
         $editString =~ s/%\$url%/$url/g;
       } else {
-        my $whiteBoard = Foswiki::Func::getPreferencesValue('WHITEBOARD');
-        my $editAction = Foswiki::Func::expandCommonVariables('%EDITACTION%', $baseTopic, $baseWeb);
         my $url = $session->getScriptUrl(0, "edit", $baseWeb, $baseTopic,
           't'=>time(),
         );
-        if ($editAction eq '%EDITACTION%') {
-          $url .= '&action=form' unless isTrue($whiteBoard, 1);
-        } else {
-          $url .= '&action=' . $editAction;
+        my $whiteBoard = Foswiki::Func::getPreferencesValue('WHITEBOARD');
+        my $editAction = Foswiki::Func::getPreferencesValue('EDITACTION') || '';
+        if (!isTrue($whiteBoard, 1) || $editAction eq 'form') {
+          $url .= '&action=form';
+        } elsif ($editAction eq 'text') {
+          $url .= '&action=text';
         }
         $editString = Foswiki::Func::expandTemplate('EDIT_ACTION');
         $editString =~ s/%\$url%/$url/g;

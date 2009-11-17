@@ -229,6 +229,8 @@ See NatSkin#Installation_Instructions
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  17 Nov 2009: | added support for !SolrPlugin; fixed email obfuscator; \
+                  switching sidebar-context off if sidebar tempalte is empty (works only for =view=) |
 |  14 Sep 2009: | removed GETSKINSTYLE in favour of using ADDTOHEAD; \
                   ajusted css to latest !TablePlugin; \
                   using relative urls where possible |

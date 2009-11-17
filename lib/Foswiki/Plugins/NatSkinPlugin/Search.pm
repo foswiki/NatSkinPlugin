@@ -48,6 +48,9 @@ sub searchCgi {
   if ($searchEngine =~ /(SearchEngine)?KinoSearch(AddOn)?/i) {
     require Foswiki::Contrib::SearchEngineKinoSearchAddOn::Search;
     $searcher = new Foswiki::Contrib::SearchEngineKinoSearchAddOn::Search('search');
+  } elsif ($searchEngine =~ /Solr(Search|Plugin)?/i && $context->{SolrPluginEnabled}) {
+    require Foswiki::Plugins::SolrPlugin;
+    return Foswiki::Plugins::SolrPlugin::searchCgi($session);
   } elsif ($searchEngine =~ /(SearchEngine)?Plucene(AddOn)?/i) {
     require Foswiki::Contrib::SearchEngine::Plucene::Search;
     $searcher = new Foswiki::Contrib::SearchEngine::Plucene::Search($session);

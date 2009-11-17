@@ -32,6 +32,6 @@ BEGIN {
     require 'setlib.cfg';
 }
 
-use Foswiki::UI;
-use Foswiki::Plugins::NatSkinPlugin::Search;
-Foswiki::UI::run(\&Foswiki::Plugins::NatSkinPlugin::Search::searchCgi, 'natsearch' => 1);
+use Foswiki ();
+use Foswiki::UI (); 
+$Foswiki::engine->run();
