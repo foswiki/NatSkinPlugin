@@ -1166,7 +1166,8 @@ sub renderUserActions {
   }
 
   # subscribe
-  if ($text =~ /\$subscribe\b/) {
+  if (($text =~ /\$subscribe\b/ ) && 
+    (Foswiki::Func::getContext()->{SubscribePluginEnabled})) {
     if ($isRestrictedAction{'subscribe'}) {
       $subscribeString = Foswiki::Func::expandTemplate('SUBSCRIBE_ACTION_RESTRICTED');
     } else {
