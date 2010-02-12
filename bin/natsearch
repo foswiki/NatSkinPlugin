@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# Copyright (C) 2003-2009 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2010 Michael Daum http://michaeldaumconsulting.com
 # 
 # based on photonsearch
 # Copyright (C) 2001 Esteban Manchado Velázquez, zoso@foton.es
@@ -20,6 +20,8 @@
 # This is a wrapper script called by a generic "search" box, that can
 # perform different functions based on the "name" value
 # searched text is in var "search"
+
+use strict;
 
 BEGIN {
     # Set default current working directory (needed for mod_perl)

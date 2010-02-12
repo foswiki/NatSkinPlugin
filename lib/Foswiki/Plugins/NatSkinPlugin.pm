@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 # 
-# Copyright (C) 2003-2009 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2010 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -49,7 +49,7 @@ $ENDWW = qr/$|(?=[\s\,\.\;\:\!\?\)])/m;
 $emailRegex = qr/([a-z0-9!+$%&'*+-\/=?^_`{|}~.]+)\@([a-z0-9\-]+)([a-z0-9\-\.]*)/i;
 
 $VERSION = '$Rev$';
-$RELEASE = '3.95';
+$RELEASE = '3.96';
 $NO_PREFS_IN_TOPIC = 1;
 $SHORTDESCRIPTION = 'Theming engine for NatSkin';
 
@@ -136,15 +136,21 @@ sub initPlugin {
     Foswiki::Func::setPreferencesValue('FOSWIKI_STYLE_URL', '%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseStyle.css');
     Foswiki::Func::setPreferencesValue('FOSWIKI_COLORS_URL', '%NATSTYLEURL%');
 
-    Foswiki::Func::addToHEAD('NATSKIN::JS', <<'HERE', 'NATSKIN, NATSKIN::OPTS, JQUERYPLUGIN::FOSWIKI, JQUERYPLUGIN::SUPERFISH');
-<script type="text/javascript" src="%PUBURLPATH%/%SYSTEMWEB%/JavascriptFiles/foswikilib.js"></script>
+    Foswiki::Func::addToZone('body', 'NATSKIN::JS', <<'HERE', 'NATSKIN, NATSKIN::OPTS, JQUERYPLUGIN::FOSWIKI, JQUERYPLUGIN::SUPERFISH');
 <script type="text/javascript" src="%PUBURLPATH%/%SYSTEMWEB%/NatSkin/natskin.js"></script>
 HERE
 
-    Foswiki::Func::addToHEAD('NATSKIN', "\n".getSkinStyle(), 'TABLEPLUGIN_default, JQUERYPLUGIN::THEME');
+    Foswiki::Func::addToZone("head", 'NATSKIN', "\n".getSkinStyle(), 'TABLEPLUGIN_default, JQUERYPLUGIN::THEME');
   }
 
   return 1;
+}
+
+###############################################################################
+sub completePageHandler {
+  # clean up
+  $_[0] =~ s/<!--.*?-->//g;
+  $_[0] =~ s/(<\/html>).*?$/$1/gs;
 }
 
 ###############################################################################
@@ -167,7 +173,7 @@ sub postRenderingHandler {
   # render email obfuscator
   if ($useEmailObfuscator && $nrEmails) {
     $useEmailObfuscator = 0;
-    Foswiki::Func::addToHEAD('EMAIL_OBFUSCATOR', renderEmailObfuscator(), 'NATSKIN');
+    Foswiki::Func::addToZone('body', 'EMAIL_OBFUSCATOR', renderEmailObfuscator(), 'NATSKIN');
     $useEmailObfuscator = 1;
   }
 }
@@ -1137,6 +1143,7 @@ sub renderUserActions {
       my $url = $session->getScriptUrl(0, 'view', $baseWeb, $baseTopic, 
         'cover'=>'print.nat'
       );
+      $url .= ';'.makeParams($request);
       $printString = Foswiki::Func::expandTemplate('PRINT_ACTION');
       $printString =~ s/%\$url%/$url/g;
     }
@@ -1160,6 +1167,7 @@ sub renderUserActions {
           'cover'=>'print.nat',
         );
       }
+      $url .= ';'.makeParams($request);
       $pdfString = Foswiki::Func::expandTemplate('PDF_ACTION');
       $pdfString =~ s/%\$url%/$url/g;
     }
@@ -1910,6 +1918,35 @@ sub isTrue {
     $value =~ s/no//gi;
     $value =~ s/false//gi;
     return ($value) ? 1 : 0;
+}
+
+###############################################################################
+sub makeParams {
+  my $query = shift;
+
+  my @params = ();
+  my $anchor = '';
+
+  foreach my $key ($query->param) {
+    my $val = $query->param($key) || '';
+
+    if ($key eq '#') {
+      $anchor .= '#' . urlEncode($val);
+    } else {
+      push(@params, urlEncode($key).'='.urlEncode($val));
+    }
+  }
+
+  return join(";", @params).$anchor;
+}
+
+###############################################################################
+sub urlEncode {
+  my $text = shift;
+
+  $text =~ s/([^0-9a-zA-Z-_.:~!*'\/])/'%'.sprintf('%02x',ord($1))/ge;
+
+  return $text;
 }
 
 1;
