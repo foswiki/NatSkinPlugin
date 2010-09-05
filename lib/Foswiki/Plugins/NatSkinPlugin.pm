@@ -136,7 +136,7 @@ sub initPlugin {
     Foswiki::Func::setPreferencesValue('FOSWIKI_STYLE_URL', '%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseStyle.css');
     Foswiki::Func::setPreferencesValue('FOSWIKI_COLORS_URL', '%NATSTYLEURL%');
 
-    Foswiki::Func::addToZone('body', 'NATSKIN::JS', <<'HERE', 'NATSKIN, NATSKIN::OPTS, JQUERYPLUGIN::FOSWIKI, JQUERYPLUGIN::SUPERFISH');
+    Foswiki::Func::addToZone('script', 'NATSKIN::JS', <<'HERE', 'NATSKIN, NATSKIN::OPTS, JQUERYPLUGIN::FOSWIKI, JQUERYPLUGIN::SUPERFISH');
 <script type="text/javascript" src="%PUBURLPATH%/%SYSTEMWEB%/NatSkin/natskin.js"></script>
 HERE
 
@@ -173,7 +173,7 @@ sub postRenderingHandler {
   # render email obfuscator
   if ($useEmailObfuscator && $nrEmails) {
     $useEmailObfuscator = 0;
-    Foswiki::Func::addToZone('body', 'EMAIL_OBFUSCATOR', renderEmailObfuscator(), 'NATSKIN');
+    Foswiki::Func::addToZone('script', 'EMAIL_OBFUSCATOR', renderEmailObfuscator(), 'NATSKIN');
     $useEmailObfuscator = 1;
   }
 }
