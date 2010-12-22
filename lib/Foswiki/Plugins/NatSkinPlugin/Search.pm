@@ -21,7 +21,9 @@
 package Foswiki::Plugins::NatSkinPlugin::Search;
 
 use strict;
+use warnings;
 use Foswiki::Plugins::NatSkinPlugin ();
+use Foswiki::Plugins::NatSkinPlugin::WebComponent ();
 use Foswiki::Sandbox ();
 use constant DEBUG => 0; # toggle me
 
@@ -73,6 +75,9 @@ sub new {
   my $class = shift;
   my $session = shift;
 
+  my $egrepCmd = $Foswiki::cfg{Store}{EgrepCmd} || '/bin/egrep';
+  $egrepCmd =~ s/^([^\s]) .*$/$1/g;
+
   my $this = {
     session => $session,
     dataDir => $Foswiki::cfg{DataDir},
@@ -87,7 +92,7 @@ sub new {
     limit => Foswiki::Func::getPreferencesFlag('NATSEARCHLIMIT') || 0,
     globalSearch => Foswiki::Func::getPreferencesFlag('NATSEARCHGLOBAL'),
     keywordSearch => Foswiki::Func::getPreferencesFlag('NATSEARCHKEYWORDS'),
-    egrepCmd=> $Foswiki::cfg{NatSearch}{EgrepCmd} || '/bin/egrep',
+    egrepCmd=> $egrepCmd,
     implWeb=>'',
     implTopic=>'',
     @_
@@ -276,7 +281,7 @@ sub search {
   } else {
     my $text;
     if (isValidTopicName($theSearchString)) { # SMELL
-      $text = Foswiki::Plugins::NatSkinPlugin::getWebComponent('WebNothingFound', $web);
+      $text = Foswiki::Plugins::NatSkinPlugin::WebComponent::getWebComponent('WebNothingFound', $web);
     } else {
       $text = '<div class="natSearch foswikiAlert">%TMPL:P{"NOTHING_FOUND"}%</div>';
     }
@@ -314,7 +319,7 @@ sub topicSearch {
   foreach my $thisWebName (@$theWebList) {
     # get all topics
     $thisWebName =~ s/\./\//go;
-    my $webDir = Foswiki::Sandbox::normalizeFileName("$this->{dataDir}/$thisWebName");
+    my $webDir = normalizeFileName("$this->{dataDir}/$thisWebName");
     unless (-d $webDir) {
       #writeDebug("no such directory");
       return;
@@ -384,7 +389,7 @@ sub contentSearch {
 
     # get all topics
     $thisWebName =~ s/\./\//go;
-    my $webDir = Foswiki::Sandbox::normalizeFileName("$this->{dataDir}/$thisWebName");
+    my $webDir = normalizeFileName("$this->{dataDir}/$thisWebName");
     unless (-d $webDir) {
       writeDebug("no such directory");
       return;
@@ -687,6 +692,30 @@ sub getModificationTime {
   return $date;
 }
 
+##############################################################################
+# compatibiltiy wrapper
+sub normalizeFileName {
+  my $fileName = shift;
+
+  #writeDebug("normalizeFileName($fileName)");
+
+  if (defined &Foswiki::Sandbox::_cleanUpFilePath) {
+    return Foswiki::Sandbox::_cleanUpFilePath($fileName);
+  }
+
+  if (defined &Foswiki::Sandbox::normalizeFileName) {
+    return Foswiki::Sandbox::normalizeFileName($fileName);
+  }
+
+  if (defined &Foswiki::normalizeFileName) {
+    return Foswiki::normalizeFileName($fileName);
+  }
+
+  # outch
+  return $fileName;
+}
+
+##############################################################################
 # imported from Foswiki.pm
 sub isValidAbbrev {
   my $name = shift || '';

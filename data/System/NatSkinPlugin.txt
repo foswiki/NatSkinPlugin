@@ -190,29 +190,6 @@ By default the NatSkin comes with predefined components
 see also: 
 [[#MYSIDEBAR][MYSIDEBAR]]
 
----+++ WEBLINK
-*Syntax*: =%<nop>WEBLINK{web="..." name="..."}%=
-
-display a link to a web with the its name and add the SITEMAPUSEDTO description to 
-to the hover balloon. The web name is stripped down to its distinguishing tail,
-removing all parent web names.
-
-*Arguments*:
-   * web: name of the web to link to
-   * name: name to display instead of the web name
-   * format: format string for the web link
-   * marker: string to be added to inserted into the format string if the web link
-     points to the current web
-
-The following variables can be used in the format string:
-   * $web: full qualified name of the web, defaults to current web
-   * $topic: name of the topic to link to, defaults to <nop>WebHome
-   * $name: name of the web, all prefixes but its basename being stripped off
-   * $url: url for the link
-   * $marker: the marker set to the "marker" string if the link points to the current
-     web
-   * $tooltip: tooltip for the link, mostly used in a =title= argument of an anchor
-
 ---++ Installation Instructions
 See NatSkin#Installation_Instructions
 
