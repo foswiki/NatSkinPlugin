@@ -30,7 +30,7 @@ our $baseWeb;
 our $baseTopic;
 
 our $VERSION = '$Rev$';
-our $RELEASE = '4.00rc1';
+our $RELEASE = '4.00rc2';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Theming engine for NatSkin';
 
@@ -84,6 +84,7 @@ sub completePageHandler {
 
   # rewrite link
   $_[0] =~ s/<link (.*?rel=["']stylesheet["'].*?)\/>/_processLinkStyle($1)/ge;
+
 }
 
 sub _processLinkStyle {

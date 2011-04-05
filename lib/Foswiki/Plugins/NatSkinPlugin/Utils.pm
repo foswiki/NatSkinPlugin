@@ -40,6 +40,7 @@ sub makeParams {
   my $anchor = '';
 
   foreach my $key ($query->param) {
+    next if $key eq 'POSTDATA';
     my $val = $query->param($key) || '';
 
     if ($key eq '#') {
@@ -110,6 +111,7 @@ sub getMaxRevision {
   return $maxRev if defined $maxRev;
 
   (undef, undef, $maxRev) = Foswiki::Func::getRevisionInfo($thisWeb, $thisTopic);
+  $maxRev = 1 unless defined $maxRev;
 
   $maxRev =~ s/r?1\.//go;  # cut 'r' and major
   $maxRevs{"$thisWeb.$thisTopic"} = $maxRev;

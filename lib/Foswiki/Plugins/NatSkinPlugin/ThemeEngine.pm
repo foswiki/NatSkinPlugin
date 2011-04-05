@@ -40,7 +40,7 @@ sub init {
 
   my $request = Foswiki::Func::getCgiQuery();
   my $doRefresh = $request->param('refresh') || ''; # refresh internal caches
-  $themeEngine = undef if $doRefresh eq 'on';
+  $themeEngine = undef if $doRefresh =~ /^(on|natskin)$/;
 
   $themeEngine = getThemeEngine();
   $themeEngine->run();
@@ -102,7 +102,6 @@ sub readThemeInfos {
 
   # read known styles
   my $pubDir = $Foswiki::cfg{PubDir};
-  my $pubUrlPath = Foswiki::Func::getPubUrlPath();
   foreach my $styleWebTopic (split(/\s*,\s*/, $themePath)) {
     my ($styleWeb, $styleTopic) =
       Foswiki::Func::normalizeWebTopicName($systemWeb, $styleWebTopic);
@@ -112,7 +111,7 @@ sub readThemeInfos {
     my %themeRecord = (
       id=>$themeId,
       dir=> $pubDir.'/'.$styleWebTopic,
-      path=> $pubUrlPath.'/'.$styleWebTopic,
+      path=> '%PUBURLPATH%/'.$styleWebTopic,
       styles => undef,
       variations => undef,
     );
@@ -431,6 +430,8 @@ sub run {
       $context->{msie6} = 1 if $agent =~ /MSIE 6/;
       $context->{msie7} = 1 if $agent =~ /MSIE 7/;
       $context->{msie8} = 1 if $agent =~ /MSIE 8/;
+    } elsif ($agent =~ /Chrome/) {
+      $context->{chrome} = 1;
     } elsif ($agent =~ /Firefox/) {
       $context->{firefox} = 1;
     } elsif ($agent =~ /Opera/) {

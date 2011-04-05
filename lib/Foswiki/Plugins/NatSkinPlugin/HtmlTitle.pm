@@ -25,8 +25,6 @@ use Foswiki::Func ();
 sub render {
   my ($session, $params, $theTopic, $theWeb) = @_;
 
-  my $theFormat = $params->{_DEFAULT};
-
   my $theSep = $params->{separator} || ' - ';
   my $theWikiToolName = $params->{wikitoolname} || 'on';
 
@@ -39,14 +37,28 @@ sub render {
     $theWikiToolName = $theSep.$theWikiToolName;
   }
 
+  my $theFormat = $params->{_DEFAULT};
+
   unless (defined $theFormat) {
     my $htmlTitle = Foswiki::Func::getPreferencesValue("HTMLTITLE");
     return $htmlTitle if $htmlTitle;
   }
 
-  $theFormat = '%TOPICTITLE%'.$theSep.$theWeb.$theWikiToolName unless defined $theFormat;
-  $theWeb =~ s/^.*[\.\/]//g;
+  my ($web, $topic) = Foswiki::Func::normalizeWebTopicName($theWeb, $params->{topic} || $theTopic);
+  $web = join($theSep, reverse split(/[\.\/]/, $web));
 
+  my $topicTitle = $params->{title};
+
+  unless (defined $topicTitle) {
+    require Foswiki::Plugins::DBCachePlugin;
+    $topicTitle = Foswiki::Plugins::DBCachePlugin::getTopicTitle($web, $topic);
+  }
+
+  $theFormat = '$title$sep$web$wikitoolname' unless defined $theFormat;
+  $theFormat =~ s/\$sep/$theSep/g;
+  $theFormat =~ s/\$wikitoolname/$theWikiToolName/g;
+  $theFormat =~ s/\$web/$web/g;
+  $theFormat =~ s/\$title/$topicTitle/g;
 
   return Foswiki::Func::decodeFormatTokens($theFormat);
 }
