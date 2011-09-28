@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 # 
-# Copyright (C) 2003-2010 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2011 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -22,7 +22,8 @@ use warnings;
 
 use Foswiki::Func ();
 use Foswiki::Plugins ();
-use Foswiki::Plugins::NatSkinPlugin::Utils ();;
+use Foswiki::Plugins::NatSkinPlugin::Utils ();
+use Foswiki::Plugins::JQueryPlugin ();
 
 use constant DEBUG => 0; # toggle me
 our $themeEngine;
@@ -65,7 +66,7 @@ sub new {
   my $this = {
     defaultStyle  => $Foswiki::cfg{NatSkin}{Style} || 'jazzynote',
     defaultVariation => $Foswiki::cfg{NatSkin}{Variation} || 'off',
-    defaultLayout => $Foswiki::cfg{NatSkin}{Layout} || 'fluid',
+    defaultLayout => $Foswiki::cfg{NatSkin}{Layout} || 'fixed',
     defaultMenu => $Foswiki::cfg{NatSkin}{Menu},
     defaultStyleSideBar => $Foswiki::cfg{NatSkin}{SideBar} || 'left',
     @_
@@ -91,7 +92,8 @@ sub readThemeInfos {
 
   # get style path
   my $systemWeb = $Foswiki::cfg{SystemWebName};
-  my $themePath = Foswiki::Func::getPreferencesValue('NATSKIN_THEMEPATH') 
+  my $themePath = $Foswiki::cfg{NatSkin}{ThemePath} 
+    || Foswiki::Func::getPreferencesValue('NATSKIN_THEMEPATH') 
     || Foswiki::Func::getPreferencesValue('STYLEPATH') # backwards compatibility
     || "$systemWeb.JazzyNoteTheme, $systemWeb.NatSkin";
   $themePath =~ s/\%SYSTEMWEB\%/$systemWeb/go;
@@ -243,7 +245,7 @@ sub run {
   } else {
     $theLayout = $prefLayout;
   }
-  $theLayout = $this->{defaultLayout} if $theLayout !~ /^(full|fluid|bordered)$/;
+  $theLayout = $this->{defaultLayout} if $theLayout !~ /^(fixed|fluid|bordered)$/;
   $this->{skinState}{'layout'} = $theLayout;
 
   # handle menu
@@ -451,11 +453,14 @@ sub run {
     Foswiki::Func::setPreferencesValue('FOSWIKI_STYLE_URL', '%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseStyle.css');
     Foswiki::Func::setPreferencesValue('FOSWIKI_COLORS_URL', '%NATSTYLEURL%');
 
-    Foswiki::Func::addToZone('script', 'NATSKIN::JS', <<'HERE', 'NATSKIN, NATSKIN::OPTS, JQUERYPLUGIN::FOSWIKI, JQUERYPLUGIN::SUPERFISH, JQUERYPLUGIN::AUTOCOMPLETE');
+    Foswiki::Func::addToZone('script', 'NATSKIN::JS', <<'HERE', 'NATSKIN, NATSKIN::OPTS, JQUERYPLUGIN::FOSWIKI, JQUERYPLUGIN::SUPERFISH, JQUERYPLUGIN::UI');
 <script src="%PUBURLPATH%/%SYSTEMWEB%/NatSkin/natskin.js"></script>
 HERE
 
-    Foswiki::Func::addToZone("head", 'NATSKIN', "\n" . $this->renderSkinStyle(), 'TABLEPLUGIN_default, JQUERYPLUGIN::THEME');
+    Foswiki::Func::addToZone("head", 'NATSKIN', "\n" . $this->renderSkinStyle(), 
+      'TABLEPLUGIN_default, JQUERYPLUGIN::UI, JQUERYPLUGIN::TEXTBOXLIST, JQUERYPLUGIN::UI');
+
+    #Foswiki::Plugins::JQueryPlugin::registerTheme("natskin", $themeRecord->{path}.'/jquery-ui.css');
   }
 
   return 1;
@@ -521,7 +526,6 @@ sub renderSkinStyle {
   #writeDebug("knownStyle=".join(',', sort keys %knownStyles));
 
   $text = <<"HERE";
-<link rel='stylesheet' href='%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseStyle.css' type='text/css' media='all' />
 <link rel='stylesheet' href='%PUBURLPATH%/%SYSTEMWEB%/NatSkin/print.css' type='text/css' media='print' />
 <link rel='stylesheet' href='$themeRecord->{styles}{$theStyle}' type='text/css' media='all' />
 HERE

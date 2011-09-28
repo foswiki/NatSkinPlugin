@@ -94,6 +94,24 @@ sub _processLinkStyle {
 }
 
 ###############################################################################
+sub preRenderingHandler {
+
+  # better cite markup
+  $_[0] =~ s/[\n\r](>.*?)([\n\r][^>])/handleCite($1).$2/ges;
+}
+
+sub handleCite {
+  my $block = shift;
+
+  $block =~ s/^>/<span class='foswikiCiteChar'>&gt;<\/span>/gm;
+  $block =~ s/\n/<br \/>\n/g;
+
+  my $class = ($block =~ /<br \/>/)?'foswikiBlockCite':'foswikiCite';
+
+  return "<div class='$class'>".$block."</div>";
+}
+
+###############################################################################
 sub postRenderingHandler { 
   
   # detect external links

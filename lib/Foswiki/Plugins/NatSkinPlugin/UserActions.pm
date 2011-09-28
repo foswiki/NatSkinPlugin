@@ -34,16 +34,16 @@ sub render {
 
   my $header = $params->{header} || '';
   my $footer = $params->{footer} || '';
+  
   my $text = $params->{_DEFAULT} || $params->{format};
-  unless ($text) {
-    $text = '<div class="natTopicActions">$edit$sep$attach$sep$new$sep$raw$sep$delete$sep$history$sep';
-    $text .= 'print$sep$more</div>';
-  }
+  $text = '<div class="natTopicActions">$edit$sep$attach$sep$new$sep$raw$sep$delete$sep$history$sepprint$sep$more</div>'
+    unless defined $text;
 
-  unless (Foswiki::Func::getContext()->{authenticated}) {
-    my $guestText = $params->{guest};
-    $text = $guestText if defined $guestText;
-  }
+  my $guestText = $params->{guest};
+  $guestText = '<div class="natTopicActions">$login$sep$register</div>' 
+    unless defined $guestText;
+
+  $text = $guestText unless Foswiki::Func::getContext()->{authenticated};
 
   my $themeEngine = Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine();
   if ($themeEngine->{skinState}{"history"}) {
@@ -86,6 +86,7 @@ sub render {
     $actionParams->{isRestrictedAction}{'editformsettings'} = 1;
     $actionParams->{isRestrictedAction}{'edittext'} = 1;
     $actionParams->{isRestrictedAction}{'harvest'} = 1;
+    $actionParams->{isRestrictedAction}{'webdavdir'} = 1;
     $actionParams->{isRestrictedAction}{'move'} = 1;
     $actionParams->{isRestrictedAction}{'restore'} = 1;
   }
@@ -94,6 +95,11 @@ sub render {
   my $wikiName = Foswiki::Func::getWikiName();
   my $gotAccess = Foswiki::Func::checkAccessPermission('CHANGE', $wikiName, undef, $baseTopic, $baseWeb);
   $actionParams->{isRestrictedAction} = () if $gotAccess;
+
+  # disable registration
+  unless (Foswiki::Func::getContext()->{registration_enabled}) {
+    $actionParams->{isRestrictedAction}{'register'} = 1;
+  }
 
   my $request = Foswiki::Func::getCgiQuery();
   $actionParams->{isRaw} = ($request) ? $request->param('raw') : '';
@@ -141,6 +147,7 @@ sub render {
   $text =~ s/\$helpurl\b/getHelpUrl($actionParams)/ge;
   $text =~ s/\$loginurl\b/getLoginUrl($actionParams)/ge;
   $text =~ s/\$logouturl/getLogoutUrl($actionParams)/ge;
+  $text =~ s/\$registerurl/getRegisterUrl($actionParams)/ge;
   $text =~ s/\$pdfurl\b/getPdfUrl($actionParams)/ge;
 
   $text =~ s/\$sep\b/$sepString/g;
@@ -456,6 +463,18 @@ sub getLogoutUrl {
 
 
 ###############################################################################
+sub getRegisterUrl {
+
+  # SMELL: I'd like to do this
+  # my $loginManager = $session->{users}->{loginManager};
+  # return $loginManager->registerUrl();
+  #
+  # but for now the "best" we can do is this:
+  return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath('view', $Foswiki::cfg{SystemWebName}, 'UserRegistration');
+}
+
+
+###############################################################################
 sub renderLast {
   my ($params, $context) = @_;
 
@@ -571,8 +590,13 @@ sub getDiffUrl {
   my $rev2 = getCurRev($params) - getNrRev($params);
   $rev2 = 1 if $rev2 < 1;
 
+  my $action = $params->{action};
+  if ($action !~ /^(compare|rdiff)$/) {
+    my $context = Foswiki::Func::getContext();
+    $action = $context->{CompareRevisionsAddonPluginEnabled} ? "compare" : "rdiff";
+  }
   return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
-    $params->{action}, undef, undef,
+    $action, undef, undef,
     'rev1' => getCurRev($params),
     'rev2' => $rev2,
     'render' => $params->{renderMode},

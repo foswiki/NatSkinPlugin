@@ -1,8 +1,5 @@
 # ---+ Extensions
 # ---++ NatSkin
-# **PERL H** 
-# This setting is required to enable executing natsearch from the bin directory
-$Foswiki::cfg{SwitchBoard}{natsearch} = ['Foswiki::Plugins::NatSkinPlugin::Search', 'searchCgi', {natsearch => 1}];
 
 # ---+++ Default theme settings
 # **STRING**
@@ -15,12 +12,17 @@ $Foswiki::cfg{NatSkin}{Style} = 'jazzynote';
 # that is you can't combine a {Style} from theme A with {Variation} from theme B.
 $Foswiki::cfg{NatSkin}{Variation} = 'off';
 
-# **SELECT full,fluid,bordered **
-# Choose from a set of basic page layouts. 'full' is a good choice for sites mostly displayed on small display devices
-# and wide content, like large tables. 'Fluid' is a typical center aligned blog-like layout that limits
+# **STRING**
+# Comma separated list of NatSkin themes installed on your system. This is the path along which themes and styles are 
+# searched for.
+$Foswiki::cfg{NatSkin}{ThemePath} = '';
+
+# **SELECT fixed,fluid,bordered **
+# Choose from a set of basic page layouts. 'fluid' is a good choice for sites mostly displayed on small display devices
+# and wide content, like large tables. 'fixed' is a typical center aligned blog-like layout that limits
 # the text width to a readable size while the content area will still resize proportional to the font width. 
-# 'Bordered' is very similar to the full width layout but adds extra white space around the content.
-$Foswiki::cfg{NatSkin}{Layout} = 'fluid';
+# 'Bordered' is very similar to the fluid width layout but adds extra white space around the content.
+$Foswiki::cfg{NatSkin}{Layout} = 'fixed';
 
 # **BOOLEAN**
 # Use this flag to switch on/off the horizontal navigation menu.

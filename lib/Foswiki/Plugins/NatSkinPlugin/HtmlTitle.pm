@@ -45,7 +45,7 @@ sub render {
   }
 
   my ($web, $topic) = Foswiki::Func::normalizeWebTopicName($theWeb, $params->{topic} || $theTopic);
-  $web = join($theSep, reverse split(/[\.\/]/, $web));
+  my $webTitle = join($theSep, reverse split(/[\.\/]/, $web));
 
   my $topicTitle = $params->{title};
 
@@ -54,11 +54,12 @@ sub render {
     $topicTitle = Foswiki::Plugins::DBCachePlugin::getTopicTitle($web, $topic);
   }
 
-  $theFormat = '$title$sep$web$wikitoolname' unless defined $theFormat;
-  $theFormat =~ s/\$sep/$theSep/g;
-  $theFormat =~ s/\$wikitoolname/$theWikiToolName/g;
-  $theFormat =~ s/\$web/$web/g;
-  $theFormat =~ s/\$title/$topicTitle/g;
+  $theFormat = '$title$sep$webtitle$wikitoolname' unless defined $theFormat;
+  $theFormat =~ s/\$sep\b/$theSep/g;
+  $theFormat =~ s/\$wikitoolname\b/$theWikiToolName/g;
+  $theFormat =~ s/\$webtitle\b/$webTitle/g;
+  $theFormat =~ s/\$web\b/$web/g;
+  $theFormat =~ s/\$title\b/$topicTitle/g;
 
   return Foswiki::Func::decodeFormatTokens($theFormat);
 }
