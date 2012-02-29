@@ -39,23 +39,64 @@ sub initPlugin {
   ($baseTopic, $baseWeb) = @_;
 
   # theme engine macros
-  Foswiki::Func::registerTagHandler('SKINSTATE', \&renderSkinState);
-  Foswiki::Func::registerTagHandler('KNOWNSTYLES', \&renderKnownStyles);
-  Foswiki::Func::registerTagHandler('KNOWNVARIATIONS', \&renderKnownVariations);
+  Foswiki::Func::registerTagHandler('SKINSTATE', sub {
+    return Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine()->renderSkinState(@_);
+  });
+
+  Foswiki::Func::registerTagHandler('KNOWNSTYLES', sub {
+    return Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine()->renderStyles(@_);
+  });
+
+  Foswiki::Func::registerTagHandler('KNOWNVARIATIONS', sub {
+    return Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine()->renderVariations(@_);
+  });
 
   # REVISIONS, MAXREV, CURREV replacements
-  Foswiki::Func::registerTagHandler('PREVREV', \&renderPrevRevision);
-  Foswiki::Func::registerTagHandler('CURREV', \&renderCurRevision);
-  Foswiki::Func::registerTagHandler('NATMAXREV', \&renderMaxRevision);
-  Foswiki::Func::registerTagHandler('NATREVISIONS', \&renderRevisions);
+  Foswiki::Func::registerTagHandler('PREVREV', sub {
+    return Foswiki::Plugins::NatSkinPlugin::Utils::getPrevRevision($baseWeb, $baseTopic, 1);
+  });
+
+  Foswiki::Func::registerTagHandler('CURREV', sub {
+    return Foswiki::Plugins::NatSkinPlugin::Utils::getCurRevision($baseWeb, $baseTopic);
+  });
+
+  Foswiki::Func::registerTagHandler('NATMAXREV', sub {
+    return Foswiki::Plugins::NatSkinPlugin::Utils::getMaxRevision($baseWeb, $baseTopic);
+  });
+
+  Foswiki::Func::registerTagHandler('NATREVISIONS', sub {
+    require Foswiki::Plugins::NatSkinPlugin::Revisions;
+    return Foswiki::Plugins::NatSkinPlugin::Revisions::render(@_);
+  });
 
   # skin macros
-  Foswiki::Func::registerTagHandler('USERACTIONS', \&renderUserActions);
-  Foswiki::Func::registerTagHandler('NATWEBLOGO', \&renderNatWebLogo);
-  Foswiki::Func::registerTagHandler('NATSTYLEURL', \&renderNatStyleUrl);
-  Foswiki::Func::registerTagHandler('HTMLTITLE', \&renderHtmlTitle);
-  Foswiki::Func::registerTagHandler('CONTENTTYPE', \&renderContentType);
-  Foswiki::Func::registerTagHandler('WEBCOMPONENT', \&renderWebComponent);
+  Foswiki::Func::registerTagHandler('USERACTIONS', sub {
+    require Foswiki::Plugins::NatSkinPlugin::UserActions;
+    return Foswiki::Plugins::NatSkinPlugin::UserActions::render(@_);
+  });
+
+  Foswiki::Func::registerTagHandler('NATWEBLOGO', sub {
+    require Foswiki::Plugins::NatSkinPlugin::WebLogo;
+    return Foswiki::Plugins::NatSkinPlugin::WebLogo::render(@_);
+  });
+
+  Foswiki::Func::registerTagHandler('NATSTYLEURL', sub {
+    return Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine()->getStyleUrl();
+  });
+
+  Foswiki::Func::registerTagHandler('HTMLTITLE', sub {
+    require Foswiki::Plugins::NatSkinPlugin::HtmlTitle;
+    return Foswiki::Plugins::NatSkinPlugin::HtmlTitle::render(@_);;
+  });
+
+  Foswiki::Func::registerTagHandler('CONTENTTYPE', sub {
+    require Foswiki::Plugins::NatSkinPlugin::ContentType;
+    return Foswiki::Plugins::NatSkinPlugin::ContentType::render(@_);;
+  });
+
+  Foswiki::Func::registerTagHandler('WEBCOMPONENT', sub {
+    return Foswiki::Plugins::NatSkinPlugin::WebComponent::render(@_);
+  });
 
   # init modules
   Foswiki::Plugins::NatSkinPlugin::ThemeEngine::init();
@@ -73,6 +114,7 @@ sub completePageHandler {
   $_[0] =~ s/<!--.*?-->//g;
   $_[0] =~ s/^\s*$//gms;
   $_[0] =~ s/(<\/html>).*?$/$1/gs;
+  $_[0] =~ s/<p><\/p>(?:\s*<p><\/p>)*/\n<p><\/p>\n/gs;
 
   # clean up %{<verbatim>}% ...%{</verbatim>}%
   $_[0] =~ s/\%{(<pre[^>]*>)}&#37;\s*/$1/g;
@@ -120,77 +162,6 @@ sub postRenderingHandler {
   require Foswiki::Plugins::NatSkinPlugin::ExternalLink;
 
   $_[0] =~ s/<a\s+([^>]*?href=(?:\"|\'|&quot;)?)([^\"\'\s>]+(?:\"|\'|\s|&quot;>)?)/'<a '.Foswiki::Plugins::NatSkinPlugin::ExternalLink::render($1,$2)/geoi;
-}
-
-###############################################################################
-sub renderKnownStyles {
-  return Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine()->renderStyles(@_);
-}
-
-###############################################################################
-sub renderKnownVariations {
-  return Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine()->renderVariations(@_);
-}
-
-###############################################################################
-sub renderSkinState {
-  return Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine()->renderSkinState(@_);
-}
-
-###############################################################################
-sub renderUserActions {
-  require Foswiki::Plugins::NatSkinPlugin::UserActions;
-  return Foswiki::Plugins::NatSkinPlugin::UserActions::render(@_);
-}
-
-###############################################################################
-sub renderWebComponent {
-  return Foswiki::Plugins::NatSkinPlugin::WebComponent::render(@_);
-}
-
-###############################################################################
-sub renderPrevRevision {
-  return Foswiki::Plugins::NatSkinPlugin::Utils::getPrevRevision($baseWeb, $baseTopic, 1);
-}
-
-###############################################################################
-sub renderCurRevision {
-  return Foswiki::Plugins::NatSkinPlugin::Utils::getCurRevision($baseWeb, $baseTopic);
-}
-
-###############################################################################
-sub renderMaxRevision {
-  return Foswiki::Plugins::NatSkinPlugin::Utils::getMaxRevision($baseWeb, $baseTopic);
-}
-
-#############################################################################
-sub renderNatStyleUrl {
-  return Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine()->getStyleUrl();
-}
-
-###############################################################################
-# SMELL: move this into the core
-sub renderContentType {
-  require Foswiki::Plugins::NatSkinPlugin::ContentType;
-  return Foswiki::Plugins::NatSkinPlugin::ContentType::render(@_);;
-}
-
-###############################################################################
-sub renderHtmlTitle {
-  require Foswiki::Plugins::NatSkinPlugin::HtmlTitle;
-  return Foswiki::Plugins::NatSkinPlugin::HtmlTitle::render(@_);;
-}
-
-#############################################################################
-sub renderNatWebLogo {
-  require Foswiki::Plugins::NatSkinPlugin::WebLogo;
-  return Foswiki::Plugins::NatSkinPlugin::WebLogo::render(@_);
-}
-
-###############################################################################
-sub renderRevisions {
-  require Foswiki::Plugins::NatSkinPlugin::Revisions;
-  return Foswiki::Plugins::NatSkinPlugin::Revisions::render(@_);
 }
 
 1;
