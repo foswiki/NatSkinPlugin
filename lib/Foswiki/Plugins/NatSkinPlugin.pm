@@ -16,8 +16,9 @@
 #
 ###############################################################################
 
-package Foswiki::Plugins::NatSkinPlugin;
 use strict;
+use warnings;
+package Foswiki::Plugins::NatSkinPlugin;
 
 use Foswiki::Func ();
 use Foswiki::Plugins ();
@@ -107,50 +108,10 @@ sub initPlugin {
 }
 
 ###############################################################################
-sub completePageHandler {
-
-  return if defined $Foswiki::cfg{NatSkin}{CleanUpHTML} && !$Foswiki::cfg{NatSkin}{CleanUpHTML};
-
-  $_[0] =~ s/<!--.*?-->//g;
-  $_[0] =~ s/^\s*$//gms;
-  $_[0] =~ s/(<\/html>).*?$/$1/gs;
-  $_[0] =~ s/<p><\/p>(?:\s*<p><\/p>)*/\n<p><\/p>\n/gs;
-
-  # clean up %{<verbatim>}% ...%{</verbatim>}%
-  $_[0] =~ s/\%{(<pre[^>]*>)}&#37;\s*/$1/g;
-  $_[0] =~ s/\s*&#37;{(<\/pre>)}\%/$1/g; 
-
-  # remove superfluous type attributes
-  $_[0] =~ s/<script +type=["']text\/javascript["']/<script/g;
-  $_[0] =~ s/<style +type=["']text\/css["']/<style/g;
-
-  # rewrite link
-  $_[0] =~ s/<link (.*?rel=["']stylesheet["'].*?)\/>/_processLinkStyle($1)/ge;
-
-}
-
 sub _processLinkStyle {
   my $args = shift;
   $args =~ s/type=["'].*?["']//g;
   return "<link $args/>";
-}
-
-###############################################################################
-sub preRenderingHandler {
-
-  # better cite markup
-  $_[0] =~ s/[\n\r](>.*?)([\n\r][^>])/handleCite($1).$2/ges;
-}
-
-sub handleCite {
-  my $block = shift;
-
-  $block =~ s/^>/<span class='foswikiCiteChar'>&gt;<\/span>/gm;
-  $block =~ s/\n/<br \/>\n/g;
-
-  my $class = ($block =~ /<br \/>/)?'foswikiBlockCite':'foswikiCite';
-
-  return "<div class='$class'>".$block."</div>";
 }
 
 ###############################################################################
