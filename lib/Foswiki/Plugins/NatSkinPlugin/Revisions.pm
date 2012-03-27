@@ -18,6 +18,8 @@
 
 package Foswiki::Plugins::NatSkinPlugin::Revisions;
 use strict;
+use warnings;
+
 use Foswiki::Func ();
 use Foswiki::Plugins::NatSkinPlugin::Utils ();
 

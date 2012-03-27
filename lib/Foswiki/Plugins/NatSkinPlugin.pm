@@ -16,9 +16,9 @@
 #
 ###############################################################################
 
+package Foswiki::Plugins::NatSkinPlugin;
 use strict;
 use warnings;
-package Foswiki::Plugins::NatSkinPlugin;
 
 use Foswiki::Func ();
 use Foswiki::Plugins ();
@@ -88,11 +88,6 @@ sub initPlugin {
   Foswiki::Func::registerTagHandler('HTMLTITLE', sub {
     require Foswiki::Plugins::NatSkinPlugin::HtmlTitle;
     return Foswiki::Plugins::NatSkinPlugin::HtmlTitle::render(@_);;
-  });
-
-  Foswiki::Func::registerTagHandler('CONTENTTYPE', sub {
-    require Foswiki::Plugins::NatSkinPlugin::ContentType;
-    return Foswiki::Plugins::NatSkinPlugin::ContentType::render(@_);;
   });
 
   Foswiki::Func::registerTagHandler('WEBCOMPONENT', sub {

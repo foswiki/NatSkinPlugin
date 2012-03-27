@@ -19,6 +19,8 @@
 package Foswiki::Plugins::NatSkinPlugin::WebComponent;
 
 use strict;
+use warnings;
+
 use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Plugins::NatSkinPlugin::ThemeEngine ();

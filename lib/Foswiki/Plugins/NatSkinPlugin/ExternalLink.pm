@@ -18,6 +18,7 @@
 
 package Foswiki::Plugins::NatSkinPlugin::ExternalLink;
 use strict;
+use warnings;
 
 use Foswiki::Func ();
 

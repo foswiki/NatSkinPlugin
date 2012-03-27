@@ -18,6 +18,7 @@
 
 package Foswiki::Plugins::NatSkinPlugin::WebLogo;
 use strict;
+use warnings;
 use Foswiki::Func ();
 use Foswiki::Plugins::NatSkinPlugin::ThemeEngine ();
 

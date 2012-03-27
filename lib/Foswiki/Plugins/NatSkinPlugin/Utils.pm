@@ -18,6 +18,8 @@
 
 package Foswiki::Plugins::NatSkinPlugin::Utils;
 use strict;
+use warnings;
+
 use Foswiki::Func ();
 use Foswiki::Plugins ();
 
@@ -60,21 +62,6 @@ sub urlEncode {
   $text =~ s/([^0-9a-zA-Z-_.:~!*'\/])/'%'.sprintf('%02x',ord($1))/ge;
 
   return $text;
-}
-
-###############################################################################
-sub isTrue {
-  my ($value, $default) = @_;
-
-  $default ||= 0;
-
-  return $default unless defined($value);
-
-  $value =~ s/^\s*(.*?)\s*$/$1/gi;
-  $value =~ s/off//gi;
-  $value =~ s/no//gi;
-  $value =~ s/false//gi;
-  return ($value) ? 1 : 0;
 }
 
 ###############################################################################

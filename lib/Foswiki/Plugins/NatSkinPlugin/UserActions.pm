@@ -18,6 +18,8 @@
 
 package Foswiki::Plugins::NatSkinPlugin::UserActions;
 use strict;
+use warnings;
+
 use Foswiki::Func ();
 use Foswiki::Meta ();
 use Foswiki::Plugins ();
@@ -209,7 +211,7 @@ sub getEditUrl {
   my $whiteBoard = Foswiki::Func::getPreferencesValue('WHITEBOARD');
   my $editAction = Foswiki::Func::getPreferencesValue('EDITACTION') || '';
 
-  if (!Foswiki::Plugins::NatSkinPlugin::Utils::isTrue($whiteBoard, 1) || $editAction eq 'form') {
+  if (!Foswiki::Func::isTrue($whiteBoard, 1) || $editAction eq 'form') {
     $url .= '&action=form';
   } elsif ($editAction eq 'text') {
     $url .= '&action=text';
