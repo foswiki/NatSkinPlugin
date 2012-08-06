@@ -370,7 +370,7 @@ sub run {
 
   if ($skin =~ /\bnat\b/) {
     my @skin = split(/\s*,\s*/, $skin);
-    my %skin = map {$_ => 1} @skin;
+    my %skin = map { $_ => 1 } @skin;
     my @skinAddOns = ();
 
     # add style
@@ -429,12 +429,15 @@ sub run {
   # SMELL: these browser-based contexts should be core
   if ($request) {
     my $agent = $request->user_agent() || '';
+
+    #print STDERR "agent=$agent\n";
     if ($agent =~ /MSIE/) {
       $context->{msie} = 1;
+
       # SMELL: better use Trident version to detect the physical version of the browser
       $context->{msie6} = 1 if $agent =~ /MSIE 6/;
       $context->{msie7} = 1 if $agent =~ /MSIE 7/;
-      $context->{msie8} = 1 if $agent =~ /MSIE 8/; 
+      $context->{msie8} = 1 if $agent =~ /MSIE 8/;
       $context->{msie9} = 1 if $agent =~ /MSIE 9/;
       $context->{msie10} = 1 if $agent =~ /MSIE 10/;
     } elsif ($agent =~ /Chrome/) {
@@ -448,6 +451,16 @@ sub run {
     } elsif ($agent =~ /Safari/) {
       $context->{safari} = 1;
     }
+
+    # flag unsupported browsers
+    $context->{UnsupportedBrowser} = 1 if $context->{msie6};    # || $context->{msie7};
+
+    # It would have been preferable to deprecate IE7 as well. However, in "compatibility mode" an IE8
+    # still reports as an IE7, even though we force it out of "compatibility mode" back into standard mode 
+    # with an x-ua-compatible http header. So while a real IE7 isn't supported, an IE8 reporting as IE7 even 
+    # though it renders in I8 mode, is fine. It seems though that we can't distinguish these two cases.
+    # Note that this only affects people still on Windows XP not being able to upgrade their browser to IE8 and
+    # are unlikely to upgrade all all of their windows operating system just to get IE9 or IE10.
   }
 
   # SMELL: these misc helper contexts should be core
@@ -462,8 +475,7 @@ sub run {
 <script src="%PUBURLPATH%/%SYSTEMWEB%/NatSkin/natskin.js"></script>
 HERE
 
-    Foswiki::Func::addToZone("head", 'NATSKIN', "\n" . $this->renderSkinStyle(), 
-      'TABLEPLUGIN_default, JQUERYPLUGIN::UI, JQUERYPLUGIN::TEXTBOXLIST, JQUERYPLUGIN::UI');
+    Foswiki::Func::addToZone("head", 'NATSKIN', "\n" . $this->renderSkinStyle(), 'TABLEPLUGIN_default, JQUERYPLUGIN::UI, JQUERYPLUGIN::TEXTBOXLIST, JQUERYPLUGIN::UI');
 
     #Foswiki::Plugins::JQueryPlugin::registerTheme("natskin", $themeRecord->{path}.'/jquery-ui.css');
   }
@@ -517,6 +529,7 @@ sub renderSkinStyle {
 
   my $theVariation;
   $theVariation = $this->{skinState}{'variation'} unless $this->{skinState}{'variation'} =~ /^(off|none)$/;
+  $theVariation ||= '';
 
   # SMELL: why not use <link rel="stylesheet" href="..." type="text/css" media="all" />
   my $text = '';

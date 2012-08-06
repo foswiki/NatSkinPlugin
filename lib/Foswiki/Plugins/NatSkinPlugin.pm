@@ -31,7 +31,7 @@ our $baseWeb;
 our $baseTopic;
 
 our $VERSION = '$Rev$';
-our $RELEASE = '4.00rc2';
+our $RELEASE = '4.00rc3';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Theming engine for NatSkin';
 
@@ -118,6 +118,14 @@ sub postRenderingHandler {
   require Foswiki::Plugins::NatSkinPlugin::ExternalLink;
 
   $_[0] =~ s/<a\s+([^>]*?href=(?:\"|\'|&quot;)?)([^\"\'\s>]+(?:\"|\'|\s|&quot;>)?)/'<a '.Foswiki::Plugins::NatSkinPlugin::ExternalLink::render($1,$2)/geoi;
+}
+
+###############################################################################
+sub modifyHeaderHandler {
+  my ($headers, $query) = @_;
+
+  # force IE to the latest version; use chrome frame if available
+  $headers->{"X-UA-Compatible"} = 'ie=edge,chrome=1';
 }
 
 1;

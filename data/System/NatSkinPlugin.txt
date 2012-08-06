@@ -206,6 +206,7 @@ See NatSkin#Installation_Instructions
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|   6 Aug 2012: | adding a x-ua-compatibility http header to force IE8 back into standard mode |
 |  12 Feb 2010: | allow printing of pages with url params; using Foswiki:Extensions/ZonePlugin for improved page load time |
 |  24 Nov 2009: | improve !SubscribePlugin support |
 |  17 Nov 2009: | added support for !SolrPlugin; fixed email obfuscator; \

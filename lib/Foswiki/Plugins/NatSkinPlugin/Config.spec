@@ -41,10 +41,6 @@ $Foswiki::cfg{NatSkin}{NoSideBarActions} = 'edit, manage, login, logon, oops';
 
 # ---+++ HTML post processing
 # **BOOLEAN**
-# If switched on, all html comments and any content appearing after the closing &lt;/html> tag will be removed.
-$Foswiki::cfg{NatSkin}{CleanUpHTML} = 1;
-
-# **BOOLEAN**
 # If switched on, external links will be detected and styled accordingly to give the user visual feedback that this
 # link is driving him off the site.
 $Foswiki::cfg{NatSkin}{DetectExternalLinks} = 0;

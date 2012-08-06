@@ -49,16 +49,19 @@ sub render {
   return '' if $themeEngine->{skinState}{$name} && $themeEngine->{skinState}{$name} eq 'off';
 
   my $text;
+
   ($text, $theWeb, $theComponent) = getWebComponent($session, $theWeb, $theComponent, $theMultiple);
+
+  return '' unless defined $theWeb  && defined $theComponent;
 
   #SL: As opposed to INCLUDE WEBCOMPONENT should render as if they were in the web they provide links to.
   #    This behavior allows for web component to be consistently rendered in foreign web using the =web= parameter. 
   #    It makes sure %WEB% is expanded to the appropriate value. 
   #    Although possible, usage of %BASEWEB% in web component topics might have undesired effect when web component is rendered from a foreign web. 
-  $text = Foswiki::Func::expandCommonVariables($text, $theComponent, $theWeb);
+  #$text = Foswiki::Func::expandCommonVariables($text, $theComponent, $theWeb);
 
   # ignore permission warnings here ;)
-  $text =~ s/No permission to read.*//g;
+  #$text =~ s/No permission to read.*//g;
   $text =~ s/[\n\r]+/\n$theLinePrefix/gs if defined $theLinePrefix;
 
   return $text
@@ -80,13 +83,13 @@ sub getWebComponent {
 
   ($web, $component) = Foswiki::Func::normalizeWebTopicName($web, $component);
 
-  #writeDebug("called getWebComponent($component)");
+  #print STDERR "called getWebComponent($component)\n";
 
   # SMELL: why does preview call for components twice ???
   if ($seenWebComponent{$component} && $seenWebComponent{$component} > 2 && !$multiple) {
-    return '<span class="foswikiAlert">'.
+    return ('<span class="foswikiAlert">'.
       "ERROR: component '$component' already included".
-      '</span>';
+      '</span>', $web, $component);
   }
   $seenWebComponent{$component}++;
 
@@ -110,7 +113,6 @@ sub getWebComponent {
     $theWeb = $usersWeb;
     $theComponent = 'Site'.$component;
 
-
     if (Foswiki::Func::topicExists($theWeb, $theComponent) &&
         Foswiki::Func::checkAccessPermission('VIEW',$userName,undef,$theComponent, $theWeb)) {
       # %USERWEB%
@@ -129,7 +131,7 @@ sub getWebComponent {
             Foswiki::Func::checkAccessPermission('VIEW',$userName,undef,$theComponent, $theWeb)) {
 	  ($meta, $text) = Foswiki::Func::readTopic($theWeb, $theComponent);
 	} else {
-	  return ''; # not found
+	  return ('', undef, undef); # not found
 	}
       }
     }
@@ -138,8 +140,6 @@ sub getWebComponent {
   # extract INCLUDE area
   $text =~ s/.*?%STARTINCLUDE%//gs;
   $text =~ s/%STOPINCLUDE%.*//gs;
-
-  #writeDebug("done getWebComponent($web.$component)");
 
   return ($text, $theWeb, $theComponent);
 }

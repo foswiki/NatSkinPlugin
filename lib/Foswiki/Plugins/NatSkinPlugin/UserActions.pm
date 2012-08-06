@@ -41,11 +41,13 @@ sub render {
   $text = '$edit$sep$attach$sep$new$sep$raw$sep$delete$sep$history$sepprint$sep$more'
     unless defined $text;
 
+  my $context = Foswiki::Func::getContext();
+
   my $guestText = $params->{guest};
   $guestText = '$login$sep$register' 
     unless defined $guestText;
 
-  $text = $guestText unless Foswiki::Func::getContext()->{authenticated};
+  $text = $guestText unless $context->{authenticated};
 
   my $themeEngine = Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine();
   if ($themeEngine->{skinState}{"history"}) {
@@ -54,6 +56,13 @@ sub render {
   }
 
   return '' unless $text;
+
+  if ($context->{GenPDFPrincePluginEnabled} || 
+      $context->{GenPDFWebkitPluginEnabled} ||
+      $context->{PdfPluginEnabled}) {
+    # SMELL: how do we detect GenPDFAddOn...see also getPdfUrl
+    $context->{can_generate_pdf} = 1;
+  }
 
   # params used by all actions
   my $actionParams = ();
@@ -99,7 +108,7 @@ sub render {
   $actionParams->{isRestrictedAction} = () if $gotAccess;
 
   # disable registration
-  unless (Foswiki::Func::getContext()->{registration_enabled}) {
+  unless ($context->{registration_enabled}) {
     $actionParams->{isRestrictedAction}{'register'} = 1;
   }
 
