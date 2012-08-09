@@ -23,7 +23,7 @@ use warnings;
 use Foswiki::Func ();
 use Foswiki::Meta ();
 use Foswiki::Plugins ();
-use Foswiki::Plugins::NatSkinPlugin::ThemeEngine ();
+use Foswiki::Plugins::NatSkinPlugin ();
 use Foswiki::Plugins::NatSkinPlugin::Utils ();
 
 ###############################################################################
@@ -49,7 +49,7 @@ sub render {
 
   $text = $guestText unless $context->{authenticated};
 
-  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine();
+  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
   if ($themeEngine->{skinState}{"history"}) {
     my $historyText = $params->{history};
     $text = $historyText if defined $historyText;
@@ -196,7 +196,7 @@ sub renderEdit {
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
   my $result = '';
-  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine();
+  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
 
   if ($params->{isRestrictedAction}{'edit'}) {
     return '' if $params->{hiderestricted};
@@ -233,7 +233,7 @@ sub getEditUrl {
 sub getRestoreUrl {
   my $params = shift;
 
-  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine();
+  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
 
   my $rev;
   if ($themeEngine->{skinState}{"history"}) {

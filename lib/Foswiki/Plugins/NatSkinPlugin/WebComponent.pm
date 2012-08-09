@@ -23,7 +23,7 @@ use warnings;
 
 use Foswiki::Func ();
 use Foswiki::Plugins ();
-use Foswiki::Plugins::NatSkinPlugin::ThemeEngine ();
+use Foswiki::Plugins::NatSkinPlugin ();
 
 our %seenWebComponent = (); # cache for get()
 
@@ -45,7 +45,7 @@ sub render {
 
   my $name = lc $theComponent;
 
-  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine();
+  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
   return '' if $themeEngine->{skinState}{$name} && $themeEngine->{skinState}{$name} eq 'off';
 
   my $text;

@@ -22,6 +22,7 @@ use warnings;
 
 use Foswiki::Func ();
 use Foswiki::Plugins ();
+use Foswiki::Plugins::NatSkinPlugin ();
 
 our %maxRevs = (); # cache for getMaxRevision()
 
@@ -118,7 +119,7 @@ sub getCurRevision {
   if ($request) {
     $rev = $request->param("rev");
     unless (defined $rev) {
-      my $themeEngine = Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine();
+      my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
       if ($themeEngine->{skinState}{'action'} =~ /compare|rdiff/) {
         my $rev1 = $request->param("rev1");
         my $rev2 = $request->param("rev2");

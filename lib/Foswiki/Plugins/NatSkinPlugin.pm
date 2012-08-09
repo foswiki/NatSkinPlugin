@@ -34,6 +34,7 @@ our $VERSION = '$Rev$';
 our $RELEASE = '4.00rc3';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Theming engine for NatSkin';
+our $themeEngine;
 
 ###############################################################################
 sub initPlugin {
@@ -41,15 +42,15 @@ sub initPlugin {
 
   # theme engine macros
   Foswiki::Func::registerTagHandler('SKINSTATE', sub {
-    return Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine()->renderSkinState(@_);
+    return getThemeEngine()->renderSkinState(@_);
   });
 
   Foswiki::Func::registerTagHandler('KNOWNSTYLES', sub {
-    return Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine()->renderStyles(@_);
+    return getThemeEngine()->renderStyles(@_);
   });
 
   Foswiki::Func::registerTagHandler('KNOWNVARIATIONS', sub {
-    return Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine()->renderVariations(@_);
+    return getThemeEngine()->renderVariations(@_);
   });
 
   # REVISIONS, MAXREV, CURREV replacements
@@ -82,7 +83,7 @@ sub initPlugin {
   });
 
   Foswiki::Func::registerTagHandler('NATSTYLEURL', sub {
-    return Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine()->getStyleUrl();
+    return getThemeEngine()->getStyleUrl();
   });
 
   Foswiki::Func::registerTagHandler('HTMLTITLE', sub {
@@ -95,11 +96,21 @@ sub initPlugin {
   });
 
   # init modules
-  Foswiki::Plugins::NatSkinPlugin::ThemeEngine::init();
+  getThemeEngine()->init();
+
   Foswiki::Plugins::NatSkinPlugin::Utils::init();
   Foswiki::Plugins::NatSkinPlugin::WebComponent::init();
 
   return 1;
+}
+
+###############################################################################
+sub getThemeEngine {
+  unless (defined $themeEngine) {
+    $themeEngine = new Foswiki::Plugins::NatSkinPlugin::ThemeEngine()
+  }
+
+  return $themeEngine;
 }
 
 ###############################################################################

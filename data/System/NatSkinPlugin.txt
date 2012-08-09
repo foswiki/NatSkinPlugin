@@ -1,25 +1,8 @@
-%META:TOPICINFO{author="ProjectContributor" date="1247226122" format="1.1" reprev="1.2" version="1.2"}%
-<!--
-
-   PLEASE DO NOT EDIT THIS TOPIC
-
-   It is automatically generated from the subversion repository, and any changes
-   you make will simply be overwritten the next time a release is generated.
-
-   Instead, you could check your fix in, raise a bug in the Bugs web, or mail the author(s).
--->
+%META:TOPICINFO{author="micha" comment="save topic" date="1344509957" format="1.1" version="4"}%
 ---+!! The Natural Skin Plugin
 %TOC%
 
 ---++ Description
-<table style="float:right">
-<tr>
-  <td><img src="%ATTACHURLPATH%/../NatSkin/wikiringlogo40x40.png"></td>
-  <td><a href="http://wikiring.com" title="Make your Wiki ring!" style="text-decoration:none;color:#0065CD">
-      Powered by <br /> <nop>WikiRing Consultants </a>
-  </td>
-</tr>
-</table>
 This is the supplemental plugin for the NatSkin. Its main purpose is to supply
 "skin states" to control different styles and variations to be switched
 dynamically while you are online. 
@@ -153,7 +136,6 @@ The "guest" and "format" format strings can use the following variables
    * $register: link to registration
    * $sep: separator string
    * $user: name of current authenticated user
-
 
 ---+++ WEBCOMPONENT
 *Syntax*: =%<nop>WEBCOMPONENT{"name" web="&lt;name>" lineprefix="&lt;prefix>" multiple="<anything>"}%=

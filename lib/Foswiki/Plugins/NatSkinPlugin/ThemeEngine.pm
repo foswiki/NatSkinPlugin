@@ -26,34 +26,12 @@ use Foswiki::Plugins::NatSkinPlugin::Utils ();
 use Foswiki::Plugins::JQueryPlugin ();
 
 use constant DEBUG => 0; # toggle me
-our $themeEngine;
 
 ###############################################################################
 # static
 sub writeDebug {
   return unless DEBUG;
   print STDERR "- NatSkinPlugin::ThemeEngine - " . $_[0] . "\n";
-}
-
-###############################################################################
-# static
-sub init {
-
-  my $request = Foswiki::Func::getCgiQuery();
-  my $doRefresh = $request->param('refresh') || ''; # refresh internal caches
-  $themeEngine = undef if $doRefresh =~ /^(on|natskin)$/;
-
-  $themeEngine = getThemeEngine();
-  $themeEngine->run();
-}
-
-###############################################################################
-sub getThemeEngine {
-
-  $themeEngine = new Foswiki::Plugins::NatSkinPlugin::ThemeEngine()
-    unless $themeEngine;
-
-  return $themeEngine;
 }
 
 
@@ -67,81 +45,58 @@ sub new {
     defaultStyle  => $Foswiki::cfg{NatSkin}{Style} || 'jazzynote',
     defaultVariation => $Foswiki::cfg{NatSkin}{Variation} || 'off',
     defaultLayout => $Foswiki::cfg{NatSkin}{Layout} || 'fixed',
-    defaultMenu => $Foswiki::cfg{NatSkin}{Menu},
+    defaultMenu => Foswiki::Func::isTrue($Foswiki::cfg{NatSkin}{Menu}, 1),
     defaultStyleSideBar => $Foswiki::cfg{NatSkin}{SideBar} || 'left',
     @_
   };
   bless($this, $class);
 
-  $this->{defaultMenu} = 1 unless defined $this->{defaultMenu};
-  $this->{defaultMenu} = $this->{defaultMenu}?'on':'off';
-
-  $this->readThemeInfos();
-
   my $noSideBarActions = $Foswiki::cfg{NatSkin}{NoSideBarActions} 
     || 'edit, manage, login, logon, oops';
   %{$this->{noSideBarActions}} = map { $_ => 1 } split(/\s*,\s*/, $noSideBarActions);
 
+  # make sure there's a default record
+  unless (defined $Foswiki::cfg{NatSkin}{Themes}) {
+    $Foswiki::cfg{NatSkin}{Themes}{JazzyNote} = {
+      baseUrl => '%PUBURLPATH%/%SYSTEMWEB%/JazzyNoteTheme',
+      styles => {
+        jazzynote => 'JazzyNoteStyle.css' 
+      },
+      variations => {
+        green => 'GreenVariation.css', 
+        red => 'RedVariation.css' 
+      }
+    };
+  };
+
+  # index which style is part of which theme
+  $this->{knownStyles} = ();
+  while (my ($themeId, $themeRecord) =  each %{$Foswiki::cfg{NatSkin}{Themes}}) {
+    foreach my $style (keys %{$themeRecord->{styles}}) {
+      $this->{knownStyles}{lc($style)} = $themeId;
+    }
+  }
+
   return $this;
 }
 
-
 ###############################################################################
-sub readThemeInfos {
-  my $this = shift;
+sub getThemeRecord {
+  my ($this, $theStyle) = @_;
 
-  # get style path
-  my $systemWeb = $Foswiki::cfg{SystemWebName};
-  my $themePath = 
-    Foswiki::Func::getPreferencesValue('NATSKIN_THEMEPATH') 
-    || Foswiki::Func::getPreferencesValue('STYLEPATH') # backwards compatibility
-    || $Foswiki::cfg{NatSkin}{ThemePath} 
-    || "$systemWeb.JazzyNoteTheme, $systemWeb.NatSkin";
-  $themePath =~ s/\%SYSTEMWEB\%/$systemWeb/go;
+  $theStyle ||= $this->{defaultStyle} ;
 
-  $this->{knownStyles} = ();
-  $this->{knownThemes} = ();
-  $this->{skinState} = ();
+  my $themeId = $this->{knownStyles}{lc($theStyle)};
+  return unless defined $themeId;
 
-  # read known styles
-  my $pubDir = $Foswiki::cfg{PubDir};
-  foreach my $styleWebTopic (split(/\s*,\s*/, $themePath)) {
-    my ($styleWeb, $styleTopic) =
-      Foswiki::Func::normalizeWebTopicName($systemWeb, $styleWebTopic);
+  my $themeRecord = $Foswiki::cfg{NatSkin}{Themes}{$themeId};
+  return unless defined $themeRecord;
 
-    $styleWebTopic = $styleWeb.'/'.$styleTopic;
-    my $themeId = $styleWebTopic;
-    my %themeRecord = (
-      id=>$themeId,
-      dir=> $pubDir.'/'.$styleWebTopic,
-      path=> '%PUBURLPATH%/'.$styleWebTopic,
-      styles => undef,
-      variations => undef,
-    );
-
-    if (opendir(DIR, $themeRecord{dir}))  {
-      foreach my $fileName (readdir(DIR)) {
-	if ($fileName =~ /((.*)Style\.css)$/) {
-          my $id = lc($2);
-          $this->{knownStyles}{$id} = $themeId;
-          $themeRecord{styles}{$id} = $themeRecord{path}.'/'.$1;
-	} elsif ($fileName =~ /((.*)Variation\.css)$/) {
-          my $id = lc($2);
-          $themeRecord{variations}{$id} = $themeRecord{path}.'/'.$1;
-	}
-      }
-      closedir(DIR);
-
-      # only add theme record if it has at least one style
-      if ($themeRecord{styles}) {
-        $this->{knownThemes}{$themeId} = \%themeRecord;
-      }
-    }
-  }
+  return $themeRecord;
 }
 
 ###############################################################################
-sub run {
+sub init {
   my $this = shift;
   writeDebug("init skin state");
 
@@ -250,22 +205,14 @@ sub run {
   $this->{skinState}{'layout'} = $theLayout;
 
   # handle menu
-  my $prefMenu =
+  my $prefMenu = Foswiki::Func::isTrue(
        Foswiki::Func::getSessionValue('NATSKIN_MENU')
     || Foswiki::Func::getPreferencesValue('NATSKIN_MENU')
     || Foswiki::Func::getPreferencesValue('STYLEBUTTONS')
-    ||    # backwards compatibility
-    $this->{defaultMenu};
-  $prefMenu =~ s/^\s+//;
-  $prefMenu =~ s/\s+$//;
-  if ($theMenu) {
-    $theMenu =~ s/^\s+//;
-    $theMenu =~ s/\s+$//;
-    $doStickyMenu = 1 if $theMenu ne $prefMenu;
-  } else {
-    $theMenu = $prefMenu;
-  }
-  $theMenu = $this->{defaultMenu} if $theMenu !~ /^(on|off)$/;
+    , $this->{defaultMenu}
+  );
+  $theMenu = Foswiki::Func::isTrue($theMenu, $prefMenu);
+  $doStickyMenu = 1 if $theMenu ne $prefMenu;
   $this->{skinState}{'menu'} = $theMenu;
 
   # handle sidebar
@@ -307,7 +254,7 @@ sub run {
     $theStyleVariation = $prefStyleVariation;
   }
   $found = 0;
-  foreach my $variation (keys %{ $themeRecord->{variations} }) {
+  foreach my $variation (keys %{$themeRecord->{variations}}) {
     if ($variation eq $theStyleVariation || lc($variation) eq lc($theStyleVariation)) {
       $found = 1;
       $theStyleVariation = $variation;
@@ -421,6 +368,9 @@ sub run {
   foreach my $key (keys %{ $this->{skinState} }) {
     my $val = $this->{skinState}{$key};
     next unless defined($val);
+
+    $val = $val?'on':'off' if $key eq 'menu';
+    
     my $var = lc('natskin_' . $key . '_' . $val);
     writeDebug("setting context $var");
     $context->{$var} = 1;
@@ -476,26 +426,9 @@ sub run {
 HERE
 
     Foswiki::Func::addToZone("head", 'NATSKIN', "\n" . $this->renderSkinStyle(), 'TABLEPLUGIN_default, JQUERYPLUGIN::UI, JQUERYPLUGIN::TEXTBOXLIST, JQUERYPLUGIN::UI');
-
-    #Foswiki::Plugins::JQueryPlugin::registerTheme("natskin", $themeRecord->{path}.'/jquery-ui.css');
   }
 
   return 1;
-}
-
-###############################################################################
-sub getThemeRecord {
-  my ($this, $theStyle) = @_;
-
-  $theStyle ||= $this->{defaultStyle} ;
-
-  my $themeId = $this->{knownStyles}{$theStyle};
-  return unless defined $themeId;
-
-  my $themeRecord = $this->{knownThemes}{$themeId};
-  return unless defined $themeRecord;
-
-  return $themeRecord;
 }
 
 ###############################################################################
@@ -545,12 +478,12 @@ sub renderSkinStyle {
 
   $text = <<"HERE";
 <link rel='stylesheet' href='%PUBURLPATH%/%SYSTEMWEB%/NatSkin/print.css' type='text/css' media='print' />
-<link rel='stylesheet' href='$themeRecord->{styles}{$theStyle}' type='text/css' media='all' />
+<link rel='stylesheet' href='$themeRecord->{baseUrl}/$themeRecord->{styles}{$theStyle}' type='text/css' media='all' />
 HERE
 
   if ($theVariation && $themeRecord->{variations}{$theVariation}) {
     $text .= <<"HERE";
-<link rel='stylesheet' href='$themeRecord->{variations}{$theVariation}' type='text/css' media='all' />
+<link rel='stylesheet' href='$themeRecord->{baseUrl}/$themeRecord->{variations}{$theVariation}' type='text/css' media='all' />
 HERE
   }
 
@@ -610,9 +543,6 @@ sub getStyleUrl {
 }
 
 ###############################################################################
-# take the REQUEST_URI, strip off the PATH_INFO from the end, the last word
-# is the action; this is done that complicated as there may be different
-# paths for the same action depending on the apache configuration (rewrites, aliases)
 sub getRequestAction {
 
   my $theAction;

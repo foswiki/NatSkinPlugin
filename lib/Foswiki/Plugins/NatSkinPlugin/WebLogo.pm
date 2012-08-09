@@ -20,7 +20,7 @@ package Foswiki::Plugins::NatSkinPlugin::WebLogo;
 use strict;
 use warnings;
 use Foswiki::Func ();
-use Foswiki::Plugins::NatSkinPlugin::ThemeEngine ();
+use Foswiki::Plugins::NatSkinPlugin();
 
 ###############################################################################
 # returns the weblogo for the header bar.
@@ -83,14 +83,14 @@ sub renderAlt {
 ###############################################################################
 sub renderStyle {
 
-  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine();
+  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
   return lc $themeEngine->{skinState}{style};
 }
 
 ###############################################################################
 sub renderVariation {
 
-  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine();
+  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
   my $variation = lc $themeEngine->{skinState}{variation};
   $variation = '' if $variation eq 'off';
   return $variation;
@@ -99,9 +99,9 @@ sub renderVariation {
 ###############################################################################
 sub renderPath {
 
-  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine();
+  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
   my $themeRecord = $themeEngine->getThemeRecord($themeEngine->{skinState}{'style'});
-  return $themeRecord?$themeRecord->{path}:'';
+  return $themeRecord?$themeRecord->{baseUrl}:'';
 }
 
 ###############################################################################
