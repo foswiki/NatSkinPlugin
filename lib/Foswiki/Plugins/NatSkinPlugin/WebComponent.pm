@@ -42,6 +42,8 @@ sub render {
   my $theLinePrefix = $params->{lineprefix};
   my $theWeb = $params->{web};
   my $theMultiple = $params->{multiple};
+  my $theHeader = $params->{header} || '';
+  my $theFooter = $params->{footer} || '';
 
   my $name = lc $theComponent;
 
@@ -64,7 +66,7 @@ sub render {
   #$text =~ s/No permission to read.*//g;
   $text =~ s/[\n\r]+/\n$theLinePrefix/gs if defined $theLinePrefix;
 
-  return $text
+  return $theHeader.$text.$theFooter;
 }
 
 ###############################################################################

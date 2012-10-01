@@ -477,8 +477,8 @@ sub renderSkinStyle {
   #writeDebug("knownStyle=".join(',', sort keys %knownStyles));
 
   $text = <<"HERE";
-<link rel='stylesheet' href='%PUBURLPATH%/%SYSTEMWEB%/NatSkin/print.css' type='text/css' media='print' />
 <link rel='stylesheet' href='$themeRecord->{baseUrl}/$themeRecord->{styles}{$theStyle}' type='text/css' media='all' />
+<link rel='stylesheet' href='%PUBURLPATH%/%SYSTEMWEB%/NatSkin/print.css' type='text/css' media='print' />
 HERE
 
   if ($theVariation && $themeRecord->{variations}{$theVariation}) {

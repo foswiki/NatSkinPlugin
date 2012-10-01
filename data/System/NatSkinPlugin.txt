@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="micha" comment="save topic" date="1344509957" format="1.1" version="4"}%
+%META:TOPICINFO{author="ProjectContributor" comment="save topic" date="1344509957" format="1.1" version="4"}%
 ---+!! The Natural Skin Plugin
 %TOC%
 

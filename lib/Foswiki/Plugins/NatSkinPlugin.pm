@@ -96,6 +96,7 @@ sub initPlugin {
   });
 
   # init modules
+  $themeEngine = undef;
   getThemeEngine()->init();
 
   Foswiki::Plugins::NatSkinPlugin::Utils::init();

@@ -127,9 +127,7 @@ sub renderSrc {
 
   # HACK: override ProjectLogos with own version
   $result =~ s/\%WIKILOGOIMG%/$wikiLogoImage/g;
-  if ($result =~ s/ProjectLogos/NatSkin/g) {
-    $result =~ s/gif/png/;
-  }
+  $result =~ s/ProjectLogos\/foswiki-logo.*/NatSkin\/foswiki-logo.png/g;
 
   return $result;
 }

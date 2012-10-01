@@ -12,11 +12,6 @@ $Foswiki::cfg{NatSkin}{Style} = 'jazzynote';
 # that is you can't combine a {Style} from theme A with {Variation} from theme B.
 $Foswiki::cfg{NatSkin}{Variation} = 'off';
 
-# **STRING**
-# Comma separated list of NatSkin themes installed on your system. This is the path along which themes and styles are 
-# searched for.
-$Foswiki::cfg{NatSkin}{ThemePath} = '';
-
 # **SELECT fixed,fluid,bordered **
 # Choose from a set of basic page layouts. 'fluid' is a good choice for sites mostly displayed on small display devices
 # and wide content, like large tables. 'fixed' is a typical center aligned blog-like layout that limits
@@ -34,10 +29,10 @@ $Foswiki::cfg{NatSkin}{Menu} = 1;
 # the content area directly instead of being controlled by the template engine.
 $Foswiki::cfg{NatSkin}{SideBar} = 'left';
 
-# **STRING EXPERT**
+# **STRING**
 # This is a list of actions that switch off the sidebar navigation automatically. Note, these are basically known cgi entry
 # points to Foswiki.
-$Foswiki::cfg{NatSkin}{NoSideBarActions} = 'edit, manage, login, logon, oops';
+$Foswiki::cfg{NatSkin}{NoSideBarActions} = 'edit, manage, login, logon, oops, register';
 
 # ---+++ HTML post processing
 # **BOOLEAN**
