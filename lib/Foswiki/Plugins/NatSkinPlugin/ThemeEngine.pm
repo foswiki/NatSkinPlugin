@@ -425,7 +425,7 @@ sub init {
 <script src="%PUBURLPATH%/%SYSTEMWEB%/NatSkin/natskin.js"></script>
 HERE
 
-    Foswiki::Func::addToZone("head", 'NATSKIN', "\n" . $this->renderSkinStyle(), 'TABLEPLUGIN_default, JQUERYPLUGIN::UI, JQUERYPLUGIN::TEXTBOXLIST, JQUERYPLUGIN::UI');
+    Foswiki::Func::addToZone("head", 'NATSKIN', "\n" . $this->renderSkinStyle(), 'TABLEPLUGIN_default, JQUERYPLUGIN::UI');
   }
 
   return 1;
@@ -464,9 +464,6 @@ sub renderSkinStyle {
   $theVariation = $this->{skinState}{'variation'} unless $this->{skinState}{'variation'} =~ /^(off|none)$/;
   $theVariation ||= '';
 
-  # SMELL: why not use <link rel="stylesheet" href="..." type="text/css" media="all" />
-  my $text = '';
-
   $theStyle = lc $theStyle;
   $theVariation = lc $theVariation;
 
@@ -476,7 +473,7 @@ sub renderSkinStyle {
   #writeDebug("theStyle=$theStyle");
   #writeDebug("knownStyle=".join(',', sort keys %knownStyles));
 
-  $text = <<"HERE";
+  my $text = <<"HERE";
 <link rel='stylesheet' href='$themeRecord->{baseUrl}/$themeRecord->{styles}{$theStyle}' type='text/css' media='all' />
 <link rel='stylesheet' href='%PUBURLPATH%/%SYSTEMWEB%/NatSkin/print.css' type='text/css' media='print' />
 HERE
@@ -539,7 +536,7 @@ sub getStyleUrl {
 
   my $theStyle = lc($this->{skinState}{'style'});
   my $themeRecord = $this->getThemeRecord($theStyle);
-  return $themeRecord->{styles}{$theStyle};
+  return $themeRecord->{baseUrl}.'/'.$themeRecord->{styles}{$theStyle};
 }
 
 ###############################################################################
