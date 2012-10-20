@@ -40,5 +40,24 @@ $Foswiki::cfg{NatSkin}{NoSideBarActions} = 'edit, manage, login, logon, oops, re
 # link is driving him off the site.
 $Foswiki::cfg{NatSkin}{DetectExternalLinks} = 0;
 
+# ---+++ Internet Explorer
+# **STRING**
+# Add an X-UA-Compatible entry to the HTTP headers. Use "ie=edge" to force any IE into the best mode supported. Add "chrome=1"
+# to switch IE using Chrome-Frame if installed.
+$Foswiki::cfg{NatSkin}{XuaCompatible} = 'ie=edge,chrome=1';
+
+# **BOOLEAN**
+# Switch on to display a browser warning when an IE6 has been detected.
+$Foswiki::cfg{NatSkin}{DeprecateIE6} = 1;
+
+# **BOOLEAN**
+# Switch on to display a browser warning when an IE7 has been detected. WARNING: an IE8 in compatibility mode will report
+# as an IE7 even though it has been forced back into IE8 standard mode using {XuaCompatible} = 'ie=edge'. 
+$Foswiki::cfg{NatSkin}{DeprecateIE7} = 1;
+
+# **BOOLEAN**
+# Switch on to display a browser warning when an IE8 has been detected. 
+$Foswiki::cfg{NatSkin}{DeprecateIE8} = 0;
+
 1;
 

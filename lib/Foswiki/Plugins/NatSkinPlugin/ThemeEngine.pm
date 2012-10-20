@@ -403,7 +403,9 @@ sub init {
     }
 
     # flag unsupported browsers
-    $context->{UnsupportedBrowser} = 1 if $context->{msie6};    # || $context->{msie7};
+    $context->{UnsupportedBrowser} = 1 if $context->{msie6} && $Foswiki::cfg{NatSkin}{DeprecateIE6};
+    $context->{UnsupportedBrowser} = 1 if $context->{msie7} && $Foswiki::cfg{NatSkin}{DeprecateIE7};
+    $context->{UnsupportedBrowser} = 1 if $context->{msie8} && $Foswiki::cfg{NatSkin}{DeprecateIE8};
 
     # It would have been preferable to deprecate IE7 as well. However, in "compatibility mode" an IE8
     # still reports as an IE7, even though we force it out of "compatibility mode" back into standard mode 

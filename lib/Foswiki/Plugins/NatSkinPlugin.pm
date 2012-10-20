@@ -137,7 +137,10 @@ sub modifyHeaderHandler {
   my ($headers, $query) = @_;
 
   # force IE to the latest version; use chrome frame if available
-  $headers->{"X-UA-Compatible"} = 'ie=edge,chrome=1';
+  my $xuaCompatible = $Foswiki::cfg{NatSkin}{XuaCompatible};
+  $xuaCompatible = 'ie=edge,chrome=1' unless defined $xuaCompatible;
+
+  $headers->{"X-UA-Compatible"} = $xuaCompatible if $xuaCompatible;
 }
 
 1;
