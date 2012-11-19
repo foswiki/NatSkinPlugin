@@ -121,10 +121,6 @@ sub render {
   $actionParams->{action} = 'compare' if $isCompare;
   $actionParams->{action} = 'rdiff' if $isRdiff;
 
-  $actionParams->{renderMode} = ($request) ? $request->param('render') : '';
-  $actionParams->{renderMode} = $isCompare ? 'interweave' : 'sequential' 
-    unless $actionParams->{renderMode};
-
   # menu can contain actions. so it goes first
   $text =~ s/\$menu/renderMenu($actionParams)/ge;
 
@@ -394,8 +390,7 @@ sub getFirstUrl {
   } else {
     return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath($params->{action}, undef, undef,
       'rev1'=>(1+getNrRev($params)),
-      'rev2'=>1,
-      'render'=>$params->{renderMode},
+      'rev2'=>1
     );
   }
 }
@@ -510,8 +505,7 @@ sub getLastUrl {
     return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
       $params->{action}, undef, undef,
       'rev1' => getMaxRev($params),
-      'rev2' => $rev2,
-      'render' => $params->{renderMode},
+      'rev2' => $rev2
     );
   }
 }
@@ -539,8 +533,7 @@ sub getNextUrl {
     return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
       $params->{action}, undef, undef,
       'rev1' => getNextRev($params),
-      'rev2' => getCurRev($params),
-      'render' => $params->{renderMode},
+      'rev2' => getCurRev($params)
     );
   }
 }
@@ -574,8 +567,7 @@ sub getPrevUrl {
     return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
       $params->{action}, undef, undef,
       'rev1' => getPrevRev($params),
-      'rev2' => $rev2,
-      'render' => $params->{renderMode},
+      'rev2' => $rev2
     );
   }
 }
@@ -609,8 +601,7 @@ sub getDiffUrl {
   return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
     $action, undef, undef,
     'rev1' => getCurRev($params),
-    'rev2' => $rev2,
-    'render' => $params->{renderMode},
+    'rev2' => $rev2
   );
 
 }
@@ -654,7 +645,7 @@ sub getRev {
       if (defined($rev)) {
         $params->{rev} = $rev;
       } elsif (!defined($rev1) && !defined($rev2)) {
-        $params->{rev} = getCurRev($params) unless defined $rev1;
+        $params->{rev} = ''; #getCurRev($params) unless defined $rev1;
       } else {
         $rev1 ||= 1;
         $rev2 ||= 1;
