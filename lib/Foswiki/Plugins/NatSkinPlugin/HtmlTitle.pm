@@ -57,6 +57,7 @@ sub render {
   $theFormat =~ s/\$webtitle\b/$webTitle/g;
   $theFormat =~ s/\$web\b/$web/g;
   $theFormat =~ s/\$title\b/$topicTitle/g;
+  $theFormat =~ s/\$topic\b/$topic/g;
 
   return Foswiki::Func::decodeFormatTokens($theFormat);
 }

@@ -158,6 +158,7 @@ sub render {
   $text =~ s/\$pdfurl\b/getPdfUrl($actionParams)/ge;
 
   $text =~ s/\$sep\b/$sepString/g;
+  $text =~ s/\$restorerev\b/getRestoreRev($actionParams)/ge;
   $text =~ s/\$rev\b/getRev($actionParams)/ge;
 
   return '' unless $text;
@@ -226,23 +227,23 @@ sub getEditUrl {
 }
 
 ###############################################################################
-sub getRestoreUrl {
+sub getRestoreRev {
   my $params = shift;
 
-  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
+  my $rev = getCurRev($params) - 1;
+  $rev = 1 if $rev < 1;
 
-  my $rev;
-  if ($themeEngine->{skinState}{"history"}) {
-    $rev = getRev($params);
-  } else {
-    $rev = getCurRev($params) - 1;
-    $rev = 1 if $rev < 1;
-  }
+  return $rev;
+}
+
+###############################################################################
+sub getRestoreUrl {
+  my $params = shift;
 
   return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
     "edit", undef, undef,
     't' => time(),
-    'rev' => $rev
+    'rev' => getRestoreRev($params)
   );
 }
 

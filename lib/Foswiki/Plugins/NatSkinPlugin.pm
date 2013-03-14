@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 # 
-# Copyright (C) 2003-2012 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2013 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -30,10 +30,10 @@ use Foswiki::Plugins::NatSkinPlugin::WebComponent ();
 our $baseWeb;
 our $baseTopic;
 
-our $VERSION = '$Rev$';
-our $RELEASE = '4.00rc3';
+our $VERSION = '3.99_001';
+our $RELEASE = '3.99_001';
 our $NO_PREFS_IN_TOPIC = 1;
-our $SHORTDESCRIPTION = 'Theming engine for NatSkin';
+our $SHORTDESCRIPTION = 'Support plugin for <nop>NatSkin';
 our $themeEngine;
 
 ###############################################################################
@@ -112,13 +112,6 @@ sub getThemeEngine {
   }
 
   return $themeEngine;
-}
-
-###############################################################################
-sub _processLinkStyle {
-  my $args = shift;
-  $args =~ s/type=["'].*?["']//g;
-  return "<link $args/>";
 }
 
 ###############################################################################

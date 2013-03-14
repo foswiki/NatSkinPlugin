@@ -319,16 +319,17 @@ sub init {
     my @skin = split(/\s*,\s*/, $skin);
     my %skin = map { $_ => 1 } @skin;
     my @skinAddOns = ();
-
-    # add style
-    my $prefix = lc($this->{skinState}{'style'}) . '.nat';
-    push(@skinAddOns, $prefix) unless $skin{$prefix};
+    my $prefix;
 
     # add variation
     if ($this->{skinState}{'variation'} ne 'off') {
       $prefix = lc($this->{skinState}{'variation'} . '.' . $this->{skinState}{'style'}) . '.nat';
-      push(@skinAddOns, $prefix) unless $skin{$prefix};
+      push @skinAddOns, $prefix unless $skin{$prefix};
     }
+
+    # add style
+    $prefix = lc($this->{skinState}{'style'}) . '.nat';
+    push @skinAddOns, $prefix unless $skin{$prefix};
 
     # auto-add natedit
     push(@skinAddOns, "natedit") unless $skin{"natedit"};
@@ -342,12 +343,8 @@ sub init {
       push @newSkin, $item;
     }
 
-    my $newSkin = join(', ', @newSkin);
-
-    writeDebug("old skin=$skin, newSkin=$newSkin");
-
     # store session prefs
-    Foswiki::Func::setPreferencesValue('SKIN', $newSkin);
+    Foswiki::Func::setPreferencesValue('SKIN', join(', ', @newSkin));
 
     if ($this->{skinState}{"action"} eq 'view') {
       Foswiki::Func::loadTemplate('sidebar');
@@ -423,11 +420,11 @@ sub init {
     Foswiki::Func::setPreferencesValue('FOSWIKI_STYLE_URL', '%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseStyle.css');
     Foswiki::Func::setPreferencesValue('FOSWIKI_COLORS_URL', '%NATSTYLEURL%');
 
-    Foswiki::Func::addToZone('script', 'NATSKIN::JS', <<'HERE', 'NATSKIN, NATSKIN::PREFERENCES, JQUERYPLUGIN::FOSWIKI, JQUERYPLUGIN::SUPERFISH, JQUERYPLUGIN::UI');
+    Foswiki::Func::addToZone('skinjs', 'NATSKIN::JS', <<'HERE', 'NATSKIN, NATSKIN::PREFERENCES, JQUERYPLUGIN::FOSWIKI, JQUERYPLUGIN::SUPERFISH, JQUERYPLUGIN::UI');
 <script src="%PUBURLPATH%/%SYSTEMWEB%/NatSkin/natskin.js"></script>
 HERE
 
-    Foswiki::Func::addToZone("head", 'NATSKIN', "\n" . $this->renderSkinStyle(), 'TABLEPLUGIN_default, JQUERYPLUGIN::UI');
+    Foswiki::Func::addToZone("skincss", 'NATSKIN', "\n" . $this->renderSkinStyle(), 'TABLEPLUGIN_default, JQUERYPLUGIN::UI, JQUERYPLUGIN::THEME');
   }
 
   return 1;
