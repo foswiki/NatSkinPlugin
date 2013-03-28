@@ -4,6 +4,7 @@ lib/Foswiki/Plugins/NatSkinPlugin/ExternalLink.pm 0644
 lib/Foswiki/Plugins/NatSkinPlugin/HtmlTitle.pm 0644
 lib/Foswiki/Plugins/NatSkinPlugin.pm 0644
 lib/Foswiki/Plugins/NatSkinPlugin/Revisions.pm 0644
+lib/Foswiki/Plugins/NatSkinPlugin/Subscribe.pm 0644
 lib/Foswiki/Plugins/NatSkinPlugin/ThemeEngine.pm 0644
 lib/Foswiki/Plugins/NatSkinPlugin/UserActions.pm 0644
 lib/Foswiki/Plugins/NatSkinPlugin/Utils.pm 0644
