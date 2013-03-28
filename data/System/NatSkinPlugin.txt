@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" comment="save topic" date="1344509957" format="1.1" version="4"}%
+%META:TOPICINFO{author="micha" comment="save topic" date="1363520449" format="1.1" version="7"}%
 ---+!! The Natural Skin Plugin
 %TOC%
 
@@ -167,7 +167,7 @@ By default the NatSkin comes with predefined components
    * [[%SYSTEMWEB%.SiteSideBar]]: sidebar navigation
    * [[%SYSTEMWEB%.SiteRightBar]]: right sidebar navigation, used in three columns layout (stylesidebar = both)
    * [[%SYSTEMWEB%.SiteTopicActions]]: topic actions
-   * [[%SYSTEMWEB%.SiteHtmlHead]] (deprecated)
+   * [[%SYSTEMWEB%.SiteHtmlHead]]
 
 see also: 
 [[#MYSIDEBAR][MYSIDEBAR]]
@@ -183,184 +183,13 @@ See NatSkin#Installation_Instructions
    * Set SHORTDESCRIPTION = Theming engine for NatSkin
 -->
 |  Plugin Author: | Michael Daum |
-|  Copyright &copy;: | 2003-2012, Michael Daum http://michaeldaumconsulting.com |
+|  Copyright &copy;: | 2003-2013, Michael Daum http://michaeldaumconsulting.com |
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
-|   6 Aug 2012: | adding a x-ua-compatibility http header to force IE8 back into standard mode |
-|  12 Feb 2010: | allow printing of pages with url params; using Foswiki:Extensions/ZonePlugin for improved page load time |
-|  24 Nov 2009: | improve !SubscribePlugin support |
-|  17 Nov 2009: | added support for !SolrPlugin; fixed email obfuscator; \
-                  switching sidebar-context off if sidebar tempalte is empty (works only for =view=) |
-|  14 Sep 2009: | removed GETSKINSTYLE in favour of using ADDTOHEAD; \
-                  ajusted css to latest !TablePlugin; \
-                  using relative urls where possible |
-|  20 Aug 2009: | added support to switch javascript parmeters via templating; \
-                  using relative urls as much as possible; \
-                  be more robust when selecting unknown themes; \
-                  support for <nop>SubscribePlugin; \
-                  adding style variation identifier to skin path as well; \
-                  made natsearch pluggable to use wiki apps for searching |
-|  15 Jan 2009: | more IE6 fixes; fixed natsearch on foswiki; simplified jump+search behavior to be more search-engine-like |
-|  07 Jan 2009: | added workaround to trick in <nop>NatSkin css into <nop>TinyMCE; \
-                  several workarounds to be a hybrid skin for twiki&foswiki; \
-                  added "show on screen" topic settings to ease hiding form, attachments and meta:comments; \
-                  removed topicactions from style engine now that they are show-on-screen settings; \
-                  added tape-recorder-like navigation to USERACTIONS to browse around revisions; \
-                  support for <nop>CompareRevisionsAddOn; \
-                  removed twiki/dakar support from natsearch; \
-                  removed old natlogon feature from old beijing days |
-|  12 Nov 2008: | fixed use of uninitialised variable |
-|  11 Nov 2008: | added topic actions to edit form and text data |
-|  05 Nov 2008: | added NATWEBLOGOURL; \
-                  natsearch can now use kinosearch, plucene, or its own native search engine |
-|  03 Jul 2008: | removed unused NATLOGINURL, NATLOGOUTURL, NATDIFFURL; \
-                  removed auto-disabling the plugin on non-nat skins; \
-                  fixed patching the skinpath not to include the cover; \
-                  added support for the <nop>GenPDFAddOn; \
-                  added =restrictedactions= parameter to USERACTIONS to disable specific \
-                  user actions if he/she has no write access to the current topic; \
-                  fixed issue in WEBCOMPONENTS that could be used to reveil read-protected topics \
-                  (reported by Martin Dahlö); \
-                  implemented a google-like display of hit results in (nat)search; \
-                  sorting natsearch results accross all webs - not per web |
-|  13 Nov 2007: | propagating skin state to context to speed up template resolution, \
-                  prepending style identifier to SKIN variable to be able to switch \
-                  the markup together with the css, \
-                  added NATFORMLIST, a more flexible variantion of the standard FORMLIST |
-|  02 Oct 2007: | added support for <nop>HistoryPlugin, <nop>TinyMCEPlugin |
-|  21 Sep 2007: | made external link detection optional, \
-                  fixed mod_perl/speedy issue detecting new themes on the stylepath, \
-                  recoded natsearch to be a lot simpler | 
-|  06 Mar 2007: | improved USERACTIONS tag for more flexibility; \
-                  added NATSEARCHGLOBAL and NATSEARCHCONTENT flags for NatSearch |
-|  05 Feb 2007: | new option NATSEARCHIGNORECASE; |
-|  13 Oct 2006: | prevent recursive expansion of WEBCOMPONENTs; \
-                  fixed natsearch not to print to STDOUT but use standard apis |
-|  02 Oct 2006: | respect access rights in WEBCOMPONENTs; \
-                  prevent deep recursion in WEBCOMPONENTs |
-|  18 Sep 2006: | fixed natlogon to run on current TMwiki4.1-svn |
-|  31 Aug 2006: | don't call getSkin during initPlugin - you may switch off albeit you are needed |
-|  29 Aug 2006: | cleaned up and removed all spaghetti code distinguishing beijing, cairo and dakar; \
-                  removed lots of code that got useless now, i.e. NATSCRIPTURL |
-|  25 Aug 2006: | first release that drops beijing and cairo support; \
-                  fixed and cleaned up initialisation sequence to detect commandline context properly; \
-                  removed unused IFACCESS tag; \
-                  minor rewrite of the email obfuscator; \
-                  fixed natsearch to properly support web.topic jumps; \
-		  moved part of the documentation to <nop>NatSkin |
-|  21 Aug 2006: | removed <nop>TablePlugin hack loading plugin preferences into the session store;\
-                  instead provide proper css for twikiTables to match the current style now; \
-                  this needs !TablePlugin from TMwiki > 4.0.4; \
-                  alternatively use the attached patch to it; \
-                  multiple fixes to email obfuscator; \
-                  simplified support for localization ; \
-                  fixed unexpanded MAKETEXT in natsearch |
-|  15 Aug 2006: | suport for userinterface internationalization |
-|  04 Aug 2006: | fixed detection of the cgi action to be more robust on different apache \
-                  configurations (rewrites, aliases);\
-                  implemented NATWEBLOGO to circumvent different ways of using WEBLOGO, \
-                  WIKITOOLNAME; \
-                  added a wrapper for natsearch and natlogon to be called using dakar's \
-                  =Foswiki::UI:run()= mechanism; \
-                  reintroduced the dependency on the <nop>FilterPlugin which is still \
-                  used in one place; \
-                  load email obfuscator javascript only when needed |
-|  28 Jul 2006: | This version drops the dependency on the <nop>FilterPlugin \
-                  and adds three new dependencies (1) <nop>FlexWebListPlugin, \
-                  (2) <nop>BreadCrumbsPlugin and (3) <nop>GluePlugin; %BR% \
-                  added =use strict;= and fixed some minor bugs showing up then; \
-                  removed NATLOGON, NATLOGOUT tags and replaced it with \
-                  NATLOGINURL, NATLOGOUTURL for more flexibility; \
-                  fixed check of USEWYSIWYG preference variable |
-|  15 Jun 2006: | remove double target attribute from external urls |
-|  26 May 2006: | fixed error fetching the number of the last revision |
-|  24 May 2006: | fixed detection of style files to prevent 403 errors; \
-                  added SETSKINSTATE; \
-                  added more accesskeys to topic actions; \
-                  added "nop" class to prevent external link detection| 
-|  05 May 2006: | fixed table bgcolor for Independence style; \
-                  display default <nop>WebLinks for non-public webs |
-|  19 Apr 2006: | use &lt;link rel="stylesheet" ... /&gt; instead of @import url() \
-                  to ease the pain for js wysiwyg editors |
-|  11 Apr 2006: | added STYLEPATH feature; \
-                  added style=off feature to emulate non-css browser; \
-                  disable email obfuscation javascript if unused |
-|  05 Apr 2006: | added support for dakar's <nop>TemplateLogin; \
-                  changed semantics of NATLOGON, added NATLOGOUT;\
-                  fixed some grave bugs exposed by the <nop>PublishContrib |
-|  27 Mar 2006: | moved <nop>MySideBar tempaltes to <nop>NatSkin; added docu for HTTPSLOGON |
-|  20 Mar 2006: | multiple errors in natsearch: \
-                  always first look into the current web, even for a global search; \
-                  default to local search, was global before, use g: to switch to \
-                  global search explicitely; \
-                  GO function searches in all webs; \
-                  display number of hits; \
-                  sort hit results in reverse chronological order |
-|  13 Mar 2006: | dont remove leading and trailing whitespaces from web components |
-|  11 Mar 2006: | removed MYSIDEBAR tag; \
-                  new web component search path; \
-                  new sidebar construction logic using <nop>WebLinks; \
-                  docu restructuring; \
-                  packaging using <nop>BuildContrib |
-|  22 Feb 2006: | removed GROUPSUMMARY, ALLUSERS and registrationHandle \
-                  which where only used on the <nop>NatsWiki installation, moved into \
-                  a plugin of its own; \
-                  fixed initPlugin not to return 0, disable the plugin if not used with the <nop>NatSkin \
-                  on a per handler base |
-|  21 Feb 2006: | externalized the IFDEFINED family into a plugin of its own and \
-                  added a new dependency for it |
-|  15 Feb 2006: | properly detect scripted mode on Dakar |
-|  14 Feb 2006: | moved FORMATLIST to Foswiki:Extensions/FilterPlugin; \
-                  added dependency on it; \
-                  fixed uninitialized variables with perl-5.8.8; \
-                  added escape chars to IFDEFINED; \
-                  don't switch off using an atom skin |
-|  03 Feb 2006: | added escape chars (percnt, dollar) to IFACCESS to make it more useful;\
-                  fixed detection of a Dakar engine; \
-                  fixed default REDDOT in the <nop>MySideBarTemplate |
-|  26 Jan 2006: | docu fixes |
-|  23 Jan 2006: | fixed natlogn; \
-                  fixed FORMATLIST to expandCommonVariables of the format result |
-|  09 Jan 2006: | removed local sandbox; added dependency on <nop>DakarContrib; \
-                  added variable expansion to IFDEFINED; \
-                  added cleanup code if the <nop>AliasPlugin is not installed; \
-                  improved natsearch customization; \
-                  w3c fixes in the <nop>MySideBarTemplate |
-|  06 Dec 2005: | switching off the plugin if the skin is not <nop>NatSkin |
-|  05 Dec 2005: | skin state variables respect FINALPREFERENCES settings; \
-                  added WEBCOMPONENT |
-|  01 Dec 2005: | added tooltips to topic actions |
-|  29 Nov 2005: | fixed warning about using the deprecated endRenderingHandler on Dakar |
-|  23 Nov 2005: | added $nop to IFSKINSTATETHEN content |
-|  22 Nov 2005: | added support for the <nop>WysiwygPlugin;\
-                  added custom templates for the <nop>BlackListPlugin's error messages |
-|  10 Nov 2005: | added switchvariation urlparam; \
-                  work arround bug in Dakar (nested calls to getRenderedVersion()); \
-                  fixed duplicate target/class in external links; \
-                  improved <nop>MySideBarTemplate using Twisties |
-|  09 Nov 2005: | fixed wrong call to =expandCommonVariables()= ... doh |
-|  08 Nov 2005: | fixed use of uninitialized variables; https links to the same site are not external once |
-|  02 Nov 2005: | added OBFUSCATEEMAILS flag to switch off this feature |
-|  28 Oct 2005: | add searchbox and style variations to the skin state; \
-                  configuring header art is now done using style variations; \
-                  fixed the <nop>NatSkinStyleBrowser to only "stick" to changes; \
-                  extended IFSKINSTATE to cover the new skin state variables |
-|  25 Oct 2005: | customization of =natsearch= by <nop>WebPreferences |
-|  20 Oct 2005: | improved external link detection |
-|  10 Oct 2005: | added switchstyle feature to cycle thru all installed skin styles|
-|  09 Oct 2005: | rewrite of skin state: support switching border, \
-                  sidebar, webbuttons and style independently; \
-                  rewrite of the email obfuscator; \
-                  improved skin style browser |
-|  27 Sep 2005: | added conditional content tags IFSKINSTATE and IFDEFINED; \
-                  added web button support |
-|  30 Aug 2005: | added external link detection; fixed IFSKINSTYLE; \
-                  added style support for the Foswiki:Extensions/TablePlugin |
-|  26 Aug 2005: | new <nop>NatSkin-2.0 release |
-|  28 Apr 2005: | pre-release to fix installation on TMwiki/Cairo |
+|  28 Mar 2013: | second beta |
+|  14 Mar 2013: | first beta of new release |
 |  16 Mar 2005: | Initial version |
-|  Perl Version: | >=5.6 |
 |  Home: | Foswiki:Extensions/NatSkinPlugin |
 |  Support: | Foswiki:Support/NatSkinPlugin  |

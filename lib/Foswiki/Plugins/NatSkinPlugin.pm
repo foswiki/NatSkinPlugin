@@ -30,8 +30,8 @@ use Foswiki::Plugins::NatSkinPlugin::WebComponent ();
 our $baseWeb;
 our $baseTopic;
 
-our $VERSION = '3.99_001';
-our $RELEASE = '3.99_001';
+our $VERSION = '3.99_002';
+our $RELEASE = '3.99_002';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Support plugin for <nop>NatSkin';
 our $themeEngine;
@@ -90,6 +90,13 @@ sub initPlugin {
     require Foswiki::Plugins::NatSkinPlugin::HtmlTitle;
     return Foswiki::Plugins::NatSkinPlugin::HtmlTitle::render(@_);;
   });
+
+  if ($Foswiki::cfg{Plugins}{SubscribePlugin}{Enabled}) {
+    Foswiki::Func::registerTagHandler('IFSUBSCRIBED', sub {
+      require Foswiki::Plugins::NatSkinPlugin::Subscribe;
+      return Foswiki::Plugins::NatSkinPlugin::Subscribe::render(@_);;
+    });
+  }
 
   Foswiki::Func::registerTagHandler('WEBCOMPONENT', sub {
     return Foswiki::Plugins::NatSkinPlugin::WebComponent::render(@_);
