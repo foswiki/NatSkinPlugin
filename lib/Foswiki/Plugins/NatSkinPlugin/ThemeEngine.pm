@@ -403,13 +403,7 @@ sub init {
     $context->{UnsupportedBrowser} = 1 if $context->{msie6} && $Foswiki::cfg{NatSkin}{DeprecateIE6};
     $context->{UnsupportedBrowser} = 1 if $context->{msie7} && $Foswiki::cfg{NatSkin}{DeprecateIE7};
     $context->{UnsupportedBrowser} = 1 if $context->{msie8} && $Foswiki::cfg{NatSkin}{DeprecateIE8};
-
-    # It would have been preferable to deprecate IE7 as well. However, in "compatibility mode" an IE8
-    # still reports as an IE7, even though we force it out of "compatibility mode" back into standard mode 
-    # with an x-ua-compatible http header. So while a real IE7 isn't supported, an IE8 reporting as IE7 even 
-    # though it renders in I8 mode, is fine. It seems though that we can't distinguish these two cases.
-    # Note that this only affects people still on Windows XP not being able to upgrade their browser to IE8 and
-    # are unlikely to upgrade all all of their windows operating system just to get IE9 or IE10.
+    $context->{UnsupportedBrowser} = 1 if $context->{msie9} && $Foswiki::cfg{NatSkin}{DeprecateIE9};
   }
 
   # SMELL: these misc helper contexts should be core

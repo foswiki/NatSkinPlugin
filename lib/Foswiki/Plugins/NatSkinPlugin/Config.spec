@@ -47,17 +47,21 @@ $Foswiki::cfg{NatSkin}{DetectExternalLinks} = 0;
 $Foswiki::cfg{NatSkin}{XuaCompatible} = 'ie=edge,chrome=1';
 
 # **BOOLEAN**
-# Switch on to display a browser warning when an IE6 has been detected.
+# Enable this switch to display a browser warning when an IE6 has been detected.
 $Foswiki::cfg{NatSkin}{DeprecateIE6} = 1;
 
 # **BOOLEAN**
-# Switch on to display a browser warning when an IE7 has been detected. WARNING: an IE8 in compatibility mode will report
+# Enable this switch to display a browser warning when an IE7 has been detected. WARNING: an IE8 in compatibility mode will report
 # as an IE7 even though it has been forced back into IE8 standard mode using an appropriate X-UA-Compatible HTTP header.
 $Foswiki::cfg{NatSkin}{DeprecateIE7} = 1;
 
 # **BOOLEAN**
-# Switch on to display a browser warning when an IE8 has been detected. 
+# Enable this switch to display a browser warning when an IE8 has been detected. 
 $Foswiki::cfg{NatSkin}{DeprecateIE8} = 1;
+
+# **BOOLEAN**
+# Enable this switch to display a browser warning when an IE9 has been detected. 
+$Foswiki::cfg{NatSkin}{DeprecateIE9} = 0;
 
 1;
 
