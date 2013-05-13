@@ -77,7 +77,7 @@ sub renderAlt {
     Foswiki::Func::getPreferencesValue('WEBLOGOALT') || 
     Foswiki::Func::getPreferencesValue('WIKILOGOALT') || 
     Foswiki::Func::getPreferencesValue('WIKITOOLNAME') || 
-    'Foswiki';
+    'Logo';
 }
 
 ###############################################################################
@@ -144,7 +144,7 @@ sub renderLogo {
   } else {
     my $image = renderSrc();
     if ($image) {
-      $result = '<img class="natWebLogo natWebLogoImage" src="$src" alt="$alt" border="0" />';
+      $result = '<img class="natWebLogo natWebLogoImage" src="$src" alt="$alt" />';
     } else {
       $result = '<span class="natWebLogo natWebLogoName">%WIKITOOLNAME%</span>';
     }

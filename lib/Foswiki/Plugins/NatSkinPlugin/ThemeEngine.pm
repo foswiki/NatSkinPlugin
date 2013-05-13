@@ -404,6 +404,13 @@ sub init {
     $context->{UnsupportedBrowser} = 1 if $context->{msie7} && $Foswiki::cfg{NatSkin}{DeprecateIE7};
     $context->{UnsupportedBrowser} = 1 if $context->{msie8} && $Foswiki::cfg{NatSkin}{DeprecateIE8};
     $context->{UnsupportedBrowser} = 1 if $context->{msie9} && $Foswiki::cfg{NatSkin}{DeprecateIE9};
+
+    my %deprecatedBrowsers = map {$_ => 1} split(/\s*,\s*/, Foswiki::Func::getPreferencesValue('DEPRECATEDBROWSERS') || '');
+    $deprecatedBrowsers{msie6} = 1 if $Foswiki::cfg{NatSkin}{DeprecateIE6};
+    $deprecatedBrowsers{msie7} = 1 if $Foswiki::cfg{NatSkin}{DeprecateIE7};
+    $deprecatedBrowsers{msie8} = 1 if $Foswiki::cfg{NatSkin}{DeprecateIE8};
+    $deprecatedBrowsers{msie9} = 1 if $Foswiki::cfg{NatSkin}{DeprecateIE9};
+    Foswiki::Func::setPreferencesValue("DEPRECATEDBROWSERS", join(", ", sort keys %deprecatedBrowsers));
   }
 
   # SMELL: these misc helper contexts should be core
