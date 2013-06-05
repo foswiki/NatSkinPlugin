@@ -129,6 +129,7 @@ sub render {
   $text =~ s/\$(?:account\b|action\(account(?:,\s*(.*?))?\))/renderAccount($actionParams, $1)/ge;
   $text =~ s/\$(?:diff\b|action\(diff(?:,\s*(.*?))?\))/renderDiff($actionParams, $1)/ge;
   $text =~ s/\$(?:edit\b|action\(edit(?:,\s*(.*?))?\))/renderEdit($actionParams, $1)/ge;
+  $text =~ s/\$(?:view\b|action\(view(?:,\s*(.*?))?\))/renderView($actionParams, $1)/ge;
   $text =~ s/\$(?:first\b|action\(first(?:,\s*(.*?))?\))/renderFirst($actionParams, $1)/ge;
   $text =~ s/\$(?:last\b|action\(last(?:,\s*(.*?))?\))/renderLast($actionParams, $1)/ge;
   $text =~ s/\$(?:login\b|action\(login(?:,\s*(.*?))?\))/renderLogin($actionParams, $1)/ge;
@@ -185,7 +186,6 @@ sub renderAction {
   return Foswiki::Func::expandTemplate($template);
 }
 
-
 ###############################################################################
 sub renderEdit {
   my ($params, $context) = @_;
@@ -204,6 +204,29 @@ sub renderEdit {
     return ($themeEngine->{skinState}{"history"})?
       Foswiki::Func::expandTemplate('RESTORE_ACTION'):
       Foswiki::Func::expandTemplate('EDIT_ACTION');
+  }
+
+  return $result;
+}
+
+###############################################################################
+sub renderView {
+  my ($params, $context) = @_;
+
+  return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
+
+  my $result = '';
+  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
+
+  if ($params->{isRestrictedAction}{'view'}) {
+    return '' if $params->{hiderestricted};
+    return Foswiki::Func::expandTemplate('VIEW_ACTION_RESTRICTED');
+  } else {
+    if ($themeEngine->{skinState}{"action"} eq 'view' ) {
+      return '';
+    } else {
+      return Foswiki::Func::expandTemplate('VIEW_ACTION');
+    }
   }
 
   return $result;
@@ -526,6 +549,10 @@ sub renderNext {
 sub getNextUrl {
   my $params = shift;
 
+  my $request = Foswiki::Func::getCgiQuery();
+  my $context = $request->param("context");
+  $context = 1 unless defined $context;
+
   if ($params->{action} eq 'view') {
     return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath('view', undef, undef, 
       'rev'=>getRev($params) + getNrRev($params)
@@ -534,7 +561,8 @@ sub getNextUrl {
     return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
       $params->{action}, undef, undef,
       'rev1' => getNextRev($params),
-      'rev2' => getCurRev($params)
+      'rev2' => getCurRev($params),
+      'context' => $context,
     );
   }
 }
@@ -554,6 +582,10 @@ sub renderPrev {
 sub getPrevUrl {
   my $params = shift;
 
+  my $request = Foswiki::Func::getCgiQuery();
+  my $context = $request->param("context");
+  $context = 1 unless defined $context;
+
   if ($params->{action} eq 'view') {
     my $rev = getRev($params) - getNrRev($params);
     $rev = 1 if $rev < 1;
@@ -568,7 +600,8 @@ sub getPrevUrl {
     return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
       $params->{action}, undef, undef,
       'rev1' => getPrevRev($params),
-      'rev2' => $rev2
+      'rev2' => $rev2,
+      'context' => $context,
     );
   }
 }
@@ -646,7 +679,7 @@ sub getRev {
       if (defined($rev)) {
         $params->{rev} = $rev;
       } elsif (!defined($rev1) && !defined($rev2)) {
-        $params->{rev} = ''; #getCurRev($params) unless defined $rev1;
+        $params->{rev} = getCurRev($params);
       } else {
         $rev1 ||= 1;
         $rev2 ||= 1;

@@ -83,25 +83,18 @@ returns either a textual or a graphical a logo to be used in the header bar
 depending on a set of preference variables.
 
 NATWEBLOGO will check for a couple of preference variables in the following order:
-   1 return =%<nop>NATWEBLOGONAME%= if defined
-   1 return =%<nop>NATWEBLOGOIMG%= if defined
+   1 return =%<nop>NATSKIN_LOGO%= if defined
+   1 return =%<nop>WIKILOGOIMG%= if defined
    1 return =%<nop>WEBLOGOIMG%= if defined
    1 return =%<nop>WIKITOOLNAME%= if defined
    1 or return the string 'Foswiki' otherwise
 
-Given you want to have the string <nop>%WIKITOOLNAME% in the logo position
-when using NatSkin but not so when using a different skin on the same site.
-Then add the following to the %USERSWEB%.SitePreferences:
-<verbatim>
-  * Set NATWEBLOGONAME = %WIKITOOLNAME%
-  * Set WEBLOGOIMG = /path/to/your/defaultlogo.gif
-</verbatim>
-
 If you want to have a different logo using NatSkin than using another skin on the same site
 then add the following to  the %USERSWEB%.SitePreferences:
-<verbatim>
-  * Set NATWEBLOGOIMG = /path/to/your/natskinlogo.gif
-  * Set WEBLOGOIMG = /path/to/your/defaultlogo.gif
+
+<verbatim class="tml">
+  * Set NATSKIN_LOGO = /path/to/your/natskinlogo.gif
+  * Set WIKILOGOIMG = /path/to/your/defaultlogo.gif
 </verbatim>
 
 ---+++ PREVREV

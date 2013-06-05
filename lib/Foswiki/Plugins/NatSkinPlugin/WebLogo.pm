@@ -25,8 +25,7 @@ use Foswiki::Plugins::NatSkinPlugin();
 ###############################################################################
 # returns the weblogo for the header bar.
 # this will check for a couple of preferences:
-#    * return %NATWEBLOGONAME% if defined
-#    * return %NATWEBLOGOIMG% if defined
+#    * return %NATSKIN_LOGO% if defined
 #    * return %WIKILOGOIMG% if defined
 #    * return %WEBLOGOIMG% if defined
 #    * return %WIKITOOLNAME% if defined
@@ -55,7 +54,6 @@ sub render {
   $result =~ s/\$variation/renderVariation()/ge;
   $result =~ s/\$style/renderStyle()/ge;
   $result =~ s/\$alt/renderAlt()/ge;
-  $result =~ s/\$name/renderName()/ge;
   $result =~ s/\$perce?nt/\%/go;
   $result =~ s/\$nop//go;
   $result =~ s/\$n/\n/go;
@@ -66,14 +64,8 @@ sub render {
 }
 
 ###############################################################################
-sub renderName {
-  return Foswiki::Func::getPreferencesValue('NATWEBLOGONAME');
-}
-
-###############################################################################
 sub renderAlt {
   return
-    Foswiki::Func::getPreferencesValue('NATWEBLOGOALT') || 
     Foswiki::Func::getPreferencesValue('WEBLOGOALT') || 
     Foswiki::Func::getPreferencesValue('WIKILOGOALT') || 
     Foswiki::Func::getPreferencesValue('WIKITOOLNAME') || 
@@ -107,7 +99,7 @@ sub renderPath {
 ###############################################################################
 sub renderUrl {
 
-  my $url = Foswiki::Func::getPreferencesValue('NATWEBLOGOURL') ||
+  my $url = Foswiki::Func::getPreferencesValue('NATSKIN_LOGOURL') ||
     Foswiki::Func::getPreferencesValue('WEBLOGOURL') ||
     Foswiki::Func::getPreferencesValue('WIKILOGOURL') ||
     Foswiki::Func::getPreferencesValue('%SCRIPTURLPATH{"view"}%/%USERSWEB%/%HOMETOPIC%');
@@ -121,7 +113,7 @@ sub renderSrc {
   my $wikiLogoImage = Foswiki::Func::getPreferencesValue('WIKILOGOIMG');
 
   my $result = 
-    Foswiki::Func::getPreferencesValue('NATWEBLOGOIMG') || 
+    Foswiki::Func::getPreferencesValue('NATSKIN_LOGO') || 
     Foswiki::Func::getPreferencesValue('WEBLOGOIMG') || 
     $wikiLogoImage;
 
@@ -135,22 +127,9 @@ sub renderSrc {
 ###############################################################################
 sub renderLogo {
 
-  my $result;
-
-  my $name = renderName();
-
-  if ($name) {
-    $result = '<span class="natWebLogo natWebLogoName">$name</span>';
-  } else {
-    my $image = renderSrc();
-    if ($image) {
-      $result = '<img class="natWebLogo natWebLogoImage" src="$src" alt="$alt" />';
-    } else {
-      $result = '<span class="natWebLogo natWebLogoName">%WIKITOOLNAME%</span>';
-    }
-  }
-
-  return $result;
+  my $image = renderSrc();
+  return '<img class="natWebLogo natWebLogoImage" src="$src" alt="$alt" />' if $image;
+  return '<span class="natWebLogo natWebLogoName">%WIKITOOLNAME%</span>';
 }
 
 1;

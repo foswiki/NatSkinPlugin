@@ -425,7 +425,7 @@ sub init {
 <script src="%PUBURLPATH%/%SYSTEMWEB%/NatSkin/natskin.js"></script>
 HERE
 
-    Foswiki::Func::addToZone("skincss", 'NATSKIN', "\n" . $this->renderSkinStyle(), 'TABLEPLUGIN_default, JQUERYPLUGIN::UI, JQUERYPLUGIN::THEME');
+    Foswiki::Func::addToZone("skincss", 'NATSKIN', $this->renderSkinStyle(), 'TABLEPLUGIN_default, JQUERYPLUGIN::UI, JQUERYPLUGIN::THEME');
   }
 
   return 1;
