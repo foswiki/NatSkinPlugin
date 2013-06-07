@@ -234,19 +234,7 @@ sub renderView {
 
 ###############################################################################
 sub getEditUrl {
-  my $params = shift;
-
-  my $url = Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath("edit", undef, undef, 't' => time(),);
-  my $whiteBoard = Foswiki::Func::getPreferencesValue('WHITEBOARD');
-  my $editAction = Foswiki::Func::getPreferencesValue('EDITACTION') || '';
-
-  if (!Foswiki::Func::isTrue($whiteBoard, 1) || $editAction eq 'form') {
-    $url .= '&action=form';
-  } elsif ($editAction eq 'text') {
-    $url .= '&action=text';
-  }
-
-  return $url;
+  return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath("edit", undef, undef, 't' => time(),);
 }
 
 ###############################################################################
