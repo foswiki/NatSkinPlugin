@@ -448,7 +448,7 @@ sub renderSkinState {
   $theFormat =~ s/\$sidebar/$this->{skinState}{'sidebar'}/g;
   $theFormat = lc($theFormat);
 
-  return $theFormat;
+  return Foswiki::Func::decodeFormatTokens($theFormat);
 }
 
 ###############################################################################
@@ -518,7 +518,7 @@ sub renderVariations {
   }
 
   return '' unless @result;
-  return $theHeader.join($theSep, @result).$theFooter;
+  return Foswiki::Func::decodeFormatTokens($theHeader.join($theSep, @result).$theFooter);
 }
 
 ###############################################################################
@@ -527,7 +527,7 @@ sub renderStyles {
 
   # TODO: make it formatish
  
-  return join(', ', sort {$a cmp $b} keys %{$this->{knownStyles}});
+  return Foswiki::Func::decodeFormatTokens(join(', ', sort {$a cmp $b} keys %{$this->{knownStyles}}));
 }
 
 ###############################################################################

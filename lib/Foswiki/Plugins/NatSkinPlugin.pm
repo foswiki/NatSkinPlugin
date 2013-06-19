@@ -30,8 +30,8 @@ use Foswiki::Plugins::NatSkinPlugin::WebComponent ();
 our $baseWeb;
 our $baseTopic;
 
-our $VERSION = '3.99_006';
-our $RELEASE = '3.99_006';
+our $VERSION = '3.99_007';
+our $RELEASE = '3.99_007';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Support plugin for <nop>NatSkin';
 our $themeEngine;
