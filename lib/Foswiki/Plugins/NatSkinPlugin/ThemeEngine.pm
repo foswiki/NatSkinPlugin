@@ -344,7 +344,9 @@ sub init {
     }
 
     # store session prefs
-    Foswiki::Func::setPreferencesValue('SKIN', join(', ', @newSkin));
+    my $newSkin = join(', ', @newSkin);
+    writeDebug("setting SKIN to '$newSkin'");
+    Foswiki::Func::setPreferencesValue('SKIN', $newSkin);
 
     if ($this->{skinState}{"action"} eq 'view') {
       Foswiki::Func::loadTemplate('sidebar');

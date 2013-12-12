@@ -30,8 +30,8 @@ use Foswiki::Plugins::NatSkinPlugin::WebComponent ();
 our $baseWeb;
 our $baseTopic;
 
-our $VERSION = '3.99_007';
-our $RELEASE = '3.99_007';
+our $VERSION = '3.99_008';
+our $RELEASE = '3.99_008';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Support plugin for <nop>NatSkin';
 our $themeEngine;
@@ -88,15 +88,22 @@ sub initPlugin {
 
   Foswiki::Func::registerTagHandler('HTMLTITLE', sub {
     require Foswiki::Plugins::NatSkinPlugin::HtmlTitle;
-    return Foswiki::Plugins::NatSkinPlugin::HtmlTitle::render(@_);;
+    return Foswiki::Plugins::NatSkinPlugin::HtmlTitle::render(@_);
   });
 
-  if ($Foswiki::cfg{Plugins}{SubscribePlugin}{Enabled}) {
-    Foswiki::Func::registerTagHandler('IFSUBSCRIBED', sub {
-      require Foswiki::Plugins::NatSkinPlugin::Subscribe;
-      return Foswiki::Plugins::NatSkinPlugin::Subscribe::render(@_);;
-    });
-  }
+  Foswiki::Func::registerTagHandler('IFSUBSCRIBED', sub {
+    require Foswiki::Plugins::NatSkinPlugin::Subscribe;
+    return Foswiki::Plugins::NatSkinPlugin::Subscribe::render(@_);
+  });
+
+  Foswiki::Func::registerRESTHandler('subscribe', sub {
+    require Foswiki::Plugins::NatSkinPlugin::Subscribe;
+    return Foswiki::Plugins::NatSkinPlugin::Subscribe::restSubscribe(@_);
+  });
+  Foswiki::Func::registerRESTHandler('unsubscribe', sub {
+    require Foswiki::Plugins::NatSkinPlugin::Subscribe;
+    return Foswiki::Plugins::NatSkinPlugin::Subscribe::restSubscribe(@_);
+  });
 
   Foswiki::Func::registerTagHandler('WEBCOMPONENT', sub {
     return Foswiki::Plugins::NatSkinPlugin::WebComponent::render(@_);

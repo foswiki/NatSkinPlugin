@@ -22,11 +22,12 @@ use warnings;
 
 use Foswiki::Func ();
 use Foswiki::Contrib::MailerContrib ();
+use Error qw (:try);
 
 sub render {
   my ($session, $params, $theTopic, $theWeb) = @_;
 
-  Foswiki::Func::addToZone('skinjs', 'NATSKIN::SUBSCRIBE', <<'HERE', 'NATSKIN::JS');
+  Foswiki::Func::addToZone('skinjs', 'NATSKIN::SUBSCRIBE', <<'HERE', 'NATSKIN::JS, JQUERYPLUGIN::BLOCKUI');
 <script src="%PUBURLPATH%/%SYSTEMWEB%/NatSkin/subscribe.js"></script>
 HERE
 
@@ -41,6 +42,29 @@ HERE
   $else = "0" unless defined $else;
  
   return Foswiki::Contrib::MailerContrib::isSubscribedTo($web, $who, $topic) ? $then : $else;
+}
+
+sub restSubscribe {
+  my ($session, $plugin, $verb, $response) = @_;
+
+  my $request = Foswiki::Func::getRequestObject();
+
+  my $web = $session->{webName};
+  my $topic = $session->{topicName};
+
+  throw Error::Simple("topic does not exist")
+    unless Foswiki::Func::topicExists($web, $topic);
+
+  my $user = Foswiki::Func::getWikiName();
+
+  throw Error::Simple("bad subscriber")
+    if $user eq $Foswiki::cfg{DefaultUserWikiName};
+
+  if ($verb eq 'subscribe') {
+    Foswiki::Contrib::MailerContrib::changeSubscription($web, $user, $topic);
+  } else {
+    Foswiki::Contrib::MailerContrib::changeSubscription($web, $user, $topic, "-");
+  }
 }
 
 1;

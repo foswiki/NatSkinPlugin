@@ -32,7 +32,6 @@ sub render {
 
   my $baseTopic = $session->{topicName};
   my $baseWeb = $session->{webName};
-  my $sepString = $params->{sep} || $params->{separator} || '<span class="natSep"> | </span>';
 
   my $header = $params->{header} || '';
   my $footer = $params->{footer} || '';
@@ -75,6 +74,8 @@ sub render {
   $actionParams->{menu_header} = $params->{menu_header};
   $actionParams->{menu_footer} = $params->{menu_footer};
   $actionParams->{hiderestricted} = Foswiki::Func::isTrue($params->{hiderestricted}, 0);
+  $actionParams->{mode} = $params->{mode} || 'short';
+  $actionParams->{sep} = $params->{sep} || $params->{separator} || '<span class="natSep"> | </span>';
 
   # get restrictions
   my $restrictedActions = $params->{restrictedactions};
@@ -121,46 +122,7 @@ sub render {
   $actionParams->{action} = 'compare' if $isCompare;
   $actionParams->{action} = 'rdiff' if $isRdiff;
 
-  # menu can contain actions. so it goes first
-  $text =~ s/\$menu/renderMenu($actionParams)/ge;
-
-  # special actions
-  $text =~ s/\$(?:editform\b|action\(editform(?:,\s*(.*?))?\))/renderEditForm($actionParams, $1)/ge;
-  $text =~ s/\$(?:account\b|action\(account(?:,\s*(.*?))?\))/renderAccount($actionParams, $1)/ge;
-  $text =~ s/\$(?:diff\b|action\(diff(?:,\s*(.*?))?\))/renderDiff($actionParams, $1)/ge;
-  $text =~ s/\$(?:edit\b|action\(edit(?:,\s*(.*?))?\))/renderEdit($actionParams, $1)/ge;
-  $text =~ s/\$(?:view\b|action\(view(?:,\s*(.*?))?\))/renderView($actionParams, $1)/ge;
-  $text =~ s/\$(?:first\b|action\(first(?:,\s*(.*?))?\))/renderFirst($actionParams, $1)/ge;
-  $text =~ s/\$(?:last\b|action\(last(?:,\s*(.*?))?\))/renderLast($actionParams, $1)/ge;
-  $text =~ s/\$(?:login\b|action\(login(?:,\s*(.*?))?\))/renderLogin($actionParams, $1)/ge;
-  $text =~ s/\$(?:next\b|action\(next(?:,\s*(.*?))?\))/renderNext($actionParams, $1)/ge;
-  $text =~ s/\$(?:prev\b|action\(prev(?:,\s*(.*?))?\))/renderPrev($actionParams, $1)/ge;
-  $text =~ s/\$(?:raw\b|action\(raw(?:,\s*(.*?))?\))/renderRaw($actionParams, $1)/ge;
-  $text =~ s/(\$sep)?\$(?:logout\b|action\(logout(?:,\s*(.*?))?\))/renderLogout($actionParams, $1, $2)/ge;
-
-  # normal actions / backwards compatibility
-  $text =~ s/\$(attach|copytopic|delete|editsettings|edittext|help|history|more|move|new|pdf|print|register|restore|users)\b/renderAction($1, $actionParams)/ge;
-
-  # generic actions
-  $text =~ s/\$action\((.*?)(?:,\s*(.*?))?\)/renderAction($1, $actionParams, undef, undef, $2)/ge;
-
-  # action urls
-  $text =~ s/\$diffurl\b/getDiffUrl($actionParams)/ge;
-  $text =~ s/\$editurl\b/getEditUrl($actionParams)/ge;
-  $text =~ s/\$restoreurl\b/getRestoreUrl($actionParams)/ge;
-  $text =~ s/\$firsturl\b/getFirstUrl($actionParams)/ge;
-  $text =~ s/\$prevurl\b/getPrevUrl($actionParams)/ge;
-  $text =~ s/\$nexturl\b/getNextUrl($actionParams)/ge;
-  $text =~ s/\$lasturl\b/getLastUrl($actionParams)/ge;
-  $text =~ s/\$helpurl\b/getHelpUrl($actionParams)/ge;
-  $text =~ s/\$loginurl\b/getLoginUrl($actionParams)/ge;
-  $text =~ s/\$logouturl/getLogoutUrl($actionParams)/ge;
-  $text =~ s/\$registerurl/getRegisterUrl($actionParams)/ge;
-  $text =~ s/\$pdfurl\b/getPdfUrl($actionParams)/ge;
-
-  $text =~ s/\$sep\b/$sepString/g;
-  $text =~ s/\$restorerev\b/getRestoreRev($actionParams)/ge;
-  $text =~ s/\$rev\b/getRev($actionParams)/ge;
+  $text = formatResult($text, $actionParams);
 
   return '' unless $text;
 
@@ -168,8 +130,58 @@ sub render {
 }
 
 ###############################################################################
+sub formatResult {
+  my ($text, $params, $mode) = @_;
+
+  $mode ||= $params->{mode} || 'short';
+
+  # menu can contain actions. so it goes first
+  $text =~ s/\$menu/renderMenu($params, $mode)/ge;
+
+  # special actions
+  $text =~ s/\$(?:editform\b|action\(editform(?:,\s*(.*?))?\))/renderEditForm($params, $1, $mode)/ge;
+  $text =~ s/\$(?:account\b|action\(account(?:,\s*(.*?))?\))/renderAccount($params, $1, $mode)/ge;
+  $text =~ s/\$(?:diff\b|action\(diff(?:,\s*(.*?))?\))/renderDiff($params, $1, $mode)/ge;
+  $text =~ s/\$(?:edit\b|action\(edit(?:,\s*(.*?))?\))/renderEdit($params, $1, $mode)/ge;
+  $text =~ s/\$(?:view\b|action\(view(?:,\s*(.*?))?\))/renderView($params, $1, $mode)/ge;
+  $text =~ s/\$(?:first\b|action\(first(?:,\s*(.*?))?\))/renderFirst($params, $1, $mode)/ge;
+  $text =~ s/\$(?:last\b|action\(last(?:,\s*(.*?))?\))/renderLast($params, $1, $mode)/ge;
+  $text =~ s/\$(?:login\b|action\(login(?:,\s*(.*?))?\))/renderLogin($params, $1, $mode)/ge;
+  $text =~ s/\$(?:next\b|action\(next(?:,\s*(.*?))?\))/renderNext($params, $1, $mode)/ge;
+  $text =~ s/\$(?:prev\b|action\(prev(?:,\s*(.*?))?\))/renderPrev($params, $1, $mode)/ge;
+  $text =~ s/\$(?:raw\b|action\(raw(?:,\s*(.*?))?\))/renderRaw($params, $1, $mode)/ge;
+  $text =~ s/(\$sep)?\$(?:logout\b|action\(logout(?:,\s*(.*?))?\))/renderLogout($params, $1, $2, $mode)/ge;
+
+  # normal actions / backwards compatibility
+  $text =~ s/\$(attach|copytopic|delete|editsettings|edittext|help|history|more|move|new|pdf|print|register|restore|users)\b/renderAction($1, $params, undef, undef, undef, $mode)/ge;
+
+  # generic actions
+  $text =~ s/\$action\((.*?)(?:,\s*(.*?))?\)/renderAction($1, $params, undef, undef, $2, $mode)/ge;
+
+  # action urls
+  $text =~ s/\$diffurl\b/getDiffUrl($params)/ge;
+  $text =~ s/\$editurl\b/getEditUrl($params)/ge;
+  $text =~ s/\$restoreurl\b/getRestoreUrl($params)/ge;
+  $text =~ s/\$firsturl\b/getFirstUrl($params)/ge;
+  $text =~ s/\$prevurl\b/getPrevUrl($params)/ge;
+  $text =~ s/\$nexturl\b/getNextUrl($params)/ge;
+  $text =~ s/\$lasturl\b/getLastUrl($params)/ge;
+  $text =~ s/\$helpurl\b/getHelpUrl($params)/ge;
+  $text =~ s/\$loginurl\b/getLoginUrl($params)/ge;
+  $text =~ s/\$logouturl/getLogoutUrl($params)/ge;
+  $text =~ s/\$registerurl/getRegisterUrl($params)/ge;
+  $text =~ s/\$pdfurl\b/getPdfUrl($params)/ge;
+
+  $text =~ s/\$sep\b/$params->{sep}/g;
+  $text =~ s/\$restorerev\b/getRestoreRev($params)/ge;
+  $text =~ s/\$rev\b/getRev($params)/ge;
+
+  return $text;
+}
+
+###############################################################################
 sub renderAction {
-  my ($action, $params, $template, $restrictedTemplate, $context) = @_;
+  my ($action, $params, $template, $restrictedTemplate, $context, $mode) = @_;
 
   #print STDERR "called renderAction($action,".($context?"'".$context."'":'').")\n";
 
@@ -178,40 +190,57 @@ sub renderAction {
   $template = uc($action)."_ACTION" unless defined $template;
   $restrictedTemplate = uc($action)."_ACTION_RESTRICTED" unless defined $restrictedTemplate;
 
+  my $result = '';
   if ($params->{isRestrictedAction}{$action}) {
     return '' if $params->{hiderestricted};
-    return Foswiki::Func::expandTemplate($restrictedTemplate);
+    $result = Foswiki::Func::expandTemplate($restrictedTemplate);
+  } else {
+    $result = Foswiki::Func::expandTemplate($template);
   }
 
-  return Foswiki::Func::expandTemplate($template);
+  my $label = getLabelForAction(uc($action), $mode);
+  $result =~ s/\$label/$label/g;
+
+  return $result;
 }
 
 ###############################################################################
 sub renderEdit {
-  my ($params, $context) = @_;
+  my ($params, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
   my $result = '';
+  my $label;
   my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
 
   if ($params->{isRestrictedAction}{'edit'}) {
     return '' if $params->{hiderestricted};
-    return ($themeEngine->{skinState}{"history"})?
-      Foswiki::Func::expandTemplate('RESTORE_ACTION_RESTRICTED'):
-      Foswiki::Func::expandTemplate('EDIT_ACTION_RESTRICTED');
+    if($themeEngine->{skinState}{"history"}) {
+      $result = Foswiki::Func::expandTemplate('RESTORE_ACTION_RESTRICTED');
+      $label = getLabelForAction("RESTORE", $mode);
+    } else {
+      $result = Foswiki::Func::expandTemplate('EDIT_ACTION_RESTRICTED');
+      $label = getLabelForAction("EDIT", $mode);
+    }
   } else {
-    return ($themeEngine->{skinState}{"history"})?
-      Foswiki::Func::expandTemplate('RESTORE_ACTION'):
-      Foswiki::Func::expandTemplate('EDIT_ACTION');
+    if($themeEngine->{skinState}{"history"}) {
+      $result = Foswiki::Func::expandTemplate('RESTORE_ACTION');
+      $label = getLabelForAction("RESTORE", $mode);
+    } else {
+      $result = Foswiki::Func::expandTemplate('EDIT_ACTION');
+      $label = getLabelForAction("EDIT", $mode);
+    }
   }
+
+  $result =~ s/\$label/$label/g;
 
   return $result;
 }
 
 ###############################################################################
 sub renderView {
-  my ($params, $context) = @_;
+  my ($params, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
@@ -220,14 +249,17 @@ sub renderView {
 
   if ($params->{isRestrictedAction}{'view'}) {
     return '' if $params->{hiderestricted};
-    return Foswiki::Func::expandTemplate('VIEW_ACTION_RESTRICTED');
+    $result = Foswiki::Func::expandTemplate('VIEW_ACTION_RESTRICTED');
   } else {
     if ($themeEngine->{skinState}{"action"} eq 'view' ) {
       return '';
     } else {
-      return Foswiki::Func::expandTemplate('VIEW_ACTION');
+      $result = Foswiki::Func::expandTemplate('VIEW_ACTION');
     }
   }
+  
+  my $label = getLabelForAction("VIEW", $mode);
+  $result =~ s/\$label/$label/g;
 
   return $result;
 }
@@ -260,29 +292,40 @@ sub getRestoreUrl {
 
 ###############################################################################
 sub renderRaw {
-  my ($params, $context) = @_;
+  my ($params, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
   my $result = '';
+  my $label;
 
   if ($params->{isRestrictedAction}{'raw'}) {
     return '' if $params->{hiderestricted};
-    return ($params->{isRaw})?
-      Foswiki::Func::expandTemplate('VIEW_ACTION_RESTRICTED'):
-      Foswiki::Func::expandTemplate('RAW_ACTION_RESTRICTED');
+    if ($params->{isRaw}) {
+      $result = Foswiki::Func::expandTemplate('VIEW_ACTION_RESTRICTED');
+      $label = getLabelForAction("VIEW", $mode);
+    } else {
+      $result = Foswiki::Func::expandTemplate('RAW_ACTION_RESTRICTED');
+      $label = getLabelForAction("RAW", $mode);
+    }
   } else {
-    return ($params->{isRaw})?
-      Foswiki::Func::expandTemplate('VIEW_ACTION'):
-      Foswiki::Func::expandTemplate('RAW_ACTION');
+    if($params->{isRaw}) {
+      $result = Foswiki::Func::expandTemplate('VIEW_ACTION');
+      $label = getLabelForAction("VIEW", $mode);
+    } else {
+      $result = Foswiki::Func::expandTemplate('RAW_ACTION');
+      $label = getLabelForAction("RAW", $mode);
+    }
   }
+
+  $result =~ s/\$label/$label/g;
 
   return $result;
 }
 
 ###############################################################################
 sub renderMenu {
-  my $params = shift;
+  my ($params, $mode) = @_;
 
   my $result = '';
 
@@ -299,7 +342,10 @@ sub renderMenu {
     $result = $header.$menu.$footer;
   }
 
-  return $result;
+  my $label = getLabelForAction("MENU", $mode);
+  $result =~ s/\$label/$label/g;
+
+  return formatResult($result, $params, "long");
 }
 
 ###############################################################################
@@ -327,27 +373,43 @@ sub getPdfUrl {
 }
 
 ###############################################################################
+sub getLabelForAction {
+  my ($action, $mode) = @_;
+
+  my $label = Foswiki::Func::expandTemplate($action."_".uc($mode));
+  $label = Foswiki::Func::expandTemplate($action) unless $label;
+
+  return $label;
+}
+
+###############################################################################
 sub renderEditForm {
-  my ($params, $context) = @_;
+  my ($params, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
+
+  my $result = '';
 
   my $session = $Foswiki::Plugins::SESSION;
   my ($topicObj) = Foswiki::Func::readTopic($params->{baseWeb}, $params->{baseTopic});
   if ($topicObj && $topicObj->getFormName) {
     if ($params->{isRestrictedAction}{'editform'}) {
       return '' if $params->{hiderestricted};
-      return Foswiki::Func::expandTemplate("EDITFORM_ACTION_RESTRICTED");
+      $result = Foswiki::Func::expandTemplate("EDITFORM_ACTION_RESTRICTED");
     }
-    return Foswiki::Func::expandTemplate("EDITFORM_ACTION");
+    $result = Foswiki::Func::expandTemplate("EDITFORM_ACTION");
+
   }
 
-  return '';
+  my $label = getLabelForAction("EDITFORM", $mode);
+  $result =~ s/\$label/$label/g;
+
+  return $result;
 }
 
 ###############################################################################
 sub renderAccount {
-  my ($params, $context) = @_;
+  my ($params, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
@@ -360,6 +422,9 @@ sub renderAccount {
   } else {
     $result = Foswiki::Func::expandTemplate('ACCOUNT_ACTION_RESTRICTED');
   }
+
+  my $label = getLabelForAction("ACCOUNT", $mode);
+  $result =~ s/\$label/$label/g;
 
   return $result;
 }
@@ -378,7 +443,7 @@ sub getHelpUrl {
 
 ###############################################################################
 sub renderFirst {
-  my ($params, $context) = @_;
+  my ($params, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
@@ -389,6 +454,9 @@ sub renderFirst {
   } else {
     $result = Foswiki::Func::expandTemplate('FIRST_ACTION');
   }
+
+  my $label = getLabelForAction("FIRST", $mode);
+  $result =~ s/\$label/$label/g;
 
   return $result;
 }
@@ -409,7 +477,7 @@ sub getFirstUrl {
 
 ###############################################################################
 sub renderLogin {
-  my ($params, $context) = @_;
+  my ($params, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
@@ -419,10 +487,14 @@ sub renderLogin {
   if ($loginUrl) {
     if ($params->{isRestrictedAction}{'login'}) {
       return '' if $params->{hiderestricted};
-      return Foswiki::Func::expandTemplate('LOG_IN_ACTION_RESTRICTED');
+      $result = Foswiki::Func::expandTemplate('LOG_IN_ACTION_RESTRICTED');
+    } else {
+      $result = Foswiki::Func::expandTemplate('LOG_IN_ACTION');
     }
-    return Foswiki::Func::expandTemplate('LOG_IN_ACTION');
   }
+
+  my $label = getLabelForAction("LOG_IN", $mode);
+  $result =~ s/\$label/$label/g;
 
   return $result;
 }
@@ -430,6 +502,7 @@ sub renderLogin {
 ###############################################################################
 sub getLoginUrl {
   my $session = $Foswiki::Plugins::SESSION;
+
   return '' unless $session;
 
   my $loginManager = $session->{loginManager} || # TMwiki-4.2
@@ -443,7 +516,7 @@ sub getLoginUrl {
 
 ###############################################################################
 sub renderLogout {
-  my ($params, $sep, $context) = @_;
+  my ($params, $sep, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
@@ -455,10 +528,14 @@ sub renderLogout {
   if ($logoutUrl) {
     if ($params->{isRestrictedAction}{'logout'}) {
       return '' if $params->{hiderestricted};
-      return $sep.Foswiki::Func::expandTemplate('LOG_OUT_ACTION_RESTRICTED');
+      $result = $sep.Foswiki::Func::expandTemplate('LOG_OUT_ACTION_RESTRICTED');
+    } else {
+      $result = $sep.Foswiki::Func::expandTemplate('LOG_OUT_ACTION');
     }
-    return $sep.Foswiki::Func::expandTemplate('LOG_OUT_ACTION');
   }
+
+  my $label = getLabelForAction("LOG_OUT", $mode);
+  $result =~ s/\$label/$label/g;
 
   return $result;
 }
@@ -494,13 +571,18 @@ sub getRegisterUrl {
 
 ###############################################################################
 sub renderLast {
-  my ($params, $context) = @_;
+  my ($params, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
-  return ($params->{isRestrictedAction}{'last'} || getCurRev($params) == getMaxRev($params))?
+  my $result = ($params->{isRestrictedAction}{'last'} || getCurRev($params) == getMaxRev($params))?
     Foswiki::Func::expandTemplate('LAST_ACTION_RESTRICTED'):
     Foswiki::Func::expandTemplate('LAST_ACTION');
+
+  my $label = getLabelForAction("LAST", $mode);
+  $result =~ s/\$label/$label/g;
+
+  return $result;
 }
 
 ###############################################################################
@@ -524,13 +606,18 @@ sub getLastUrl {
 
 ###############################################################################
 sub renderNext {
-  my ($params, $context) = @_;
+  my ($params, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
-  return ($params->{isRestrictedAction}{'next'} || getNextRev($params) > getMaxRev($params))?
+  my $result = ($params->{isRestrictedAction}{'next'} || getNextRev($params) > getMaxRev($params))?
     Foswiki::Func::expandTemplate('NEXT_ACTION_RESTRICTED'):
     Foswiki::Func::expandTemplate('NEXT_ACTION');
+
+  my $label = getLabelForAction("NEXT", $mode);
+  $result =~ s/\$label/$label/g;
+
+  return $result;
 }
 
 ###############################################################################
@@ -557,13 +644,18 @@ sub getNextUrl {
 
 ###############################################################################
 sub renderPrev {
-  my ($params, $context) = @_;
+  my ($params, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
-  return ($params->{isRestrictedAction}{'prev'} || getPrevRev($params) <= 1)?
+  my $result = ($params->{isRestrictedAction}{'prev'} || getPrevRev($params) <= 1)?
     Foswiki::Func::expandTemplate('PREV_ACTION_RESTRICTED'):
     Foswiki::Func::expandTemplate('PREV_ACTION');
+
+  my $label = getLabelForAction("PREV", $mode);
+  $result =~ s/\$label/$label/g;
+
+  return $result;
 }
 
 ###############################################################################
@@ -596,16 +688,22 @@ sub getPrevUrl {
 
 ###############################################################################
 sub renderDiff {
-  my ($params, $context) = @_;
+  my ($params, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
+  my $result = '';
   if ($params->{isRestrictedAction}{'diff'}) {
-      return '' if $params->{hiderestricted};
-      return Foswiki::Func::expandTemplate('DIFF_ACTION_RESTRICTED');
+    return '' if $params->{hiderestricted};
+    $result = Foswiki::Func::expandTemplate('DIFF_ACTION_RESTRICTED');
+  } else {
+    $result = Foswiki::Func::expandTemplate('DIFF_ACTION');
   }
 
-  return Foswiki::Func::expandTemplate('DIFF_ACTION');
+  my $label = getLabelForAction("DIFF", $mode);
+  $result =~ s/\$label/$label/g;
+
+  return $result;
 }
 
 ###############################################################################
