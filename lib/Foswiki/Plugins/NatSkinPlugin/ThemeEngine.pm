@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 # 
-# Copyright (C) 2003-2013 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2014 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -42,7 +42,7 @@ sub new {
   #writeDebug("new themegine");
 
   my $this = {
-    defaultStyle  => $Foswiki::cfg{NatSkin}{Style} || 'jazzynote',
+    defaultStyle  => $Foswiki::cfg{NatSkin}{Style} || 'customato',
     defaultVariation => $Foswiki::cfg{NatSkin}{Variation} || 'off',
     defaultLayout => $Foswiki::cfg{NatSkin}{Layout} || 'fixed',
     defaultMenu => Foswiki::Func::isTrue($Foswiki::cfg{NatSkin}{Menu}, 1),
@@ -57,15 +57,24 @@ sub new {
 
   # make sure there's a default record
   unless (defined $Foswiki::cfg{NatSkin}{Themes}) {
-    $Foswiki::cfg{NatSkin}{Themes}{JazzyNote} = {
-      baseUrl => '%PUBURLPATH%/%SYSTEMWEB%/JazzyNoteTheme',
-      styles => {
-        jazzynote => 'JazzyNoteStyle.css' 
+    $Foswiki::cfg{NatSkin}{Themes} = {
+      JazzyNote => {
+        baseUrl => '%PUBURLPATH%/%SYSTEMWEB%/JazzyNoteTheme',
+        styles => {
+          jazzynote => 'JazzyNoteStyle.css' 
+        },
+        variations => {
+          green => 'GreenVariation.css', 
+          red => 'RedVariation.css' 
+        }
       },
-      variations => {
-        green => 'GreenVariation.css', 
-        red => 'RedVariation.css' 
-      }
+      Customato => {
+        baseUrl => '%PUBURLPATH%/%SYSTEMWEB%/CustomatoTheme',
+        logoUrl => '%PUBURLPATH%/%SYSTEMWEB%/CustomatoTheme/foswiki-logo.png',
+        styles => {
+           whity => 'customato.css',
+        }
+      },
     };
   };
 
@@ -84,7 +93,9 @@ sub new {
 sub getThemeRecord {
   my ($this, $theStyle) = @_;
 
-  $theStyle ||= $this->{defaultStyle} ;
+  unless (defined $theStyle) {
+    $theStyle = lc($this->{skinState}{style});
+  }
 
   my $themeId = $this->{knownStyles}{lc($theStyle)};
   return unless defined $themeId;

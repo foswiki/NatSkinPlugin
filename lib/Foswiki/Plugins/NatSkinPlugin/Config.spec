@@ -5,7 +5,7 @@
 # **STRING**
 # This is the default style used for this site. Note, that theming and layout can be configured using preference settings
 # per web, topic and user thus overriding settings specified here.
-$Foswiki::cfg{NatSkin}{Style} = 'jazzynote';
+$Foswiki::cfg{NatSkin}{Style} = 'customato';
 
 # **STRING**
 # Choose a default style variation. Note, that only variations shipped within the same theme package can be used,

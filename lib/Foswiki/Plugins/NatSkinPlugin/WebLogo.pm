@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 # 
-# Copyright (C) 2003-2013 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2014 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -45,6 +45,7 @@ sub render {
 
   my $format = $params->{format};
   $format = '<a href="$url" title="$alt">$logo</a>' unless defined $format;
+  my $height = $params->{height} || 50;
 
   my $result = $format;
   $result =~ s/\$logo/renderLogo()/ge;
@@ -54,6 +55,7 @@ sub render {
   $result =~ s/\$variation/renderVariation()/ge;
   $result =~ s/\$style/renderStyle()/ge;
   $result =~ s/\$alt/renderAlt()/ge;
+  $result =~ s/\$height/$height/g;
   $result =~ s/\$perce?nt/\%/go;
   $result =~ s/\$nop//go;
   $result =~ s/\$n/\n/go;
@@ -117,9 +119,12 @@ sub renderSrc {
     Foswiki::Func::getPreferencesValue('WEBLOGOIMG') || 
     $wikiLogoImage;
 
-  # HACK: override ProjectLogos with own version
   $result =~ s/\%WIKILOGOIMG%/$wikiLogoImage/g;
-  $result =~ s/ProjectLogos\/foswiki-logo.*/NatSkin\/foswiki-logo.png/g;
+
+  # HACK: override ProjectLogos with own version
+  my $theme = Foswiki::Plugins::NatSkinPlugin::getThemeEngine->getThemeRecord;
+  my $logoUrl = $theme->{logoUrl} || '%PUBURLPATH%/%SYSTEMWEB%/NatSkin/foswiki-logo.png';
+  $result = $logoUrl if $result =~ /ProjectLogos\/foswiki-logo/;
 
   return $result;
 }
@@ -128,7 +133,7 @@ sub renderSrc {
 sub renderLogo {
 
   my $image = renderSrc();
-  return '<img class="natWebLogo natWebLogoImage" src="$src" alt="$alt" />' if $image;
+  return '<img class="natWebLogo natWebLogoImage" src="$src" alt="$alt" height="$height" />' if $image;
   return '<span class="natWebLogo natWebLogoName">%WIKITOOLNAME%</span>';
 }
 
