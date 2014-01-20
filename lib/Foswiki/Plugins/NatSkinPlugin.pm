@@ -116,6 +116,8 @@ sub initPlugin {
   Foswiki::Plugins::NatSkinPlugin::Utils::init();
   Foswiki::Plugins::NatSkinPlugin::WebComponent::init();
 
+  #print STDERR "Perl Version $]\n";
+
   return 1;
 }
 

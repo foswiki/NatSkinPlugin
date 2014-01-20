@@ -60,6 +60,7 @@ sub new {
     $Foswiki::cfg{NatSkin}{Themes} = {
       JazzyNote => {
         baseUrl => '%PUBURLPATH%/%SYSTEMWEB%/JazzyNoteTheme',
+        logoUrl => '%PUBURLPATH%/%SYSTEMWEB%/JazzyNoteTheme/jazzynote-logo.png',
         styles => {
           jazzynote => 'JazzyNoteStyle.css' 
         },
@@ -72,7 +73,7 @@ sub new {
         baseUrl => '%PUBURLPATH%/%SYSTEMWEB%/CustomatoTheme',
         logoUrl => '%PUBURLPATH%/%SYSTEMWEB%/CustomatoTheme/foswiki-logo.png',
         styles => {
-           whity => 'customato.css',
+           customato => 'customato.css',
         }
       },
     };
@@ -163,9 +164,8 @@ sub init {
   my $prefStyle =
        Foswiki::Func::getSessionValue('NATSKIN_STYLE')
     || Foswiki::Func::getPreferencesValue('NATSKIN_STYLE')
-    || Foswiki::Func::getPreferencesValue('SKINSTYLE')
-    ||    # backwards compatibility
-    $this->{defaultStyle};
+    || Foswiki::Func::getPreferencesValue('SKINSTYLE') # backwards compatibility
+    || $this->{defaultStyle};
 
   $prefStyle =~ s/^\s+//;
   $prefStyle =~ s/\s+$//;
@@ -230,9 +230,8 @@ sub init {
   my $prefStyleSideBar =
        Foswiki::Func::getSessionValue('NATSKIN_SIDEBAR')
     || Foswiki::Func::getPreferencesValue('NATSKIN_SIDEBAR')
-    || Foswiki::Func::getPreferencesValue('STYLESIDEBAR')
-    ||    # backwards compatibility
-    $this->{defaultStyleSideBar};
+    || Foswiki::Func::getPreferencesValue('STYLESIDEBAR') # backwards compatibility
+    || $this->{defaultStyleSideBar};
 
   $prefStyleSideBar =~ s/^\s+//;
   $prefStyleSideBar =~ s/\s+$//;
@@ -251,9 +250,8 @@ sub init {
   my $prefStyleVariation =
        Foswiki::Func::getSessionValue('NATSKIN_VARIATION')
     || Foswiki::Func::getPreferencesValue('NATSKIN_VARIATION')
-    || Foswiki::Func::getPreferencesValue('STYLEVARIATION')
-    ||    # backwards compatibility
-    $this->{defaultVariation};
+    || Foswiki::Func::getPreferencesValue('STYLEVARIATION') # backwards compatibility
+    || $this->{defaultVariation};
 
   $prefStyleVariation =~ s/^\s+//;
   $prefStyleVariation =~ s/\s+$//;
