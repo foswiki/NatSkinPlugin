@@ -1,6 +1,6 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
-# 
+#
 # Copyright (C) 2013-2014 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
@@ -11,7 +11,7 @@
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details, published at 
+# GNU General Public License for more details, published at
 # http://www.gnu.org/copyleft/gpl.html
 #
 ###############################################################################
@@ -40,7 +40,7 @@ HERE
 
   my $else = $params->{else};
   $else = "0" unless defined $else;
- 
+
   return Foswiki::Contrib::MailerContrib::isSubscribedTo($web, $who, $topic) ? $then : $else;
 }
 

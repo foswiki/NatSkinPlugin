@@ -1,6 +1,6 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
-# 
+#
 # Copyright (C) 2003-2014 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
@@ -11,7 +11,7 @@
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details, published at 
+# GNU General Public License for more details, published at
 # http://www.gnu.org/copyleft/gpl.html
 #
 ###############################################################################
@@ -25,7 +25,7 @@ use Foswiki::Plugins ();
 use Foswiki::Plugins::NatSkinPlugin::Utils ();
 use Foswiki::Plugins::JQueryPlugin ();
 
-use constant DEBUG => 0; # toggle me
+use constant DEBUG => 0;    # toggle me
 
 ###############################################################################
 # static
@@ -34,7 +34,6 @@ sub writeDebug {
   print STDERR "- NatSkinPlugin::ThemeEngine - " . $_[0] . "\n";
 }
 
-
 ###############################################################################
 sub new {
   my $class = shift;
@@ -42,7 +41,7 @@ sub new {
   #writeDebug("new themegine");
 
   my $this = {
-    defaultStyle  => $Foswiki::cfg{NatSkin}{Style} || 'customato',
+    defaultStyle => $Foswiki::cfg{NatSkin}{Style} || 'customato',
     defaultVariation => $Foswiki::cfg{NatSkin}{Variation} || 'off',
     defaultLayout => $Foswiki::cfg{NatSkin}{Layout} || 'fixed',
     defaultMenu => Foswiki::Func::isTrue($Foswiki::cfg{NatSkin}{Menu}, 1),
@@ -51,7 +50,7 @@ sub new {
   };
   bless($this, $class);
 
-  my $noSideBarActions = $Foswiki::cfg{NatSkin}{NoSideBarActions} 
+  my $noSideBarActions = $Foswiki::cfg{NatSkin}{NoSideBarActions}
     || 'edit, manage, login, logon, oops';
   %{$this->{noSideBarActions}} = map { $_ => 1 } split(/\s*,\s*/, $noSideBarActions);
 
@@ -62,26 +61,26 @@ sub new {
         baseUrl => '%PUBURLPATH%/%SYSTEMWEB%/JazzyNoteTheme',
         logoUrl => '%PUBURLPATH%/%SYSTEMWEB%/JazzyNoteTheme/jazzynote-logo.png',
         styles => {
-          jazzynote => 'JazzyNoteStyle.css' 
+          jazzynote => 'JazzyNoteStyle.css'
         },
         variations => {
-          green => 'GreenVariation.css', 
-          red => 'RedVariation.css' 
+          green => 'GreenVariation.css',
+          red => 'RedVariation.css'
         }
       },
       Customato => {
         baseUrl => '%PUBURLPATH%/%SYSTEMWEB%/CustomatoTheme',
         logoUrl => '%PUBURLPATH%/%SYSTEMWEB%/CustomatoTheme/foswiki-logo.png',
         styles => {
-           customato => 'customato.css',
+          customato => 'customato.css',
         }
       },
     };
-  };
+  }
 
   # index which style is part of which theme
   $this->{knownStyles} = ();
-  while (my ($themeId, $themeRecord) =  each %{$Foswiki::cfg{NatSkin}{Themes}}) {
+  while (my ($themeId, $themeRecord) = each %{$Foswiki::cfg{NatSkin}{Themes}}) {
     foreach my $style (keys %{$themeRecord->{styles}}) {
       $this->{knownStyles}{lc($style)} = $themeId;
     }
@@ -164,7 +163,7 @@ sub init {
   my $prefStyle =
        Foswiki::Func::getSessionValue('NATSKIN_STYLE')
     || Foswiki::Func::getPreferencesValue('NATSKIN_STYLE')
-    || Foswiki::Func::getPreferencesValue('SKINSTYLE') # backwards compatibility
+    || Foswiki::Func::getPreferencesValue('SKINSTYLE')    # backwards compatibility
     || $this->{defaultStyle};
 
   $prefStyle =~ s/^\s+//;
@@ -180,7 +179,7 @@ sub init {
     $theStyle = 'off';
   } else {
     $found = 0;
-    foreach my $style (keys %{ $this->{knownStyles} }) {
+    foreach my $style (keys %{$this->{knownStyles}}) {
       if ($style eq $theStyle || lc($style) eq lc($theStyle)) {
         $found = 1;
         $theStyle = $style;
@@ -216,12 +215,8 @@ sub init {
   $this->{skinState}{'layout'} = $theLayout;
 
   # handle menu
-  my $prefMenu = Foswiki::Func::isTrue(
-       Foswiki::Func::getSessionValue('NATSKIN_MENU')
-    || Foswiki::Func::getPreferencesValue('NATSKIN_MENU')
-    || Foswiki::Func::getPreferencesValue('STYLEBUTTONS')
-    , $this->{defaultMenu}
-  );
+  my $prefMenu =
+    Foswiki::Func::isTrue(Foswiki::Func::getSessionValue('NATSKIN_MENU') || Foswiki::Func::getPreferencesValue('NATSKIN_MENU') || Foswiki::Func::getPreferencesValue('STYLEBUTTONS'), $this->{defaultMenu});
   $theMenu = Foswiki::Func::isTrue($theMenu, $prefMenu);
   $doStickyMenu = 1 if $theMenu ne $prefMenu;
   $this->{skinState}{'menu'} = $theMenu;
@@ -230,7 +225,7 @@ sub init {
   my $prefStyleSideBar =
        Foswiki::Func::getSessionValue('NATSKIN_SIDEBAR')
     || Foswiki::Func::getPreferencesValue('NATSKIN_SIDEBAR')
-    || Foswiki::Func::getPreferencesValue('STYLESIDEBAR') # backwards compatibility
+    || Foswiki::Func::getPreferencesValue('STYLESIDEBAR')    # backwards compatibility
     || $this->{defaultStyleSideBar};
 
   $prefStyleSideBar =~ s/^\s+//;
@@ -250,7 +245,7 @@ sub init {
   my $prefStyleVariation =
        Foswiki::Func::getSessionValue('NATSKIN_VARIATION')
     || Foswiki::Func::getPreferencesValue('NATSKIN_VARIATION')
-    || Foswiki::Func::getPreferencesValue('STYLEVARIATION') # backwards compatibility
+    || Foswiki::Func::getPreferencesValue('STYLEVARIATION')    # backwards compatibility
     || $this->{defaultVariation};
 
   $prefStyleVariation =~ s/^\s+//;
@@ -297,7 +292,7 @@ sub init {
   }
 
   # temporary toggles
-  $theToggleSideBar = 'off' if $this->{noSideBarActions}{ $this->{skinState}{'action'} };
+  $theToggleSideBar = 'off' if $this->{noSideBarActions}{$this->{skinState}{'action'}};
 
   # switch the sidebar off if we need to authenticate
   if ($this->{noSideBarActions}{login}) {
@@ -373,12 +368,12 @@ sub init {
 
   # set context
   my $context = Foswiki::Func::getContext();
-  foreach my $key (keys %{ $this->{skinState} }) {
+  foreach my $key (keys %{$this->{skinState}}) {
     my $val = $this->{skinState}{$key};
     next unless defined($val);
 
-    $val = $val?'on':'off' if $key eq 'menu';
-    
+    $val = $val ? 'on' : 'off' if $key eq 'menu';
+
     my $var = lc('natskin_' . $key . '_' . $val);
     writeDebug("setting context $var");
     $context->{$var} = 1;
@@ -398,6 +393,7 @@ sub init {
       $context->{msie8} = 1 if $agent =~ /MSIE 8/;
       $context->{msie9} = 1 if $agent =~ /MSIE 9/;
       $context->{msie10} = 1 if $agent =~ /MSIE 10/;
+      $context->{msie11} = 1 if $agent =~ /MSIE 11/;
     } elsif ($agent =~ /Chrome/) {
       $context->{chrome} = 1;
     } elsif ($agent =~ /Firefox/) {
@@ -415,17 +411,27 @@ sub init {
     $context->{UnsupportedBrowser} = 1 if $context->{msie7} && $Foswiki::cfg{NatSkin}{DeprecateIE7};
     $context->{UnsupportedBrowser} = 1 if $context->{msie8} && $Foswiki::cfg{NatSkin}{DeprecateIE8};
     $context->{UnsupportedBrowser} = 1 if $context->{msie9} && $Foswiki::cfg{NatSkin}{DeprecateIE9};
+    $context->{UnsupportedBrowser} = 1 if $context->{msie10} && $Foswiki::cfg{NatSkin}{DeprecateIE10};
+    $context->{UnsupportedBrowser} = 1 if $context->{msie11} && $Foswiki::cfg{NatSkin}{DeprecateIE11};
 
-    my %deprecatedBrowsers = map {$_ => 1} split(/\s*,\s*/, Foswiki::Func::getPreferencesValue('DEPRECATEDBROWSERS') || '');
+    my %deprecatedBrowsers = map { $_ => 1 } split(/\s*,\s*/, Foswiki::Func::getPreferencesValue('DEPRECATEDBROWSERS') || '');
     $deprecatedBrowsers{msie6} = 1 if $Foswiki::cfg{NatSkin}{DeprecateIE6};
     $deprecatedBrowsers{msie7} = 1 if $Foswiki::cfg{NatSkin}{DeprecateIE7};
     $deprecatedBrowsers{msie8} = 1 if $Foswiki::cfg{NatSkin}{DeprecateIE8};
     $deprecatedBrowsers{msie9} = 1 if $Foswiki::cfg{NatSkin}{DeprecateIE9};
+    $deprecatedBrowsers{msie10} = 1 if $Foswiki::cfg{NatSkin}{DeprecateIE10};
+    $deprecatedBrowsers{msie11} = 1 if $Foswiki::cfg{NatSkin}{DeprecateIE11};
     Foswiki::Func::setPreferencesValue("DEPRECATEDBROWSERS", join(", ", sort keys %deprecatedBrowsers));
   }
 
   # SMELL: these misc helper contexts should be core
   $context->{allow_loginname} = 1 if $Foswiki::cfg{Register}{AllowLoginName};
+
+  # check for "view printable version" and enter static content in case
+  my $cover = $request->param("cover") || '';
+  if ($cover =~ /\bprint\b/) {
+    $context->{static} = 1;
+  }
 
   $skin = Foswiki::Func::getSkin();
   if ($skin =~ /\bnat\b/) {
@@ -446,11 +452,11 @@ HERE
 sub renderSkinState {
   my ($this, $session, $params) = @_;
 
-  my $theFormat = $params->{_DEFAULT} || 
-    '$style, $variation, $sidebar, $layout, $menu';
+  my $theFormat = $params->{_DEFAULT}
+    || '$style, $variation, $sidebar, $layout, $menu';
 
   my $theLowerCase = $params->{lowercase} || 0;
-  $theLowerCase = ($theLowerCase eq 'on')?1:0;
+  $theLowerCase = ($theLowerCase eq 'on') ? 1 : 0;
 
   $theFormat =~ s/\$style/$this->{skinState}{'style'}/g;
   $theFormat =~ s/\$variation/$this->{skinState}{'variation'}/g;
@@ -484,9 +490,11 @@ sub renderSkinStyle {
   #writeDebug("theStyle=$theStyle");
   #writeDebug("knownStyle=".join(',', sort keys %knownStyles));
 
+  my $media = (Foswiki::Func::getContext()->{static}) ? "all" : "print";
+
   my $text = <<"HERE";
 <link rel='stylesheet' href='$themeRecord->{baseUrl}/$themeRecord->{styles}{$theStyle}' type='text/css' media='all' />
-<link rel='stylesheet' href='%PUBURLPATH%/%SYSTEMWEB%/NatSkin/print.css' type='text/css' media='print' />
+<link rel='stylesheet' href='%PUBURLPATH%/%SYSTEMWEB%/NatSkin/print.css' type='text/css' media='$media' />
 HERE
 
   if ($theVariation && $themeRecord->{variations}{$theVariation}) {
@@ -529,7 +537,7 @@ sub renderVariations {
   }
 
   return '' unless @result;
-  return Foswiki::Func::decodeFormatTokens($theHeader.join($theSep, @result).$theFooter);
+  return Foswiki::Func::decodeFormatTokens($theHeader . join($theSep, @result) . $theFooter);
 }
 
 ###############################################################################
@@ -537,8 +545,8 @@ sub renderStyles {
   my ($this, $session, $params) = @_;
 
   # TODO: make it formatish
- 
-  return Foswiki::Func::decodeFormatTokens(join(', ', sort {$a cmp $b} keys %{$this->{knownStyles}}));
+
+  return Foswiki::Func::decodeFormatTokens(join(', ', sort { $a cmp $b } keys %{$this->{knownStyles}}));
 }
 
 ###############################################################################
@@ -547,7 +555,7 @@ sub getStyleUrl {
 
   my $theStyle = lc($this->{skinState}{'style'});
   my $themeRecord = $this->getThemeRecord($theStyle);
-  return $themeRecord->{baseUrl}.'/'.$themeRecord->{styles}{$theStyle};
+  return $themeRecord->{baseUrl} . '/' . $themeRecord->{styles}{$theStyle};
 }
 
 ###############################################################################
@@ -556,11 +564,11 @@ sub getRequestAction {
   my $theAction;
 
   my $request = Foswiki::Func::getCgiQuery();
-  unless (defined($request->VERSION)) { # Foswiki::Request
+  unless (defined($request->VERSION)) {    # Foswiki::Request
     $theAction = $request->action();
-  } 
+  }
 
-  unless ($theAction) { # fallback
+  unless ($theAction) {                    # fallback
     my $context = Foswiki::Func::getContext();
 
     # not all cgi actions we want to distinguish set their context
@@ -596,7 +604,7 @@ sub getRequestAction {
     }
 
   }
-  
+
   #writeDebug("PATH_INFO=$ENV{'PATH_INFO'}");
   #writeDebug("REQUEST_URI=$ENV{'REQUEST_URI'}");
   #writeDebug("theAction=$theAction");

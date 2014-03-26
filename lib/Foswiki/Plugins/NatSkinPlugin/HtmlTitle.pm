@@ -1,6 +1,6 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
-# 
+#
 # Copyright (C) 2003-2014 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
@@ -11,7 +11,7 @@
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details, published at 
+# GNU General Public License for more details, published at
 # http://www.gnu.org/copyleft/gpl.html
 #
 ###############################################################################
@@ -30,11 +30,11 @@ sub render {
 
   if ($theWikiToolName eq 'on') {
     $theWikiToolName = Foswiki::Func::getPreferencesValue("WIKITOOLNAME") || 'Wiki';
-    $theWikiToolName = $theSep.$theWikiToolName;
+    $theWikiToolName = $theSep . $theWikiToolName;
   } elsif ($theWikiToolName eq 'off') {
     $theWikiToolName = '';
   } else {
-    $theWikiToolName = $theSep.$theWikiToolName;
+    $theWikiToolName = $theSep . $theWikiToolName;
   }
 
   my $theFormat = $params->{_DEFAULT};
@@ -69,7 +69,7 @@ sub getTopicTitle {
     #print STDERR "using DBCachePlugin\n";
     require Foswiki::Plugins::DBCachePlugin;
     return Foswiki::Plugins::DBCachePlugin::getTopicTitle($web, $topic);
-  } 
+  }
 
   #print STDERR "using foswiki core means\n";
 
@@ -92,7 +92,7 @@ sub getTopicTitle {
   }
 
   # read the preference
-  unless ($title)  {
+  unless ($title) {
     Foswiki::Func::pushTopicContext($web, $topic);
     $title = Foswiki::Func::getPreferencesValue('TOPICTITLE');
     Foswiki::Func::popTopicContext();
@@ -105,7 +105,7 @@ sub getTopicTitle {
   $title =~ s/^\s*//;
 
   return $title;
-} 
+}
 
 1;
 

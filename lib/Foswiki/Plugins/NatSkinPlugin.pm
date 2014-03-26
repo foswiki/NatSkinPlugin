@@ -1,6 +1,6 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
-# 
+#
 # Copyright (C) 2003-2014 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
@@ -11,7 +11,7 @@
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details, published at 
+# GNU General Public License for more details, published at
 # http://www.gnu.org/copyleft/gpl.html
 #
 ###############################################################################
@@ -41,73 +41,118 @@ sub initPlugin {
   ($baseTopic, $baseWeb) = @_;
 
   # theme engine macros
-  Foswiki::Func::registerTagHandler('SKINSTATE', sub {
-    return getThemeEngine()->renderSkinState(@_);
-  });
+  Foswiki::Func::registerTagHandler(
+    'SKINSTATE',
+    sub {
+      return getThemeEngine()->renderSkinState(@_);
+    }
+  );
 
-  Foswiki::Func::registerTagHandler('KNOWNSTYLES', sub {
-    return getThemeEngine()->renderStyles(@_);
-  });
+  Foswiki::Func::registerTagHandler(
+    'KNOWNSTYLES',
+    sub {
+      return getThemeEngine()->renderStyles(@_);
+    }
+  );
 
-  Foswiki::Func::registerTagHandler('KNOWNVARIATIONS', sub {
-    return getThemeEngine()->renderVariations(@_);
-  });
+  Foswiki::Func::registerTagHandler(
+    'KNOWNVARIATIONS',
+    sub {
+      return getThemeEngine()->renderVariations(@_);
+    }
+  );
 
   # REVISIONS, MAXREV, CURREV replacements
-  Foswiki::Func::registerTagHandler('PREVREV', sub {
-    return Foswiki::Plugins::NatSkinPlugin::Utils::getPrevRevision($baseWeb, $baseTopic, 1);
-  });
+  Foswiki::Func::registerTagHandler(
+    'PREVREV',
+    sub {
+      return Foswiki::Plugins::NatSkinPlugin::Utils::getPrevRevision($baseWeb, $baseTopic, 1);
+    }
+  );
 
-  Foswiki::Func::registerTagHandler('CURREV', sub {
-    return Foswiki::Plugins::NatSkinPlugin::Utils::getCurRevision($baseWeb, $baseTopic);
-  });
+  Foswiki::Func::registerTagHandler(
+    'CURREV',
+    sub {
+      return Foswiki::Plugins::NatSkinPlugin::Utils::getCurRevision($baseWeb, $baseTopic);
+    }
+  );
 
-  Foswiki::Func::registerTagHandler('NATMAXREV', sub {
-    return Foswiki::Plugins::NatSkinPlugin::Utils::getMaxRevision($baseWeb, $baseTopic);
-  });
+  Foswiki::Func::registerTagHandler(
+    'NATMAXREV',
+    sub {
+      return Foswiki::Plugins::NatSkinPlugin::Utils::getMaxRevision($baseWeb, $baseTopic);
+    }
+  );
 
-  Foswiki::Func::registerTagHandler('NATREVISIONS', sub {
-    require Foswiki::Plugins::NatSkinPlugin::Revisions;
-    return Foswiki::Plugins::NatSkinPlugin::Revisions::render(@_);
-  });
+  Foswiki::Func::registerTagHandler(
+    'NATREVISIONS',
+    sub {
+      require Foswiki::Plugins::NatSkinPlugin::Revisions;
+      return Foswiki::Plugins::NatSkinPlugin::Revisions::render(@_);
+    }
+  );
 
   # skin macros
-  Foswiki::Func::registerTagHandler('USERACTIONS', sub {
-    require Foswiki::Plugins::NatSkinPlugin::UserActions;
-    return Foswiki::Plugins::NatSkinPlugin::UserActions::render(@_);
-  });
+  Foswiki::Func::registerTagHandler(
+    'USERACTIONS',
+    sub {
+      require Foswiki::Plugins::NatSkinPlugin::UserActions;
+      return Foswiki::Plugins::NatSkinPlugin::UserActions::render(@_);
+    }
+  );
 
-  Foswiki::Func::registerTagHandler('NATWEBLOGO', sub {
-    require Foswiki::Plugins::NatSkinPlugin::WebLogo;
-    return Foswiki::Plugins::NatSkinPlugin::WebLogo::render(@_);
-  });
+  Foswiki::Func::registerTagHandler(
+    'NATWEBLOGO',
+    sub {
+      require Foswiki::Plugins::NatSkinPlugin::WebLogo;
+      return Foswiki::Plugins::NatSkinPlugin::WebLogo::render(@_);
+    }
+  );
 
-  Foswiki::Func::registerTagHandler('NATSTYLEURL', sub {
-    return getThemeEngine()->getStyleUrl();
-  });
+  Foswiki::Func::registerTagHandler(
+    'NATSTYLEURL',
+    sub {
+      return getThemeEngine()->getStyleUrl();
+    }
+  );
 
-  Foswiki::Func::registerTagHandler('HTMLTITLE', sub {
-    require Foswiki::Plugins::NatSkinPlugin::HtmlTitle;
-    return Foswiki::Plugins::NatSkinPlugin::HtmlTitle::render(@_);
-  });
+  Foswiki::Func::registerTagHandler(
+    'HTMLTITLE',
+    sub {
+      require Foswiki::Plugins::NatSkinPlugin::HtmlTitle;
+      return Foswiki::Plugins::NatSkinPlugin::HtmlTitle::render(@_);
+    }
+  );
 
-  Foswiki::Func::registerTagHandler('IFSUBSCRIBED', sub {
-    require Foswiki::Plugins::NatSkinPlugin::Subscribe;
-    return Foswiki::Plugins::NatSkinPlugin::Subscribe::render(@_);
-  });
+  Foswiki::Func::registerTagHandler(
+    'IFSUBSCRIBED',
+    sub {
+      require Foswiki::Plugins::NatSkinPlugin::Subscribe;
+      return Foswiki::Plugins::NatSkinPlugin::Subscribe::render(@_);
+    }
+  );
 
-  Foswiki::Func::registerRESTHandler('subscribe', sub {
-    require Foswiki::Plugins::NatSkinPlugin::Subscribe;
-    return Foswiki::Plugins::NatSkinPlugin::Subscribe::restSubscribe(@_);
-  });
-  Foswiki::Func::registerRESTHandler('unsubscribe', sub {
-    require Foswiki::Plugins::NatSkinPlugin::Subscribe;
-    return Foswiki::Plugins::NatSkinPlugin::Subscribe::restSubscribe(@_);
-  });
+  Foswiki::Func::registerRESTHandler(
+    'subscribe',
+    sub {
+      require Foswiki::Plugins::NatSkinPlugin::Subscribe;
+      return Foswiki::Plugins::NatSkinPlugin::Subscribe::restSubscribe(@_);
+    }
+  );
+  Foswiki::Func::registerRESTHandler(
+    'unsubscribe',
+    sub {
+      require Foswiki::Plugins::NatSkinPlugin::Subscribe;
+      return Foswiki::Plugins::NatSkinPlugin::Subscribe::restSubscribe(@_);
+    }
+  );
 
-  Foswiki::Func::registerTagHandler('WEBCOMPONENT', sub {
-    return Foswiki::Plugins::NatSkinPlugin::WebComponent::render(@_);
-  });
+  Foswiki::Func::registerTagHandler(
+    'WEBCOMPONENT',
+    sub {
+      return Foswiki::Plugins::NatSkinPlugin::WebComponent::render(@_);
+    }
+  );
 
   # init modules
   $themeEngine = undef;
@@ -124,15 +169,15 @@ sub initPlugin {
 ###############################################################################
 sub getThemeEngine {
   unless (defined $themeEngine) {
-    $themeEngine = new Foswiki::Plugins::NatSkinPlugin::ThemeEngine()
+    $themeEngine = new Foswiki::Plugins::NatSkinPlugin::ThemeEngine();
   }
 
   return $themeEngine;
 }
 
 ###############################################################################
-sub postRenderingHandler { 
-  
+sub postRenderingHandler {
+
   # detect external links
   return unless $Foswiki::cfg{NatSkin}{DetectExternalLinks};
 

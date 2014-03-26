@@ -1,6 +1,6 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
-# 
+#
 # Copyright (C) 2003-2014 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
@@ -11,7 +11,7 @@
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details, published at 
+# GNU General Public License for more details, published at
 # http://www.gnu.org/copyleft/gpl.html
 #
 ###############################################################################
@@ -27,25 +27,23 @@ sub render {
   my ($thePrefix, $theUrl) = @_;
 
   my $addClass = 0;
-  my $text = $thePrefix.$theUrl;
+  my $text = $thePrefix . $theUrl;
   my $urlHost = Foswiki::Func::getUrlHost();
   my $httpsUrlHost = $urlHost;
   $httpsUrlHost =~ s/^http:\/\//https:\/\//go;
 
-  $theUrl =~ /^http/i && ($addClass = 1); # only for http and hhtps
-  $theUrl =~ /^$urlHost/i && ($addClass = 0); # not for own host
-  $theUrl =~ /^$httpsUrlHost/i && ($addClass = 0); # not for own host
-  $thePrefix =~ /class="[^"]*\bnop\b/ && ($addClass = 0); # prevent adding it 
-  $thePrefix =~ /class="natExternalLink"/ && ($addClass = 0); # prevent adding it twice
+  $theUrl =~ /^http/i && ($addClass = 1);    # only for http and hhtps
+  $theUrl =~ /^$urlHost/i && ($addClass = 0);    # not for own host
+  $theUrl =~ /^$httpsUrlHost/i && ($addClass = 0);    # not for own host
+  $thePrefix =~ /class=/ && ($addClass = 0);          # prevent adding it
 
   if ($addClass) {
-    #writeDebug("called renderExternalLink($thePrefix, $theUrl)");
+    #Foswiki::Func::writeDebug("called renderExternalLink: prefix=$thePrefix url=$theUrl");
     $text = "class='natExternalLink' $thePrefix$theUrl";
-    #writeDebug("text=$text");
+    #Foswiki::Func::writeDebug("text=$text");
   }
 
   return $text;
 }
-
 
 1;

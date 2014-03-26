@@ -1,6 +1,6 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
-# 
+#
 # Copyright (C) 2003-2014 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
@@ -11,7 +11,7 @@
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details, published at 
+# GNU General Public License for more details, published at
 # http://www.gnu.org/copyleft/gpl.html
 #
 ###############################################################################
@@ -36,11 +36,11 @@ sub render {
 
   my $topicExists = Foswiki::Func::topicExists($baseWeb, $baseTopic);
   if ($topicExists) {
-    
+
     $rev1 = 0 unless $rev1;
     $rev2 = 0 unless $rev2;
-    $rev1 =~ s/r?1\.//go;  # cut 'r' and major
-    $rev2 =~ s/r?1\.//go;  # cut 'r' and major
+    $rev1 =~ s/r?1\.//go;    # cut 'r' and major
+    $rev2 =~ s/r?1\.//go;    # cut 'r' and major
 
     my $maxRev = Foswiki::Plugins::NatSkinPlugin::Utils::getMaxRevision();
     $rev1 = $maxRev if $rev1 < 1;
@@ -65,20 +65,16 @@ sub render {
 
   my $j = $rev1 - $nrrevs;
   for (my $i = $rev1; $i >= $j; $i -= 1) {
-    $revisions .= '&nbsp; <a href="%SCRIPTURLPATH{"view"}%'.
-      '/%WEB%/%TOPIC%?rev='.$i.'">r'.$i.'</a>';
+    $revisions .= '&nbsp; <a href="%SCRIPTURLPATH{"view"}%' . '/%WEB%/%TOPIC%?rev=' . $i . '">r' . $i . '</a>';
     if ($i == $j) {
       my $torev = $j - $nrrevs;
       $torev = 1 if $torev < 0;
       if ($j != $torev) {
-	$revisions = $revisions.
-	  '&nbsp; <a href="%SCRIPTURLPATH{"rdiff"}%'.
-	  '/%WEB%/%TOPIC%?rev1='.$j.'&amp;rev2='.$torev.'">...</a>';
+        $revisions = $revisions . '&nbsp; <a href="%SCRIPTURLPATH{"rdiff"}%' . '/%WEB%/%TOPIC%?rev1=' . $j . '&amp;rev2=' . $torev . '">...</a>';
       }
       last;
     } else {
-      $revisions .= '&nbsp; <a href="%SCRIPTURLPATH{"rdiff"}%'.
-	'/%WEB%/%TOPIC%?rev1='.$i.'&amp;rev2='.($i-1).'">&gt;</a>';
+      $revisions .= '&nbsp; <a href="%SCRIPTURLPATH{"rdiff"}%' . '/%WEB%/%TOPIC%?rev1=' . $i . '&amp;rev2=' . ($i - 1) . '">&gt;</a>';
     }
   }
 

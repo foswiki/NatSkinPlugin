@@ -1,6 +1,6 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
-# 
+#
 # Copyright (C) 2003-2014 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
@@ -11,7 +11,7 @@
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details, published at 
+# GNU General Public License for more details, published at
 # http://www.gnu.org/copyleft/gpl.html
 #
 ###############################################################################
@@ -24,13 +24,13 @@ use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Plugins::NatSkinPlugin ();
 
-our %maxRevs = (); # cache for getMaxRevision()
+our %maxRevs = ();    # cache for getMaxRevision()
 
 ###############################################################################
 sub init {
 
   # init caches
-  %maxRevs = (); 
+  %maxRevs = ();
 }
 
 ###############################################################################
@@ -49,11 +49,11 @@ sub makeParams {
     if ($key eq '#') {
       $anchor .= '#' . urlEncode($val);
     } else {
-      push(@params, urlEncode($key).'='.urlEncode($val));
+      push(@params, urlEncode($key) . '=' . urlEncode($val));
     }
   }
 
-  return join(";", @params).$anchor;
+  return join(";", @params) . $anchor;
 }
 
 ###############################################################################
@@ -76,7 +76,7 @@ sub getPrevRevision {
   $numberOfRevisions ||= $Foswiki::cfg{NumberOfRevisions};
 
   $rev = getMaxRevision($thisWeb, $thisTopic) unless $rev;
-  $rev =~ s/r?1\.//go; # cut major
+  $rev =~ s/r?1\.//go;    # cut major
   if ($rev > $numberOfRevisions) {
     $rev -= $numberOfRevisions;
     $rev = 1 if $rev < 1;
@@ -101,7 +101,7 @@ sub getMaxRevision {
   (undef, undef, $maxRev) = Foswiki::Func::getRevisionInfo($thisWeb, $thisTopic);
   $maxRev = 1 unless defined $maxRev;
 
-  $maxRev =~ s/r?1\.//go;  # cut 'r' and major
+  $maxRev =~ s/r?1\.//go;    # cut 'r' and major
   $maxRevs{"$thisWeb.$thisTopic"} = $maxRev;
   return $maxRev;
 }
@@ -124,7 +124,7 @@ sub getCurRevision {
         my $rev1 = $request->param("rev1");
         my $rev2 = $request->param("rev2");
         if ($rev1 && $rev2) {
-          $rev = ($rev1 > $rev2)?$rev1:$rev2;
+          $rev = ($rev1 > $rev2) ? $rev1 : $rev2;
         }
       }
     }

@@ -1,6 +1,6 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
-# 
+#
 # Copyright (C) 2003-2014 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
@@ -11,7 +11,7 @@
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details, published at 
+# GNU General Public License for more details, published at
 # http://www.gnu.org/copyleft/gpl.html
 #
 ###############################################################################
@@ -31,13 +31,13 @@ use Foswiki::Plugins::NatSkinPlugin();
 #    * return %WIKITOOLNAME% if defined
 #    * or return 'Foswiki'
 #
-# the ...IMG% settings are urls to images where the following variables 
+# the ...IMG% settings are urls to images where the following variables
 # are substituted:
-#    * $style: the lower case id of the current style 
+#    * $style: the lower case id of the current style
 #    * $variation: the lower case id of the current variation
 #
 # this allows to switch the logo while switching the style and/or variation.
-# 
+#
 # the *IMG cases will return a full <img src /> tag
 #
 sub render {
@@ -68,10 +68,10 @@ sub render {
 ###############################################################################
 sub renderAlt {
   return
-    Foswiki::Func::getPreferencesValue('WEBLOGOALT') || 
-    Foswiki::Func::getPreferencesValue('WIKILOGOALT') || 
-    Foswiki::Func::getPreferencesValue('WIKITOOLNAME') || 
-    'Logo';
+       Foswiki::Func::getPreferencesValue('WEBLOGOALT')
+    || Foswiki::Func::getPreferencesValue('WIKILOGOALT')
+    || Foswiki::Func::getPreferencesValue('WIKITOOLNAME')
+    || 'Logo';
 }
 
 ###############################################################################
@@ -95,16 +95,17 @@ sub renderPath {
 
   my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
   my $themeRecord = $themeEngine->getThemeRecord($themeEngine->{skinState}{'style'});
-  return $themeRecord?$themeRecord->{baseUrl}:'';
+  return $themeRecord ? $themeRecord->{baseUrl} : '';
 }
 
 ###############################################################################
 sub renderUrl {
 
-  my $url = Foswiki::Func::getPreferencesValue('NATSKIN_LOGOURL') ||
-    Foswiki::Func::getPreferencesValue('WEBLOGOURL') ||
-    Foswiki::Func::getPreferencesValue('WIKILOGOURL') ||
-    Foswiki::Func::getPreferencesValue('%SCRIPTURLPATH{"view"}%/%USERSWEB%/%HOMETOPIC%');
+  my $url =
+       Foswiki::Func::getPreferencesValue('NATSKIN_LOGOURL')
+    || Foswiki::Func::getPreferencesValue('WEBLOGOURL')
+    || Foswiki::Func::getPreferencesValue('WIKILOGOURL')
+    || Foswiki::Func::getPreferencesValue('%SCRIPTURLPATH{"view"}%/%USERSWEB%/%HOMETOPIC%');
 
   return $url;
 }
@@ -114,10 +115,10 @@ sub renderSrc {
 
   my $wikiLogoImage = Foswiki::Func::getPreferencesValue('WIKILOGOIMG');
 
-  my $result = 
-    Foswiki::Func::getPreferencesValue('NATSKIN_LOGO') || 
-    Foswiki::Func::getPreferencesValue('WEBLOGOIMG') || 
-    $wikiLogoImage;
+  my $result =
+       Foswiki::Func::getPreferencesValue('NATSKIN_LOGO')
+    || Foswiki::Func::getPreferencesValue('WEBLOGOIMG')
+    || $wikiLogoImage;
 
   $result =~ s/\%WIKILOGOIMG%/$wikiLogoImage/g;
 

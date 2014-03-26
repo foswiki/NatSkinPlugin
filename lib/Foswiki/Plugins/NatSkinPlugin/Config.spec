@@ -23,11 +23,11 @@ $Foswiki::cfg{NatSkin}{Layout} = 'fixed';
 # Use this flag to switch on/off the horizontal navigation menu.
 $Foswiki::cfg{NatSkin}{Menu} = 1;
 
-# **SELECT left,right,both,none**
+# **SELECT left,right,both,off**
 # This setting configures different vertical layout variations where sidebars either appear left, right or on both sides
-# of the main content area. 'None' switches off any skin-driven sidebars. This is useful when columns are designed inside
+# of the main content area. 'off' switches off any skin-driven sidebars. This is useful when columns are designed inside
 # the content area directly instead of being controlled by the template engine.
-$Foswiki::cfg{NatSkin}{SideBar} = 'left';
+$Foswiki::cfg{NatSkin}{SideBar} = 'right';
 
 # **STRING**
 # This is a list of actions that switch off the sidebar navigation automatically. Note, these are basically known cgi entry
@@ -37,7 +37,7 @@ $Foswiki::cfg{NatSkin}{NoSideBarActions} = 'edit, manage, login, logon, oops, re
 # ---+++ HTML post processing
 # **BOOLEAN**
 # If switched on, external links will be detected and styled accordingly to give the user visual feedback that this
-# link is driving him off the site.
+# link is driving him off the site. This is a prerequisite to open external links in an extra borwser window/tab.
 $Foswiki::cfg{NatSkin}{DetectExternalLinks} = 0;
 
 # ---+++ Internet Explorer
@@ -62,6 +62,15 @@ $Foswiki::cfg{NatSkin}{DeprecateIE8} = 1;
 # **BOOLEAN**
 # Enable this switch to display a browser warning when an IE9 has been detected. 
 $Foswiki::cfg{NatSkin}{DeprecateIE9} = 0;
+
+# **BOOLEAN**
+# Enable this switch to display a browser warning when an IE10 has been detected. 
+$Foswiki::cfg{NatSkin}{DeprecateIE10} = 0;
+
+# **BOOLEAN**
+# Enable this switch to display a browser warning when an IE11 has been detected. 
+$Foswiki::cfg{NatSkin}{DeprecateIE11} = 0;
+
 
 1;
 
