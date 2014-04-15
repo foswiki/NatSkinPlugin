@@ -25,12 +25,12 @@ use Foswiki::Plugins ();
 use Foswiki::Plugins::NatSkinPlugin::Utils ();
 use Foswiki::Plugins::JQueryPlugin ();
 
-use constant DEBUG => 0;    # toggle me
+use constant TRACE => 0;    # toggle me
 
 ###############################################################################
 # static
 sub writeDebug {
-  return unless DEBUG;
+  return unless TRACE;
   print STDERR "- NatSkinPlugin::ThemeEngine - " . $_[0] . "\n";
 }
 
@@ -45,7 +45,7 @@ sub new {
     defaultVariation => $Foswiki::cfg{NatSkin}{Variation} || 'off',
     defaultLayout => $Foswiki::cfg{NatSkin}{Layout} || 'fixed',
     defaultMenu => Foswiki::Func::isTrue($Foswiki::cfg{NatSkin}{Menu}, 1),
-    defaultStyleSideBar => $Foswiki::cfg{NatSkin}{SideBar} || 'left',
+    defaultStyleSideBar => $Foswiki::cfg{NatSkin}{SideBar} || 'right',
     @_
   };
   bless($this, $class);
@@ -493,8 +493,8 @@ sub renderSkinStyle {
   my $media = (Foswiki::Func::getContext()->{static}) ? "all" : "print";
 
   my $text = <<"HERE";
-<link rel='stylesheet' href='$themeRecord->{baseUrl}/$themeRecord->{styles}{$theStyle}' type='text/css' media='all' />
 <link rel='stylesheet' href='%PUBURLPATH%/%SYSTEMWEB%/NatSkin/print.css' type='text/css' media='$media' />
+<link rel='stylesheet' href='$themeRecord->{baseUrl}/$themeRecord->{styles}{$theStyle}' type='text/css' media='all' />
 HERE
 
   if ($theVariation && $themeRecord->{variations}{$theVariation}) {

@@ -717,7 +717,8 @@ sub getDiffUrl {
   return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
     $action, undef, undef,
     'rev1' => getCurRev($params),
-    'rev2' => $rev2
+    'rev2' => $rev2,
+    'context' => 1
   );
 
 }
