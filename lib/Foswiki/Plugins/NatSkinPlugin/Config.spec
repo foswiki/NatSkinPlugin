@@ -72,7 +72,7 @@ $Foswiki::cfg{NatSkin}{DeprecateIE10} = 0;
 $Foswiki::cfg{NatSkin}{DeprecateIE11} = 0;
 
 # ---+++ HTTP Security Headers
-# Enable security headers for secure web applications 
+# Enable security headers for secure web applications. See also http://perltricks.com/article/81/2014/3/31/Perl-web-application-security-HTTP-headers
 # **BOOLEAN**
 # Set the X-Frame-Options header to "DENY":
 # This header can prevent your application responses from being loaded within
@@ -91,13 +91,15 @@ $Foswiki::cfg{NatSkin}{DenyFrameOptions} = 1;
 # a max-age parameter that defines how long in seconds to enforce the policy for. 
 $Foswiki::cfg{NatSkin}{StrictTransportSecurity} = "max-age=3600";
 
-# **STRING**
+# **STRING EXPERT**
 # Set the content security policy.
 # The CSP header sets a whitelist of domains from which content can be safely
 # loaded. This prevents most types of XSS attack, assuming the malicious content
 # is not hosted by a whitelisted domain. For example this specifies that all
 # content should only be loaded from the responding domain: "default-src 'self'"
-$Foswiki::cfg{NatSkin}{ContentSecurityPolicy} = "default-src 'self'"; 
+# WARNING: Enabling this setting will currently render your Foswiki non-operational 
+# as it relys on unsafe inline css and js.
+$Foswiki::cfg{NatSkin}{ContentSecurityPolicy} = ""; 
 
 # **STRING**
 # IE-only header to disable mime sniffing.
@@ -120,6 +122,6 @@ $Foswiki::cfg{NatSkin}{DownloadOptions} = "noopen";
 # cross-site-scripting (XSS) filter functionality (more here). Additionally it
 # has an optional setting called "mode" that can force IE to block the entire
 # page if an XSS attempt is detected.
-$Foswiki::cfg{NatSkin}{XSSProtection} = "1; 'mode=block'"; 
+$Foswiki::cfg{NatSkin}{XSSProtection} = "1; mode=block"; 
 
 1;

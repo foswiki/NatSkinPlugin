@@ -200,10 +200,18 @@ sub modifyHeaderHandler {
   # enable security headers
   $headers->{"X-Frame-Options"} = "DENY" if $Foswiki::cfg{NatSkin}{DenyFrameOptions};
   $headers->{"Strict-Transport-Security"} = $Foswiki::cfg{NatSkin}{StrictTransportSecurity} if $Foswiki::cfg{NatSkin}{StrictTransportSecurity};
-  $headers->{"X-Content-Security-Policy"} = $Foswiki::cfg{NatSkin}{ContentSecurityPolicy} if $Foswiki::cfg{NatSkin}{ContentSecurityPolicy}; 
   $headers->{"X-Content-Type-Options"} = $Foswiki::cfg{NatSkin}{ContentTypeOptions} if $Foswiki::cfg{NatSkin}{ContentTypeOptions}; 
   $headers->{"X-Download-Options"} = $Foswiki::cfg{NatSkin}{DownloadOptions} if $Foswiki::cfg{NatSkin}{DownloadOptions};
   $headers->{"X-XSS-Protection"} = $Foswiki::cfg{NatSkin}{XSSProtection} if $Foswiki::cfg{NatSkin}{XSSProtection};
+
+  if ($Foswiki::cfg{NatSkin}{ContentSecurityPolicy}) {
+    $headers->{"Content-Security-Policy"} = $Foswiki::cfg{NatSkin}{ContentSecurityPolicy};
+
+    # deprecated header
+    # $headers->{"X-Content-Security-Policy"} = $Foswiki::cfg{NatSkin}{ContentSecurityPolicy};
+    # $headers->{"X-Webkit-Csp"} = $Foswiki::cfg{NatSkin}{ContentSecurityPolicy};
+  }
+
 }
 
 1;
