@@ -76,7 +76,8 @@ sub render {
   $actionParams->{menu_footer} = $params->{menu_footer};
   $actionParams->{hiderestricted} = Foswiki::Func::isTrue($params->{hiderestricted}, 0);
   $actionParams->{mode} = $params->{mode} || 'short';
-  $actionParams->{sep} = $params->{sep} || $params->{separator} || '<span class="natSep"> | </span>';
+  $actionParams->{sep} = $params->{sep} || $params->{separator};
+  $actionParams->{sep} = '<span class="natSep"> | </span>' unless defined $actionParams->{sep};
 
   # get restrictions
   my $restrictedActions = $params->{restrictedactions};
