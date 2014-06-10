@@ -40,6 +40,11 @@ $Foswiki::cfg{NatSkin}{NoSideBarActions} = 'edit, manage, login, logon, oops, re
 # link is driving him off the site. This is a prerequisite to open external links in an extra borwser window/tab.
 $Foswiki::cfg{NatSkin}{DetectExternalLinks} = 0;
 
+# **BOOLEAN**
+# Enable this switch to perform some basic typographic fixes to the output text: support proper quotes, arrows and 
+# ellipsis.
+$Foswiki::cfg{NatSkin}{FixTypograpghy} = 0;
+
 # ---+++ Internet Explorer
 # **STRING**
 # Add an X-UA-Compatible entry to the HTTP headers. Use "ie=edge" to force any IE into the best mode supported. Add "chrome=1"

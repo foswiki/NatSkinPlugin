@@ -58,6 +58,7 @@ sub render {
 
   if ( $context->{GenPDFPrincePluginEnabled}
     || $context->{GenPDFWebkitPluginEnabled}
+    || $context->{GenPDFOfficePluginEnabled}
     || $context->{PdfPluginEnabled})
   {
     # SMELL: how do we detect GenPDFAddOn...see also getPdfUrl
@@ -355,7 +356,9 @@ sub getPdfUrl {
 
   my $url;
   my $context = Foswiki::Func::getContext();
-  if ($context->{GenPDFPrincePluginEnabled} || $context->{GenPDFWebkitPluginEnabled}) {
+  if ($context->{GenPDFPrincePluginEnabled} || 
+      $context->{GenPDFOfficePluginEnabled} ||
+      $context->{GenPDFWebkitPluginEnabled}) {
     $url = Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
       'view',
       undef, undef,

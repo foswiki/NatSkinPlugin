@@ -26,12 +26,20 @@ use Foswiki::Plugins::NatSkinPlugin::ThemeEngine ();
 use Foswiki::Plugins::NatSkinPlugin::Utils ();
 use Foswiki::Plugins::NatSkinPlugin::WebComponent ();
 
+our $START = '(?:^|(?<=[\w\b\s]))';
+our $STOP = '(?:$|(?=[\w\b\s\,\.\;\:\!\?\)\(]))';
+
+BEGIN {
+  #print STDERR "Perl Version $]\n";
+}
+
+
 ###############################################################################
 our $baseWeb;
 our $baseTopic;
 
-our $VERSION = '3.99_009';
-our $RELEASE = '3.99_009';
+our $VERSION = '3.99_010';
+our $RELEASE = '3.99_010';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Support plugin for <nop>NatSkin';
 our $themeEngine;
@@ -138,7 +146,9 @@ sub initPlugin {
       require Foswiki::Plugins::NatSkinPlugin::Subscribe;
       return Foswiki::Plugins::NatSkinPlugin::Subscribe::restSubscribe(@_);
     },
-    authenticate => 1
+    authenticate => 1,
+    validate => 0,
+    http_allow => 'POST',
   );
   Foswiki::Func::registerRESTHandler(
     'unsubscribe',
@@ -146,7 +156,9 @@ sub initPlugin {
       require Foswiki::Plugins::NatSkinPlugin::Subscribe;
       return Foswiki::Plugins::NatSkinPlugin::Subscribe::restSubscribe(@_);
     },
-    authenticate => 1
+    authenticate => 1,
+    validate => 0,
+    http_allow => 'POST',
   );
 
   Foswiki::Func::registerTagHandler(
@@ -163,8 +175,6 @@ sub initPlugin {
   Foswiki::Plugins::NatSkinPlugin::Utils::init();
   Foswiki::Plugins::NatSkinPlugin::WebComponent::init();
 
-  #print STDERR "Perl Version $]\n";
-
   return 1;
 }
 
@@ -178,14 +188,26 @@ sub getThemeEngine {
 }
 
 ###############################################################################
-sub postRenderingHandler {
+sub endRenderingHandler {
 
-  # detect external links
-  return unless $Foswiki::cfg{NatSkin}{DetectExternalLinks};
+  if ($Foswiki::cfg{NatSkin}{DetectExternalLinks}) {
+    require Foswiki::Plugins::NatSkinPlugin::ExternalLink;
+    $_[0] =~ s/<a\s+([^>]*?href=(?:\"|\'|&quot;)?)([^\"\'\s>]+(?:\"|\'|\s|&quot;>)?)/'<a '.Foswiki::Plugins::NatSkinPlugin::ExternalLink::render($1,$2)/geoi;
+  }
 
-  require Foswiki::Plugins::NatSkinPlugin::ExternalLink;
+  if ($Foswiki::cfg{NatSkin}{FixTypograpghy}) {
+    $_[0] =~ s((?<=[^\w\-])\-\-\-(?=[^\w\-\+]))(&#8212;)go;         # emdash
+    $_[0] =~ s/$START``$STOP/&#8220/go;
+    $_[0] =~ s/$START''$STOP/&#8221/go;
+    $_[0] =~ s/$START,,$STOP/&#8222/go;
+    $_[0] =~ s/$START\(c\)$STOP/&#169/go;
+    $_[0] =~ s/$START\(r\)$STOP/&#174/go;
+    $_[0] =~ s/$START\(tm\)$STOP/&#8482/go;
+    $_[0] =~ s/$START\.\.\.$STOP/&#8230/go;
+    $_[0] =~ s/\-&gt;/&#8594;/go;
+    $_[0] =~ s/&lt;\-/&#8592;/go;
+  }
 
-  $_[0] =~ s/<a\s+([^>]*?href=(?:\"|\'|&quot;)?)([^\"\'\s>]+(?:\"|\'|\s|&quot;>)?)/'<a '.Foswiki::Plugins::NatSkinPlugin::ExternalLink::render($1,$2)/geoi;
 }
 
 ###############################################################################
