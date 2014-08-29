@@ -181,6 +181,7 @@ See NatSkin#Installation_Instructions
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  29 Aug 2014: | third beta |
 |  28 Mar 2013: | second beta |
 |  14 Mar 2013: | first beta of new release |
 |  16 Mar 2005: | Initial version |
