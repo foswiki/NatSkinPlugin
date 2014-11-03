@@ -28,6 +28,7 @@ use Foswiki::Plugins::NatSkinPlugin::WebComponent ();
 
 our $START = '(?:^|(?<=[\w\b\s]))';
 our $STOP = '(?:$|(?=[\w\b\s\,\.\;\:\!\?\)\(]))';
+our $doneInjectRevinfo = 0;
 
 BEGIN {
   #print STDERR "Perl Version $]\n";
@@ -38,8 +39,8 @@ BEGIN {
 our $baseWeb;
 our $baseTopic;
 
-our $VERSION = '3.99_011';
-our $RELEASE = '3.99_011';
+our $VERSION = '3.99_012';
+our $RELEASE = '3.99_012';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Support plugin for <nop>NatSkin';
 our $themeEngine;
@@ -169,6 +170,7 @@ sub initPlugin {
   );
 
   # init modules
+  $doneInjectRevinfo = 0;
   $themeEngine = undef;
   getThemeEngine()->init();
 
@@ -207,7 +209,25 @@ sub endRenderingHandler {
     $_[0] =~ s/\-&gt;/&#8594;/go;
     $_[0] =~ s/&lt;\-/&#8592;/go;
   }
+}
 
+###############################################################################
+sub completePageHandler {
+  #my $text = $_[0];
+
+  unless ($doneInjectRevinfo) {
+    my $flag = Foswiki::Func::isTrue(Foswiki::Func::getPreferencesValue("DISPLAYREVISIONINFO"), 1);
+    if ($flag && $_[0] =~ s/(<h1.*<\/h1>)/$1.&_insertRevInfo()/e) {
+      $doneInjectRevinfo = 1;
+    }
+  }
+}
+
+sub _insertRevInfo {
+  
+  my $revinfo = Foswiki::Func::expandTemplate("revinfo");
+  $revinfo = Foswiki::Func::expandCommonVariables($revinfo);
+  return Foswiki::Func::renderText($revinfo, $baseWeb, $baseTopic);
 }
 
 ###############################################################################

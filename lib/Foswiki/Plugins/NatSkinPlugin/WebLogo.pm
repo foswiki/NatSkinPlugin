@@ -45,7 +45,7 @@ sub render {
 
   my $format = $params->{format};
   $format = '<a href="$url" title="$alt">$logo</a>' unless defined $format;
-  my $height = $params->{height} || 50;
+  my $height = $params->{height} || 60;
 
   my $result = $format;
   $result =~ s/\$logo/renderLogo()/ge;
