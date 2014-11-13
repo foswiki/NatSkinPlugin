@@ -199,13 +199,13 @@ sub endRenderingHandler {
 
   if ($Foswiki::cfg{NatSkin}{FixTypograpghy}) {
     $_[0] =~ s((?<=[^\w\-])\-\-\-(?=[^\w\-\+]))(&#8212;)go;         # emdash
-    $_[0] =~ s/$START``$STOP/&#8220/go;
-    $_[0] =~ s/$START''$STOP/&#8221/go;
-    $_[0] =~ s/$START,,$STOP/&#8222/go;
-    $_[0] =~ s/$START\(c\)$STOP/&#169/go;
-    $_[0] =~ s/$START\(r\)$STOP/&#174/go;
-    $_[0] =~ s/$START\(tm\)$STOP/&#8482/go;
-    $_[0] =~ s/$START\.\.\.$STOP/&#8230/go;
+    $_[0] =~ s/$START``$STOP/&#8220;/go;
+    $_[0] =~ s/$START''$STOP/&#8221;/go;
+    $_[0] =~ s/$START,,$STOP/&#8222;/go;
+    $_[0] =~ s/$START\(c\)$STOP/&#169;/go;
+    $_[0] =~ s/$START\(r\)$STOP/&#174;/go;
+    $_[0] =~ s/$START\(tm\)$STOP/&#8482;/go;
+    $_[0] =~ s/$START\.\.\.$STOP/&#8230;/go;
     $_[0] =~ s/\-&gt;/&#8594;/go;
     $_[0] =~ s/&lt;\-/&#8592;/go;
   }
