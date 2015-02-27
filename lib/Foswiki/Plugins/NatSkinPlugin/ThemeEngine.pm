@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2014 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2015 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -490,7 +490,8 @@ sub renderSkinStyle {
   #writeDebug("theStyle=$theStyle");
   #writeDebug("knownStyle=".join(',', sort keys %knownStyles));
 
-  my $media = (Foswiki::Func::getContext()->{static}) ? "all" : "print";
+  #my $media = (Foswiki::Func::getContext()->{static}) ? "all" : "print";
+  my $media = "print";
 
   my $text = <<"HERE";
 <link rel='stylesheet' href='%PUBURLPATH%/%SYSTEMWEB%/NatSkin/print.css' type='text/css' media='$media' />

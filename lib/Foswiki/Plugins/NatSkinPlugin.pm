@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2014 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2015 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -169,15 +169,19 @@ sub initPlugin {
     }
   );
 
-  # init modules
+  init();
+
+  return 1;
+}
+
+sub init {
+
   $doneInjectRevinfo = 0;
   $themeEngine = undef;
   getThemeEngine()->init();
 
   Foswiki::Plugins::NatSkinPlugin::Utils::init();
   Foswiki::Plugins::NatSkinPlugin::WebComponent::init();
-
-  return 1;
 }
 
 ###############################################################################
@@ -206,6 +210,8 @@ sub endRenderingHandler {
     $_[0] =~ s/$START\(r\)$STOP/&#174;/go;
     $_[0] =~ s/$START\(tm\)$STOP/&#8482;/go;
     $_[0] =~ s/$START\.\.\.$STOP/&#8230;/go;
+    $_[0] =~ s/$START\->$STOP/&#8594;/go;
+    $_[0] =~ s/$START<\-$STOP/&#8592;/go;
     $_[0] =~ s/\-&gt;/&#8594;/go;
     $_[0] =~ s/&lt;\-/&#8592;/go;
   }

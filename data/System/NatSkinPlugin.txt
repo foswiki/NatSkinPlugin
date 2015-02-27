@@ -176,11 +176,12 @@ See NatSkin#Installation_Instructions
    * Set SHORTDESCRIPTION = Theming engine for NatSkin
 -->
 |  Plugin Author: | Michael Daum |
-|  Copyright &copy;: | 2003-2014, Michael Daum http://michaeldaumconsulting.com |
+|  Copyright &copy;: | 2003-2015, Michael Daum http://michaeldaumconsulting.com |
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  27 Feb 2015: | finally 4.00 |
 |  29 Aug 2014: | third beta |
 |  28 Mar 2013: | second beta |
 |  14 Mar 2013: | first beta of new release |

@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2014 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2015 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -547,12 +547,17 @@ sub renderLogout {
 ###############################################################################
 sub getLogoutUrl {
 
+  my $session = $Foswiki::Plugins::SESSION;
+  my $loginManager = $session->{users}->{loginManager};
+
+  return '' unless $loginManager;
+
   # SMELL: I'd like to do this
-  # my $loginManager = $session->{users}->{loginManager};
-  # return $loginManager->logoutUrl();
-  #
-  # but for now the "best" we can do is this:
-  my $loginManager = $Foswiki::cfg{LoginManager};
+  if ($loginManager->can("logoutUrl")) {
+    return $loginManager->logoutUrl();
+  }
+
+  # but for now the "best" we can do is this
   if ($loginManager =~ /ApacheLogin/) {
     return '';
   }
@@ -563,10 +568,16 @@ sub getLogoutUrl {
 ###############################################################################
 sub getRegisterUrl {
 
+  my $session = $Foswiki::Plugins::SESSION;
+  my $loginManager = $session->{users}->{loginManager};
+
+  return '' unless $loginManager;
+
   # SMELL: I'd like to do this
-  # my $loginManager = $session->{users}->{loginManager};
-  # return $loginManager->registerUrl();
-  #
+  if ($loginManager->can("registerUrl")) {
+    return $loginManager->registerUrl();
+  }
+
   # but for now the "best" we can do is this:
   return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath('view', $Foswiki::cfg{SystemWebName}, 'UserRegistration');
 }
