@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" comment="save topic" date="1363520449" format="1.1" version="7"}%
+%META:TOPICINFO{author="ProjectContributor" comment="" date="1437155814" format="1.1" version="1"}%
 ---+!! The Natural Skin Plugin
 %TOC%
 
@@ -181,6 +181,10 @@ See NatSkin#Installation_Instructions
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  17 Jul 2015: | better integration with Foswiki:Extensions/AutoTemplatePlugin; \
+                  better detection of Internet Explorer versions; added edit_raw action; \
+                  added support for Foswiki-2.0; \
+                  properly searching for !WebComponents in the web holding the local !SitePreferences ... which not necessarily is the user web  | 
 |  27 Feb 2015: | finally 4.00 |
 |  29 Aug 2014: | third beta |
 |  28 Mar 2013: | second beta |

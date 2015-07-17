@@ -39,8 +39,8 @@ BEGIN {
 our $baseWeb;
 our $baseTopic;
 
-our $VERSION = '4.00';
-our $RELEASE = '27 Feb 2015';
+our $VERSION = '4.10';
+our $RELEASE = '17 Jul 2015';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Support plugin for <nop>NatSkin';
 our $themeEngine;

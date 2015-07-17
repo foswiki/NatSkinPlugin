@@ -357,11 +357,18 @@ sub init {
       my $viewTemplate = $request->param('template')
         || Foswiki::Func::getPreferencesValue('VIEW_TEMPLATE');
 
+      if (!$viewTemplate && $Foswiki::cfg{Plugins}{AutoTemplatePlugin}{Enabled}) {
+        require Foswiki::Plugins::AutoTemplatePlugin;
+        my $session = $Foswiki::Plugins::SESSION;
+        $viewTemplate = Foswiki::Plugins::AutoTemplatePlugin::getTemplateName($session->{webName}, $session->{topicName});
+      }
+
       Foswiki::Func::loadTemplate($viewTemplate)
         if $viewTemplate;
 
       # check if 'sidebar' is empty. if so then switch it off in the skinState
       my $sidebar = Foswiki::Func::expandTemplate('sidebar');
+
       $this->{skinState}{'sidebar'} = 'off' unless $sidebar;
     }
   }
@@ -384,7 +391,7 @@ sub init {
     my $agent = $request->user_agent() || '';
 
     #print STDERR "agent=$agent\n";
-    if ($agent =~ /MSIE/) {
+    if ($agent =~ /MSIE|Trident/) {
       $context->{msie} = 1;
 
       # SMELL: better use Trident version to detect the physical version of the browser
@@ -393,7 +400,7 @@ sub init {
       $context->{msie8} = 1 if $agent =~ /MSIE 8/;
       $context->{msie9} = 1 if $agent =~ /MSIE 9/;
       $context->{msie10} = 1 if $agent =~ /MSIE 10/;
-      $context->{msie11} = 1 if $agent =~ /MSIE 11/;
+      $context->{msie11} = 1 if $agent =~ /Trident\/7.0/;
     } elsif ($agent =~ /Chrome/) {
       $context->{chrome} = 1;
     } elsif ($agent =~ /Firefox/) {

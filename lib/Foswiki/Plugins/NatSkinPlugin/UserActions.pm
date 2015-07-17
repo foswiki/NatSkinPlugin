@@ -77,12 +77,11 @@ sub render {
   $actionParams->{menu_footer} = $params->{menu_footer};
   $actionParams->{hiderestricted} = Foswiki::Func::isTrue($params->{hiderestricted}, 0);
   $actionParams->{mode} = $params->{mode} || 'short';
-  $actionParams->{sep} = $params->{sep} || $params->{separator};
-  $actionParams->{sep} = '<span class="natSep"> | </span>' unless defined $actionParams->{sep};
+  $actionParams->{sep} = $params->{sep} || $params->{separator} || '';
 
   # get restrictions
   my $restrictedActions = $params->{restrictedactions};
-  $restrictedActions = 'edit, attach, move, delete, diff, more, raw'
+  $restrictedActions = 'edit, edit_raw, attach, move, delete, diff, more, raw'
     unless defined $restrictedActions;
   %{$actionParams->{isRestrictedAction}} = map { $_ => 1 } split(/\s*,\s*/, $restrictedActions);
 
@@ -93,6 +92,7 @@ sub render {
 
   # list all actions that need edit rights
   if ($actionParams->{isRestrictedAction}{'edit'}) {
+    $actionParams->{isRestrictedAction}{'edit_raw'} = 1;
     $actionParams->{isRestrictedAction}{'attach'} = 1;
     $actionParams->{isRestrictedAction}{'delete'} = 1;
     $actionParams->{isRestrictedAction}{'editform'} = 1;
@@ -145,6 +145,7 @@ sub formatResult {
   $text =~ s/\$(?:editform\b|action\(editform(?:,\s*(.*?))?\))/renderEditForm($params, $1, $mode)/ge;
   $text =~ s/\$(?:account\b|action\(account(?:,\s*(.*?))?\))/renderAccount($params, $1, $mode)/ge;
   $text =~ s/\$(?:diff\b|action\(diff(?:,\s*(.*?))?\))/renderDiff($params, $1, $mode)/ge;
+  $text =~ s/\$(?:edit_raw\b|action\(edit_raw(?:,\s*(.*?))?\))/renderEditRaw($params, $1, $mode)/ge;
   $text =~ s/\$(?:edit\b|action\(edit(?:,\s*(.*?))?\))/renderEdit($params, $1, $mode)/ge;
   $text =~ s/\$(?:view\b|action\(view(?:,\s*(.*?))?\))/renderView($params, $1, $mode)/ge;
   $text =~ s/\$(?:first\b|action\(first(?:,\s*(.*?))?\))/renderFirst($params, $1, $mode)/ge;
@@ -156,7 +157,7 @@ sub formatResult {
   $text =~ s/(\$sep)?\$(?:logout\b|action\(logout(?:,\s*(.*?))?\))/renderLogout($params, $1, $2, $mode)/ge;
 
   # normal actions / backwards compatibility
-  $text =~ s/\$(attach|copytopic|delete|editsettings|edittext|help|history|more|move|new|pdf|print|register|restore|users)\b/renderAction($1, $params, undef, undef, undef, $mode)/ge;
+  $text =~ s/\$(attach|copytopic|delete|editsettings|edittext|help|history|more|move|new|pdf|print|register|restore|users|share)\b/renderAction($1, $params, undef, undef, undef, $mode)/ge;
 
   # generic actions
   $text =~ s/\$action\((.*?)(?:,\s*(.*?))?\)/renderAction($1, $params, undef, undef, $2, $mode)/ge;
@@ -233,6 +234,40 @@ sub renderEdit {
     } else {
       $result = Foswiki::Func::expandTemplate('EDIT_ACTION');
       $label = getLabelForAction("EDIT", $mode);
+    }
+  }
+
+  $result =~ s/\$label/$label/g;
+
+  return $result;
+}
+
+###############################################################################
+sub renderEditRaw {
+  my ($params, $context, $mode) = @_;
+
+  return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
+
+  my $result = '';
+  my $label;
+  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
+
+  if ($params->{isRestrictedAction}{'edit_raw'}) {
+    return '' if $params->{hiderestricted};
+    if ($themeEngine->{skinState}{"history"}) {
+      $result = Foswiki::Func::expandTemplate('RESTORE_ACTION_RESTRICTED');
+      $label = getLabelForAction("RESTORE", $mode);
+    } else {
+      $result = Foswiki::Func::expandTemplate('EDIT_RAW_ACTION_RESTRICTED');
+      $label = getLabelForAction("EDIT_RAW", $mode);
+    }
+  } else {
+    if ($themeEngine->{skinState}{"history"}) {
+      $result = Foswiki::Func::expandTemplate('RESTORE_ACTION');
+      $label = getLabelForAction("RESTORE", $mode);
+    } else {
+      $result = Foswiki::Func::expandTemplate('EDIT_RAW_ACTION');
+      $label = getLabelForAction("EDIT_RAW", $mode);
     }
   }
 
@@ -400,13 +435,13 @@ sub renderEditForm {
   if ($topicObj && $topicObj->getFormName) {
     if ($params->{isRestrictedAction}{'editform'}) {
       return '' if $params->{hiderestricted};
-      $result = Foswiki::Func::expandTemplate("EDITFORM_ACTION_RESTRICTED");
+      $result = Foswiki::Func::expandTemplate("EDIT_FORM_ACTION_RESTRICTED");
     }
-    $result = Foswiki::Func::expandTemplate("EDITFORM_ACTION");
+    $result = Foswiki::Func::expandTemplate("EDIT_FORM_ACTION");
 
   }
 
-  my $label = getLabelForAction("EDITFORM", $mode);
+  my $label = getLabelForAction("EDIT_FORM", $mode);
   $result =~ s/\$label/$label/g;
 
   return $result;

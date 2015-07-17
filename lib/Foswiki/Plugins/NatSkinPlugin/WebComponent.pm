@@ -95,7 +95,7 @@ sub getWebComponent {
   # get component for web
   my $text = '';
   my $meta = '';
-  my $usersWeb = $Foswiki::cfg{UsersWebName};
+  my ($configWeb) = Foswiki::Func::normalizeWebTopicName(undef, $Foswiki::cfg{LocalSitePreferences});
   my $systemWeb = $Foswiki::cfg{SystemWebName};
 
   my $theWeb = $web;
@@ -110,7 +110,7 @@ sub getWebComponent {
     # current
     ($meta, $text) = Foswiki::Func::readTopic($theWeb, $theComponent);
   } else {
-    $theWeb = $usersWeb;
+    $theWeb = $configWeb;
     $theComponent = 'Site' . $component;
 
     if ( Foswiki::Func::topicExists($theWeb, $theComponent)

@@ -23,6 +23,7 @@ use warnings;
 use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Plugins::NatSkinPlugin ();
+use Encode();
 
 our %maxRevs = ();    # cache for getMaxRevision()
 
@@ -60,6 +61,7 @@ sub makeParams {
 sub urlEncode {
   my $text = shift;
 
+  $text = Encode::encode_utf8($text) if $Foswiki::UNICODE;
   $text =~ s/([^0-9a-zA-Z-_.:~!*'\/])/'%'.sprintf('%02x',ord($1))/ge;
 
   return $text;
