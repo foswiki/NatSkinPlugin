@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2015 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2016 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -59,6 +59,7 @@ sub render {
   if ( $context->{GenPDFPrincePluginEnabled}
     || $context->{GenPDFWebkitPluginEnabled}
     || $context->{GenPDFOfficePluginEnabled}
+    || $context->{GenPDFWeasyPluginEnabled}
     || $context->{PdfPluginEnabled})
   {
     # SMELL: how do we detect GenPDFAddOn...see also getPdfUrl
@@ -81,7 +82,7 @@ sub render {
 
   # get restrictions
   my $restrictedActions = $params->{restrictedactions};
-  $restrictedActions = 'edit, edit_raw, attach, move, delete, diff, more, raw'
+  $restrictedActions = 'edit, edit_raw, edit_settings, attach, move, delete, diff, more, raw'
     unless defined $restrictedActions;
   %{$actionParams->{isRestrictedAction}} = map { $_ => 1 } split(/\s*,\s*/, $restrictedActions);
 
@@ -109,6 +110,16 @@ sub render {
   # if you've got access to this topic then all actions are allowed
   my $wikiName = Foswiki::Func::getWikiName();
   my $gotAccess = Foswiki::Func::checkAccessPermission('CHANGE', $wikiName, undef, $baseTopic, $baseWeb);
+
+  # support for old WorkflowPlugin 
+# if ($gotAccess && Foswiki::Func::getContext()->{WorkflowPluginEnabled}) {
+#   require Foswiki::Plugins::WorkflowPlugin;
+#   my $controlledTopic = Foswiki::Plugins::WorkflowPlugin::_initTOPIC($baseWeb, $baseTopic);
+#   if ($controlledTopic && !$controlledTopic->canEdit()) {
+#     $gotAccess = 0;
+#   }
+# }
+
   $actionParams->{isRestrictedAction} = () if $gotAccess;
 
   # disable registration
@@ -156,8 +167,8 @@ sub formatResult {
   $text =~ s/\$(?:raw\b|action\(raw(?:,\s*(.*?))?\))/renderRaw($params, $1, $mode)/ge;
   $text =~ s/(\$sep)?\$(?:logout\b|action\(logout(?:,\s*(.*?))?\))/renderLogout($params, $1, $2, $mode)/ge;
 
-  # normal actions / backwards compatibility
-  $text =~ s/\$(attach|copytopic|delete|editsettings|edittext|help|history|more|move|new|pdf|print|register|restore|users|share)\b/renderAction($1, $params, undef, undef, undef, $mode)/ge;
+  # normal actions 
+  $text =~ s/\$(attach|copytopic|delete|editsettings|edittext|help|history|more|move|new|pdf|print|register|restore|users|share|like)\b/renderAction($1, $params, undef, undef, undef, $mode)/ge;
 
   # generic actions
   $text =~ s/\$action\((.*?)(?:,\s*(.*?))?\)/renderAction($1, $params, undef, undef, $2, $mode)/ge;
@@ -393,7 +404,8 @@ sub getPdfUrl {
   my $context = Foswiki::Func::getContext();
   if ($context->{GenPDFPrincePluginEnabled} || 
       $context->{GenPDFOfficePluginEnabled} ||
-      $context->{GenPDFWebkitPluginEnabled}) {
+      $context->{GenPDFWebkitPluginEnabled} || 
+      $context->{GenPDFWeasyPluginEnabled}) {
     $url = Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
       'view',
       undef, undef,
@@ -406,6 +418,7 @@ sub getPdfUrl {
     # default to normal printing if no other print helper is installed
     $url = Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath('genpdf', undef, undef, 'cover' => 'print',);
   }
+
   my $extraParams = Foswiki::Plugins::NatSkinPlugin::Utils::makeParams();
   $url .= ';' . $extraParams if $extraParams;
 

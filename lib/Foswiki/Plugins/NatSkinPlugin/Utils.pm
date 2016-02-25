@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2015 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2016 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -62,7 +62,7 @@ sub urlEncode {
   my $text = shift;
 
   $text = Encode::encode_utf8($text) if $Foswiki::UNICODE;
-  $text =~ s/([^0-9a-zA-Z-_.:~!*'\/])/'%'.sprintf('%02x',ord($1))/ge;
+  $text =~ s/([^0-9a-zA-Z-_.:~!*'\/])/sprintf('%%%02x',ord($1))/ge;
 
   return $text;
 }

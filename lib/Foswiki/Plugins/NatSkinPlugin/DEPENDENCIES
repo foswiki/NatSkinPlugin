@@ -14,7 +14,7 @@ Foswiki::Plugins::MimeIconPlugin,>=1,perl,Required
 Foswiki::Plugins::MultiLingualPlugin,>=2.00,perl,Optional
 Foswiki::Plugins::NatEditPlugin,>=8.00,perl,Required
 Foswiki::Plugins::PageOptimizerPlugin,>=0.10,perl,Optional
-Foswiki::Plugins::RenderPlugin,>=3644,perl,Required
+Foswiki::Plugins::RenderPlugin,>=4.00,perl,Required
 Foswiki::Plugins::TopicInteractionPlugin,>=1340,perl,Required
 Foswiki::Plugins::WebLinkPlugin,>=1,perl,Required
 ONLYIF ( $Foswiki::Plugins::VERSION < 2.1)

@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2013-2015 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2013-2016 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -60,10 +60,12 @@ sub restSubscribe {
   throw Error::Simple("bad subscriber")
     if $user eq $Foswiki::cfg{DefaultUserWikiName};
 
+  my $sub = $request->param("subscription") || $topic;
+
   if ($verb eq 'subscribe') {
-    Foswiki::Contrib::MailerContrib::changeSubscription($web, $user, $topic);
+    Foswiki::Contrib::MailerContrib::changeSubscription($web, $user, $sub);
   } else {
-    Foswiki::Contrib::MailerContrib::changeSubscription($web, $user, $topic, "-");
+    Foswiki::Contrib::MailerContrib::changeSubscription($web, $user, $sub, "-");
   }
 }
 

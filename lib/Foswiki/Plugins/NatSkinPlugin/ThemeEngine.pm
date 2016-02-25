@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2015 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2016 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -51,7 +51,7 @@ sub new {
   bless($this, $class);
 
   my $noSideBarActions = $Foswiki::cfg{NatSkin}{NoSideBarActions}
-    || 'edit, manage, login, logon, oops';
+    || 'edit, manage, login, logon, oops, register, compare, rdiff';
   %{$this->{noSideBarActions}} = map { $_ => 1 } split(/\s*,\s*/, $noSideBarActions);
 
   # make sure there's a default record
@@ -459,7 +459,7 @@ HERE
 sub renderSkinState {
   my ($this, $session, $params) = @_;
 
-  my $theFormat = $params->{_DEFAULT}
+  my $theFormat = $params->{_DEFAULT} || $params->{format}
     || '$style, $variation, $sidebar, $layout, $menu';
 
   my $theLowerCase = $params->{lowercase} || 0;
