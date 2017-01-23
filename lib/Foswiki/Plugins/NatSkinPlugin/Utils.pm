@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2016 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2017 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -48,23 +48,13 @@ sub makeParams {
     my $val = $query->param($key) || '';
 
     if ($key eq '#') {
-      $anchor .= '#' . urlEncode($val);
+      $anchor .= '#' . Foswiki::urlEncode($val);
     } else {
-      push(@params, urlEncode($key) . '=' . urlEncode($val));
+      push(@params, Foswiki::urlEncode($key) . '=' . Foswiki::urlEncode($val));
     }
   }
 
   return join(";", @params) . $anchor;
-}
-
-###############################################################################
-sub urlEncode {
-  my $text = shift;
-
-  $text = Encode::encode_utf8($text) if $Foswiki::UNICODE;
-  $text =~ s/([^0-9a-zA-Z-_.:~!*'\/])/sprintf('%%%02x',ord($1))/ge;
-
-  return $text;
 }
 
 ###############################################################################
@@ -74,6 +64,7 @@ sub getPrevRevision {
   my $request = Foswiki::Func::getCgiQuery();
   my $rev;
   $rev = $request->param("rev") if $request;
+  $rev =~ s/[^\d]//g;
 
   $numberOfRevisions ||= $Foswiki::cfg{NumberOfRevisions};
 
@@ -122,21 +113,20 @@ sub getCurRevision {
     $rev = $request->param("rev");
     unless (defined $rev) {
       my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
-      if ($themeEngine->{skinState}{'action'} =~ /compare|rdiff/) {
+      if ($themeEngine->{skinState}{'action'} =~ /compare|rdiff|diff/) {
         my $rev1 = $request->param("rev1");
         my $rev2 = $request->param("rev2");
         if ($rev1 && $rev2) {
+          $rev1 =~ s/[^\d]//g;
+          $rev2 =~ s/[^\d]//g;
           $rev = ($rev1 > $rev2) ? $rev1 : $rev2;
         }
       }
     }
   }
 
-  if ($rev) {
-    $rev =~ s/r?1\.//go;
-  } else {
-    $rev = getMaxRevision($thisWeb, $thisTopic);
-  }
+  $rev = getMaxRevision($thisWeb, $thisTopic) unless $rev;
+  $rev =~ s/[^\d]//g;
 
   return $rev;
 }

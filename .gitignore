@@ -1,8 +1,8 @@
 *.swp
-NatSkinPlugin.md5
-NatSkinPlugin.sha1
-NatSkinPlugin.tgz
-NatSkinPlugin.txt
-NatSkinPlugin.zip
-NatSkinPlugin_installer
-NatSkinPlugin_installer.pl
+/NatSkinPlugin.md5
+/NatSkinPlugin.sha1
+/NatSkinPlugin.tgz
+/NatSkinPlugin.txt
+/NatSkinPlugin.zip
+/NatSkinPlugin_installer
+/NatSkinPlugin_installer.pl

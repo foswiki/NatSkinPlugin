@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2013-2016 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2013-2017 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -28,7 +28,7 @@ sub render {
   my ($session, $params, $theTopic, $theWeb) = @_;
 
   Foswiki::Func::addToZone('skinjs', 'NATSKIN::SUBSCRIBE', <<'HERE', 'NATSKIN::JS, JQUERYPLUGIN::BLOCKUI');
-<script src="%PUBURLPATH%/%SYSTEMWEB%/NatSkin/subscribe.js"></script>
+<script type="text/javascript" src="%PUBURLPATH%/%SYSTEMWEB%/NatSkin/subscribe.js"></script>
 HERE
 
   my $webTopic = $params->{topic} || $theTopic;

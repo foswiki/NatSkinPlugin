@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2016 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2017 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -82,7 +82,7 @@ sub render {
 
   # get restrictions
   my $restrictedActions = $params->{restrictedactions};
-  $restrictedActions = 'edit, edit_raw, edit_settings, attach, move, delete, diff, more, raw'
+  $restrictedActions = 'attach,delete,diff,edit,harvest,managetags,more,move,raw,restore'
     unless defined $restrictedActions;
   %{$actionParams->{isRestrictedAction}} = map { $_ => 1 } split(/\s*,\s*/, $restrictedActions);
 
@@ -93,18 +93,16 @@ sub render {
 
   # list all actions that need edit rights
   if ($actionParams->{isRestrictedAction}{'edit'}) {
-    $actionParams->{isRestrictedAction}{'edit_raw'} = 1;
     $actionParams->{isRestrictedAction}{'attach'} = 1;
     $actionParams->{isRestrictedAction}{'delete'} = 1;
-    $actionParams->{isRestrictedAction}{'editform'} = 1;
-    $actionParams->{isRestrictedAction}{'editsettings'} = 1;
-    $actionParams->{isRestrictedAction}{'editraw'} = 1;
-    $actionParams->{isRestrictedAction}{'editformsettings'} = 1;
-    $actionParams->{isRestrictedAction}{'edittext'} = 1;
+    $actionParams->{isRestrictedAction}{'edit_form'} = 1;
+    $actionParams->{isRestrictedAction}{'edit_raw'} = 1;
+    $actionParams->{isRestrictedAction}{'edit_settings'} = 1;
+    $actionParams->{isRestrictedAction}{'edit_text'} = 1;
     $actionParams->{isRestrictedAction}{'harvest'} = 1;
-    $actionParams->{isRestrictedAction}{'webdavdir'} = 1;
     $actionParams->{isRestrictedAction}{'move'} = 1;
     $actionParams->{isRestrictedAction}{'restore'} = 1;
+    $actionParams->{isRestrictedAction}{'webdavdir'} = 1;
   }
 
   # if you've got access to this topic then all actions are allowed
@@ -120,7 +118,10 @@ sub render {
 #   }
 # }
 
+  my $gotWebAccess = Foswiki::Func::checkAccessPermission('CHANGE', $wikiName, undef, undef, $baseWeb);
+
   $actionParams->{isRestrictedAction} = () if $gotAccess;
+  $actionParams->{isRestrictedAction}{'new'} = 1 unless $gotWebAccess;
 
   # disable registration
   unless ($context->{registration_enabled}) {
@@ -132,9 +133,11 @@ sub render {
 
   my $isCompare = ($themeEngine->{skinState}{'action'} eq 'compare') ? 1 : 0;
   my $isRdiff = ($themeEngine->{skinState}{'action'} eq 'rdiff') ? 1 : 0;
+  my $isDiff = ($themeEngine->{skinState}{'action'} eq 'diff') ? 1 : 0;
   $actionParams->{action} = 'view';
   $actionParams->{action} = 'compare' if $isCompare;
   $actionParams->{action} = 'rdiff' if $isRdiff;
+  $actionParams->{action} = 'diff' if $isDiff;
 
   $text = formatResult($text, $actionParams);
 
@@ -153,11 +156,11 @@ sub formatResult {
   $text =~ s/\$menu/renderMenu($params, $mode)/ge;
 
   # special actions
-  $text =~ s/\$(?:editform\b|action\(editform(?:,\s*(.*?))?\))/renderEditForm($params, $1, $mode)/ge;
-  $text =~ s/\$(?:account\b|action\(account(?:,\s*(.*?))?\))/renderAccount($params, $1, $mode)/ge;
-  $text =~ s/\$(?:diff\b|action\(diff(?:,\s*(.*?))?\))/renderDiff($params, $1, $mode)/ge;
+  $text =~ s/\$(?:edit_form\b|action\(edit_form(?:,\s*(.*?))?\))/renderEditForm($params, $1, $mode)/ge;
   $text =~ s/\$(?:edit_raw\b|action\(edit_raw(?:,\s*(.*?))?\))/renderEditRaw($params, $1, $mode)/ge;
   $text =~ s/\$(?:edit\b|action\(edit(?:,\s*(.*?))?\))/renderEdit($params, $1, $mode)/ge;
+  $text =~ s/\$(?:account\b|action\(account(?:,\s*(.*?))?\))/renderAccount($params, $1, $mode)/ge;
+  $text =~ s/\$(?:diff\b|action\(diff(?:,\s*(.*?))?\))/renderDiff($params, $1, $mode)/ge;
   $text =~ s/\$(?:view\b|action\(view(?:,\s*(.*?))?\))/renderView($params, $1, $mode)/ge;
   $text =~ s/\$(?:first\b|action\(first(?:,\s*(.*?))?\))/renderFirst($params, $1, $mode)/ge;
   $text =~ s/\$(?:last\b|action\(last(?:,\s*(.*?))?\))/renderLast($params, $1, $mode)/ge;
@@ -168,7 +171,7 @@ sub formatResult {
   $text =~ s/(\$sep)?\$(?:logout\b|action\(logout(?:,\s*(.*?))?\))/renderLogout($params, $1, $2, $mode)/ge;
 
   # normal actions 
-  $text =~ s/\$(attach|copytopic|delete|editsettings|edittext|help|history|more|move|new|pdf|print|register|restore|users|share|like)\b/renderAction($1, $params, undef, undef, undef, $mode)/ge;
+  $text =~ s/\$(attach|copytopic|delete|edit_settings|edit_text|help|history|more|move|new|pdf|print|register|restore|users|share|like)\b/renderAction($1, $params, undef, undef, undef, $mode)/ge;
 
   # generic actions
   $text =~ s/\$action\((.*?)(?:,\s*(.*?))?\)/renderAction($1, $params, undef, undef, $2, $mode)/ge;
@@ -446,12 +449,12 @@ sub renderEditForm {
   my $session = $Foswiki::Plugins::SESSION;
   my ($topicObj) = Foswiki::Func::readTopic($params->{baseWeb}, $params->{baseTopic});
   if ($topicObj && $topicObj->getFormName) {
-    if ($params->{isRestrictedAction}{'editform'}) {
+    if ($params->{isRestrictedAction}{'edit_form'}) {
       return '' if $params->{hiderestricted};
       $result = Foswiki::Func::expandTemplate("EDIT_FORM_ACTION_RESTRICTED");
+    } else {
+      $result = Foswiki::Func::expandTemplate("EDIT_FORM_ACTION");
     }
-    $result = Foswiki::Func::expandTemplate("EDIT_FORM_ACTION");
-
   }
 
   my $label = getLabelForAction("EDIT_FORM", $mode);
@@ -521,10 +524,12 @@ sub getFirstUrl {
   if ($params->{action} eq 'view') {
     return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath('view', undef, undef, 'rev' => 1);
   } else {
+    my $request = Foswiki::Func::getCgiQuery();
     return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
       $params->{action}, undef, undef,
       'rev1' => (1 + getNrRev($params)),
-      'rev2' => 1
+      'rev2' => 1,
+      'render' => $request->param("render") || Foswiki::Func::getPreferencesValue("DIFFRENDERSTYLE") || '',
     );
   }
 }
@@ -656,11 +661,13 @@ sub getLastUrl {
   } else {
     my $rev2 = getMaxRev($params) - getNrRev($params);
     $rev2 = 1 if $rev2 < 1;
+    my $request = Foswiki::Func::getCgiQuery();
 
     return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
       $params->{action}, undef, undef,
       'rev1' => getMaxRev($params),
-      'rev2' => $rev2
+      'rev2' => $rev2,
+      'render' => $request->param("render") || Foswiki::Func::getPreferencesValue("DIFFRENDERSTYLE") || '',
     );
   }
 }
@@ -698,6 +705,7 @@ sub getNextUrl {
       'rev1' => getNextRev($params),
       'rev2' => getCurRev($params),
       'context' => $context,
+      'render' => $request->param("render") || Foswiki::Func::getPreferencesValue("DIFFRENDERSTYLE") || '',
     );
   }
 }
@@ -741,6 +749,7 @@ sub getPrevUrl {
       'rev1' => getPrevRev($params),
       'rev2' => $rev2,
       'context' => $context,
+      'render' => $request->param("render") || Foswiki::Func::getPreferencesValue("DIFFRENDERSTYLE") || '',
     );
   }
 }
@@ -773,16 +782,23 @@ sub getDiffUrl {
   $rev2 = 1 if $rev2 < 1;
 
   my $action = $params->{action};
-  if ($action !~ /^(compare|rdiff)$/) {
-    my $context = Foswiki::Func::getContext();
-    $action = $context->{CompareRevisionsAddonPluginEnabled} ? "compare" : "rdiff";
+  my $context = Foswiki::Func::getContext();
+  if ($action !~ /^(compare|rdiff|diff)$/) {
+    $action = $context->{DiffPluginEnabled} ? "diff": $context->{CompareRevisionsAddonPluginEnabled} ? "compare" : "rdiff";
   }
-  return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
-    $action, undef, undef,
-    'rev1' => getCurRev($params),
-    'rev2' => $rev2,
-    'context' => 1
-  );
+  my $request = Foswiki::Func::getCgiQuery();
+
+  if ($context->{DiffPluginEnabled}) {
+    return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath("diff");
+  } else {
+    return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
+      $action, undef, undef,
+      'rev1' => getCurRev($params),
+      'rev2' => $rev2,
+      'context' => 2,
+      'render' => $request->param("render") || Foswiki::Func::getPreferencesValue("DIFFRENDERSTYLE") || '',
+    );
+  }
 
 }
 
@@ -823,15 +839,19 @@ sub getRev {
       my $rev2 = $request->param('rev2');
 
       if (defined($rev)) {
+        $rev =~ s/[^\d]//g;
         $params->{rev} = $rev;
       } elsif (!defined($rev1) && !defined($rev2)) {
         $params->{rev} = getCurRev($params);
       } else {
         $rev1 ||= 1;
         $rev2 ||= 1;
+        $rev1 =~ s/[^\d]//g;
+        $rev2 =~ s/[^\d]//g;
         $params->{rev} = $rev1 > $rev2 ? $rev1 : $rev2;
       }
     }
+
   }
 
   return $params->{rev};
@@ -846,6 +866,8 @@ sub getNrRev {
     if ($request) {
       my $rev1 = $request->param('rev1') || 1;
       my $rev2 = $request->param('rev2') || 1;
+      $rev1 =~ s/[^\d]//g;
+      $rev2 =~ s/[^\d]//g;
       $params->{nrRev} = abs($rev1 - $rev2);
     }
     #$params->{nrRev} = $Foswiki::cfg{NumberOfRevisions} unless $params->{nrRev};

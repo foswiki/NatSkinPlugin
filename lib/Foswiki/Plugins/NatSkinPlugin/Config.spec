@@ -32,48 +32,17 @@ $Foswiki::cfg{NatSkin}{SideBar} = 'right';
 # **STRING**
 # This is a list of actions that switch off the sidebar navigation automatically. Note, these are basically known cgi entry
 # points to Foswiki.
-$Foswiki::cfg{NatSkin}{NoSideBarActions} = 'edit, manage, login, logon, oops, register, compare, rdiff';
+$Foswiki::cfg{NatSkin}{NoSideBarActions} = 'edit, manage, login, logon, oops, register, compare, rdiff, diff';
 
 # ---+++ HTML post processing
 # **BOOLEAN**
 # If switched on, external links will be detected and styled accordingly to give the user visual feedback that this
 # link is driving him off the site. This is a prerequisite to open external links in an extra borwser window/tab.
-$Foswiki::cfg{NatSkin}{DetectExternalLinks} = 0;
+$Foswiki::cfg{NatSkin}{DetectExternalLinks} = 1;
 
 # **BOOLEAN**
 # Enable this switch to perform some basic typographic fixes to the output text: support proper quotes, arrows and 
 # ellipsis.
-$Foswiki::cfg{NatSkin}{FixTypograpghy} = 0;
-
-# ---+++ Internet Explorer
-# **STRING**
-# Add an X-UA-Compatible entry to the HTTP headers. Use "ie=edge" to force any IE into the best mode supported. Add "chrome=1"
-# to switch IE using Chrome-Frame if installed.
-$Foswiki::cfg{NatSkin}{XuaCompatible} = 'ie=edge,chrome=1';
-
-# **BOOLEAN**
-# Enable this switch to display a browser warning when an IE6 has been detected.
-$Foswiki::cfg{NatSkin}{DeprecateIE6} = 1;
-
-# **BOOLEAN**
-# Enable this switch to display a browser warning when an IE7 has been detected. WARNING: an IE8 in compatibility mode will report
-# as an IE7 even though it has been forced back into IE8 standard mode using an appropriate X-UA-Compatible HTTP header.
-$Foswiki::cfg{NatSkin}{DeprecateIE7} = 1;
-
-# **BOOLEAN**
-# Enable this switch to display a browser warning when an IE8 has been detected. 
-$Foswiki::cfg{NatSkin}{DeprecateIE8} = 1;
-
-# **BOOLEAN**
-# Enable this switch to display a browser warning when an IE9 has been detected. 
-$Foswiki::cfg{NatSkin}{DeprecateIE9} = 0;
-
-# **BOOLEAN**
-# Enable this switch to display a browser warning when an IE10 has been detected. 
-$Foswiki::cfg{NatSkin}{DeprecateIE10} = 0;
-
-# **BOOLEAN**
-# Enable this switch to display a browser warning when an IE11 has been detected. 
-$Foswiki::cfg{NatSkin}{DeprecateIE11} = 0;
+$Foswiki::cfg{NatSkin}{FixTypograpghy} = 1;
 
 1;

@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" comment="" date="1437155814" format="1.1" version="1"}%
+%META:TOPICINFO{author="ProjectContributor" comment="" date="1485176369" format="1.1" version="1"}%
 ---+!! The Natural Skin Plugin
 %FORMFIELD{"Description"}%
 %TOC%
@@ -20,7 +20,6 @@ returns the current topic revision
 
 see also: 
 [[#NATMAXREV][NATMAXREV]], 
-[[#NATREVISIONS][NATREVISIONS]]
 [[#PREVREV][PREVREV]], 
 
 ---+++ NATFORMBUTTON
@@ -70,12 +69,6 @@ paramters:
 
 substitute for =%<nop>MAXREV%= which differes all too much on Beijing, Cairo
 and Dakar. This version grants to behave the same.
-
----+++ NATREVISIONS
-*Syntax*: =%<nop>NATREVISIONS%= 
-
-substitute for the =%<nop>REVISIONS%= tag which only works on 
-the <nop>PatternSkin.
 
 ---+++ NATWEBLOGO
 *Syntax*: =%<nop>NATWEBLOGO{format="..."}%=
@@ -173,6 +166,11 @@ See NatSkin#Installation_Instructions
 %$DEPENDENCIES%
 
 ---++ Change History
+%TABLE{columnwidths="7em" tablewidth="100%"}%
+|  23 Jan 2017: | better handing of revision infos being attached to a h1; \
+                  removed detection of old Internet Explorers as well as warning for unsupported browsers; \
+                  better support for Foswiki:Extensions/DiffPlugin; \
+                  hide "New" button based on web, not on topic access rights |
 |  25 Feb 2016: | improved support for pdf printouts; removed secure headers as that's a plugin of its own now |
 |  17 Jul 2015: | better integration with Foswiki:Extensions/AutoTemplatePlugin; \
                   better detection of Internet Explorer versions; added edit_raw action; \
@@ -186,7 +184,7 @@ See NatSkin#Installation_Instructions
 
 %META:FORM{name="PackageForm"}%
 %META:FIELD{name="Author" title="Author" value="Michael Daum"}%
-%META:FIELD{name="Copyright" title="Copyright" value="2003-2016, Michael Daum http://michaeldaumconsulting.com"}%
+%META:FIELD{name="Copyright" title="Copyright" value="2003-2017, Michael Daum http://michaeldaumconsulting.com"}%
 %META:FIELD{name="Description" title="Description" value="%25$SHORTDESCRIPTION%25"}%
 %META:FIELD{name="Home" title="Home" value="Foswiki:Extensions/NatSkinPlugin"}%
 %META:FIELD{name="License" title="License" value="GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]])"}%

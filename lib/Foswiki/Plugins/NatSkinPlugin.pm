@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2016 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2017 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -30,24 +30,17 @@ our $START = '(?:^|(?<=[\w\b\s]))';
 our $STOP = '(?:$|(?=[\w\b\s\,\.\;\:\!\?\)\(]))';
 our $doneInjectRevinfo = 0;
 
-BEGIN {
-  #print STDERR "Perl Version $]\n";
-}
-
-
 ###############################################################################
-our $baseWeb;
-our $baseTopic;
-
-our $VERSION = '4.20';
-our $RELEASE = '25 Feb 2016';
+our $VERSION = '5.00';
+our $RELEASE = '23 Jan 2017';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Support plugin for <nop>NatSkin';
 our $themeEngine;
 
 ###############################################################################
 sub initPlugin {
-  ($baseTopic, $baseWeb) = @_;
+
+  #print STDERR "### Perl Version $]\n";
 
   # theme engine macros
   Foswiki::Func::registerTagHandler(
@@ -75,29 +68,27 @@ sub initPlugin {
   Foswiki::Func::registerTagHandler(
     'PREVREV',
     sub {
-      return Foswiki::Plugins::NatSkinPlugin::Utils::getPrevRevision($baseWeb, $baseTopic, 1);
+      my ($session, $params, $topic, $web) = @_;
+      ($web, $topic) = Foswiki::Func::normalizeWebTopicName($params->{web} || $session->{webName}, $params->{topic} || $session->{topicName});
+      return Foswiki::Plugins::NatSkinPlugin::Utils::getPrevRevision($web, $topic, 1);
     }
   );
 
   Foswiki::Func::registerTagHandler(
     'CURREV',
     sub {
-      return Foswiki::Plugins::NatSkinPlugin::Utils::getCurRevision($baseWeb, $baseTopic);
+      my ($session, $params, $topic, $web) = @_;
+      ($web, $topic) = Foswiki::Func::normalizeWebTopicName($params->{web} || $session->{webName}, $params->{topic} || $session->{topicName});
+      return Foswiki::Plugins::NatSkinPlugin::Utils::getCurRevision($web, $topic);
     }
   );
 
   Foswiki::Func::registerTagHandler(
     'NATMAXREV',
     sub {
-      return Foswiki::Plugins::NatSkinPlugin::Utils::getMaxRevision($baseWeb, $baseTopic);
-    }
-  );
-
-  Foswiki::Func::registerTagHandler(
-    'NATREVISIONS',
-    sub {
-      require Foswiki::Plugins::NatSkinPlugin::Revisions;
-      return Foswiki::Plugins::NatSkinPlugin::Revisions::render(@_);
+      my ($session, $params, $topic, $web) = @_;
+      ($web, $topic) = Foswiki::Func::normalizeWebTopicName($params->{web} || $session->{webName}, $params->{topic} || $session->{topicName});
+      return Foswiki::Plugins::NatSkinPlugin::Utils::getMaxRevision($web, $topic);
     }
   );
 
@@ -254,27 +245,24 @@ sub completePageHandler {
 
   unless ($doneInjectRevinfo) {
     my $flag = Foswiki::Func::isTrue(Foswiki::Func::getPreferencesValue("DISPLAYREVISIONINFO"), 1);
-    if ($flag && $_[0] =~ s/(<h1.*<\/h1>)/$1.&_insertRevInfo()/e) {
+    if ($flag && $_[0] =~ s/(<h1[^>]*>.*<\/h1>)/$1.&_insertRevInfo()/e) {
       $doneInjectRevinfo = 1;
+    } else {
     }
   }
 }
 
 sub _insertRevInfo {
+
+  my $session = $Foswiki::Plugins::SESSION;
+  my $web = $session->{webName};
+  my $topic = $session->{topicName};
   
-  my $revinfo = Foswiki::Func::expandTemplate("revinfo");
-  $revinfo = Foswiki::Func::expandCommonVariables($revinfo);
-  return Foswiki::Func::renderText($revinfo, $baseWeb, $baseTopic);
-}
-
-###############################################################################
-sub modifyHeaderHandler {
-  my ($headers, $query) = @_;
-
-  # force IE to the latest version; use chrome frame if available
-  my $xuaCompatible = $Foswiki::cfg{NatSkin}{XuaCompatible};
-  $xuaCompatible = 'ie=edge,chrome=1' unless defined $xuaCompatible;
-  $headers->{"X-UA-Compatible"} = $xuaCompatible if $xuaCompatible;
+  my $text = Foswiki::Func::expandTemplate("revinfo");
+  $text = Foswiki::Func::expandCommonVariables($text, $topic, $web);
+  $text = Foswiki::Func::renderText($text, $web, $topic);
+  $text =~ s/<!--[^\[<].*?-->//g;
+  return $text;
 }
 
 1;

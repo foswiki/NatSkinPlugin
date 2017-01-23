@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2016 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2017 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -386,51 +386,6 @@ sub init {
     $context->{$var} = 1;
   }
 
-  # SMELL: these browser-based contexts should be core
-  if ($request) {
-    my $agent = $request->user_agent() || '';
-
-    #print STDERR "agent=$agent\n";
-    if ($agent =~ /MSIE|Trident/) {
-      $context->{msie} = 1;
-
-      # SMELL: better use Trident version to detect the physical version of the browser
-      $context->{msie6} = 1 if $agent =~ /MSIE 6/;
-      $context->{msie7} = 1 if $agent =~ /MSIE 7/;
-      $context->{msie8} = 1 if $agent =~ /MSIE 8/;
-      $context->{msie9} = 1 if $agent =~ /MSIE 9/;
-      $context->{msie10} = 1 if $agent =~ /MSIE 10/;
-      $context->{msie11} = 1 if $agent =~ /Trident\/7.0/;
-    } elsif ($agent =~ /Chrome/) {
-      $context->{chrome} = 1;
-    } elsif ($agent =~ /Firefox/) {
-      $context->{firefox} = 1;
-    } elsif ($agent =~ /Opera/) {
-      $context->{opera} = 1;
-    } elsif ($agent =~ /Konqueror/) {
-      $context->{konqueror} = 1;
-    } elsif ($agent =~ /Safari/) {
-      $context->{safari} = 1;
-    }
-
-    # flag unsupported browsers
-    $context->{UnsupportedBrowser} = 1 if $context->{msie6} && $Foswiki::cfg{NatSkin}{DeprecateIE6};
-    $context->{UnsupportedBrowser} = 1 if $context->{msie7} && $Foswiki::cfg{NatSkin}{DeprecateIE7};
-    $context->{UnsupportedBrowser} = 1 if $context->{msie8} && $Foswiki::cfg{NatSkin}{DeprecateIE8};
-    $context->{UnsupportedBrowser} = 1 if $context->{msie9} && $Foswiki::cfg{NatSkin}{DeprecateIE9};
-    $context->{UnsupportedBrowser} = 1 if $context->{msie10} && $Foswiki::cfg{NatSkin}{DeprecateIE10};
-    $context->{UnsupportedBrowser} = 1 if $context->{msie11} && $Foswiki::cfg{NatSkin}{DeprecateIE11};
-
-    my %deprecatedBrowsers = map { $_ => 1 } split(/\s*,\s*/, Foswiki::Func::getPreferencesValue('DEPRECATEDBROWSERS') || '');
-    $deprecatedBrowsers{msie6} = 1 if $Foswiki::cfg{NatSkin}{DeprecateIE6};
-    $deprecatedBrowsers{msie7} = 1 if $Foswiki::cfg{NatSkin}{DeprecateIE7};
-    $deprecatedBrowsers{msie8} = 1 if $Foswiki::cfg{NatSkin}{DeprecateIE8};
-    $deprecatedBrowsers{msie9} = 1 if $Foswiki::cfg{NatSkin}{DeprecateIE9};
-    $deprecatedBrowsers{msie10} = 1 if $Foswiki::cfg{NatSkin}{DeprecateIE10};
-    $deprecatedBrowsers{msie11} = 1 if $Foswiki::cfg{NatSkin}{DeprecateIE11};
-    Foswiki::Func::setPreferencesValue("DEPRECATEDBROWSERS", join(", ", sort keys %deprecatedBrowsers));
-  }
-
   # SMELL: these misc helper contexts should be core
   $context->{allow_loginname} = 1 if $Foswiki::cfg{Register}{AllowLoginName};
 
@@ -446,7 +401,7 @@ sub init {
     Foswiki::Func::setPreferencesValue('FOSWIKI_COLORS_URL', '%NATSTYLEURL%');
 
     Foswiki::Func::addToZone('skinjs', 'NATSKIN::JS', <<'HERE', 'NATSKIN, NATSKIN::PREFERENCES, JQUERYPLUGIN::FOSWIKI, JQUERYPLUGIN::SUPERFISH, JQUERYPLUGIN::UI');
-<script src="%PUBURLPATH%/%SYSTEMWEB%/NatSkin/natskin.js"></script>
+<script type='text/javascript' src="%PUBURLPATH%/%SYSTEMWEB%/NatSkin/natskin.js"></script>
 HERE
 
     Foswiki::Func::addToZone("skincss", 'NATSKIN', $this->renderSkinStyle(), 'TABLEPLUGIN_default, JQUERYPLUGIN::UI, JQUERYPLUGIN::THEME');
@@ -510,6 +465,8 @@ HERE
 <link rel='stylesheet' href='$themeRecord->{baseUrl}/$themeRecord->{variations}{$theVariation}' type='text/css' media='all' />
 HERE
   }
+
+  $text =~ s/^\s+|\s+$//g;
 
   return $text;
 }
