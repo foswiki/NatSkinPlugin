@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2017 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2019 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -37,15 +37,18 @@ sub writeDebug {
 ###############################################################################
 sub new {
   my $class = shift;
+  my $session = shift || $Foswiki::Plugins::SESSION;
 
   #writeDebug("new themegine");
 
   my $this = {
-    defaultStyle => $Foswiki::cfg{NatSkin}{Style} || 'customato',
+    session => $session,    
+    defaultStyle => $Foswiki::cfg{NatSkin}{Style} || 'matter',
     defaultVariation => $Foswiki::cfg{NatSkin}{Variation} || 'off',
     defaultLayout => $Foswiki::cfg{NatSkin}{Layout} || 'fixed',
     defaultMenu => Foswiki::Func::isTrue($Foswiki::cfg{NatSkin}{Menu}, 1),
     defaultStyleSideBar => $Foswiki::cfg{NatSkin}{SideBar} || 'right',
+    displayCookieInfo => $Foswiki::cfg{NatSkin}{DisplayCookieInfo} || 'on',
     @_
   };
   bless($this, $class);
@@ -57,24 +60,13 @@ sub new {
   # make sure there's a default record
   unless (defined $Foswiki::cfg{NatSkin}{Themes}) {
     $Foswiki::cfg{NatSkin}{Themes} = {
-      JazzyNote => {
-        baseUrl => '%PUBURLPATH%/%SYSTEMWEB%/JazzyNoteTheme',
-        logoUrl => '%PUBURLPATH%/%SYSTEMWEB%/JazzyNoteTheme/jazzynote-logo.png',
+      Matter => {
+        baseUrl => '%PUBURLPATH%/%SYSTEMWEB%/MatterTheme',
+        logoUrl => '%PUBURLPATH%/%SYSTEMWEB%/MatterTheme/foswiki-logo.png',
         styles => {
-          jazzynote => 'JazzyNoteStyle.css'
-        },
-        variations => {
-          green => 'GreenVariation.css',
-          red => 'RedVariation.css'
+          matter => 'matter.css',
         }
-      },
-      Customato => {
-        baseUrl => '%PUBURLPATH%/%SYSTEMWEB%/CustomatoTheme',
-        logoUrl => '%PUBURLPATH%/%SYSTEMWEB%/CustomatoTheme/foswiki-logo.png',
-        styles => {
-          customato => 'customato.css',
-        }
-      },
+      }
     };
   }
 
@@ -87,6 +79,15 @@ sub new {
   }
 
   return $this;
+}
+
+###############################################################################
+sub finish {
+  my $this = shift;
+
+  foreach my $key (keys %$this) {
+    undef $this->{$key};
+  }
 }
 
 ###############################################################################
@@ -285,7 +286,7 @@ sub init {
 
   # switch on history context
   my $curRev = ($request) ? $request->param('rev') : '';
-  if ($curRev || $this->{skinState}{"action"} =~ /rdiff|compare/) {
+  if ($curRev || $this->{skinState}{"action"} =~ /r?diff|compare/) {
     $this->{skinState}{"history"} = 1;
   } else {
     $this->{skinState}{"history"} = 0;
@@ -320,7 +321,7 @@ sub init {
   # getting the cover as well
 
   if ($skin =~ /\bnat\b/) {
-    my @skin = split(/\s*,\s*/, $skin);
+    my @skin = map {$_ =~ /([[:alnum:].,\s]+)/} split(/\s*,\s*/, $skin); # clean skin setting
     my %skin = map { $_ => 1 } @skin;
     my @skinAddOns = ();
     my $prefix;
@@ -359,8 +360,7 @@ sub init {
 
       if (!$viewTemplate && $Foswiki::cfg{Plugins}{AutoTemplatePlugin}{Enabled}) {
         require Foswiki::Plugins::AutoTemplatePlugin;
-        my $session = $Foswiki::Plugins::SESSION;
-        $viewTemplate = Foswiki::Plugins::AutoTemplatePlugin::getTemplateName($session->{webName}, $session->{topicName});
+        $viewTemplate = Foswiki::Plugins::AutoTemplatePlugin::getTemplateName($this->{session}{webName}, $this->{session}{topicName});
       }
 
       Foswiki::Func::loadTemplate($viewTemplate)
@@ -395,10 +395,24 @@ sub init {
     $context->{static} = 1;
   }
 
+  # set cookie info 
+  my $displayCookieInfo = 
+    Foswiki::Func::getSessionValue('NATSKIN_COOKIEINFO') ||
+    Foswiki::Func::getPreferencesValue('NATSKIN_COOKIEINFO') ||
+    $this->{displayCookieInfo};
+
+  if ($displayCookieInfo eq "on" || ($displayCookieInfo eq "guest" && !$context->{authenticated})) {
+    $context->{cookie_info} = 1;
+  }
+
   $skin = Foswiki::Func::getSkin();
   if ($skin =~ /\bnat\b/) {
     Foswiki::Func::setPreferencesValue('FOSWIKI_STYLE_URL', '%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseStyle.css');
     Foswiki::Func::setPreferencesValue('FOSWIKI_COLORS_URL', '%NATSTYLEURL%');
+
+    Foswiki::Func::addToZone('script', 'NATSKIN::POLYFILLS', <<'HERE');
+<script type='text/javascript' src="%PUBURLPATH%/%SYSTEMWEB%/NatSkin/polyfills.js"></script>
+HERE
 
     Foswiki::Func::addToZone('skinjs', 'NATSKIN::JS', <<'HERE', 'NATSKIN, NATSKIN::PREFERENCES, JQUERYPLUGIN::FOSWIKI, JQUERYPLUGIN::SUPERFISH, JQUERYPLUGIN::UI');
 <script type='text/javascript' src="%PUBURLPATH%/%SYSTEMWEB%/NatSkin/natskin.js"></script>
@@ -412,7 +426,7 @@ HERE
 
 ###############################################################################
 sub renderSkinState {
-  my ($this, $session, $params) = @_;
+  my ($this, undef, $params) = @_;
 
   my $theFormat = $params->{_DEFAULT} || $params->{format}
     || '$style, $variation, $sidebar, $layout, $menu';
@@ -473,7 +487,7 @@ HERE
 
 ###############################################################################
 sub renderVariations {
-  my ($this, $session, $params) = @_;
+  my ($this, undef, $params) = @_;
 
   my $theStyle = $params->{style} || '.*';
   my $theFormat = $params->{format} || '$style: $variations';
@@ -507,7 +521,7 @@ sub renderVariations {
 
 ###############################################################################
 sub renderStyles {
-  my ($this, $session, $params) = @_;
+  my ($this, undef, $params) = @_;
 
   # TODO: make it formatish
 

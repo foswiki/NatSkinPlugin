@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" comment="" date="1485176369" format="1.1" version="1"}%
+%META:TOPICINFO{author="ProjectContributor" comment="" date="1549973505" format="1.1" version="1"}%
 ---+!! The Natural Skin Plugin
 %FORMFIELD{"Description"}%
 %TOC%
@@ -117,7 +117,7 @@ The "guest" and "format" format strings can use the following variables
    * $logout: link to log out
    * $more: link to more dialog
    * $move: link to move dialog
-   * $pdf: link to export pdf using the <nop>GenPDFAddOn
+   * $pdf: link to export pdf using the one of <nop>GenPDF...Plugins ([[Foswiki:Extensions/GenPDFWeasyPlugin][weasyprint]], [[Foswiki:Extensions/GenPDFPrincePlugin][prince-xml]] or [[Foswiki:Extensions/GenPDFWebkitPlugin][wkhtmltopdf]])
    * $print: link to print action
    * $raw: link to display topic in raw format
    * $register: link to registration
@@ -167,6 +167,7 @@ See NatSkin#Installation_Instructions
 
 ---++ Change History
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  12 Feb 2019: | major release for !NatSkin 6.0 |
 |  23 Jan 2017: | better handing of revision infos being attached to a h1; \
                   removed detection of old Internet Explorers as well as warning for unsupported browsers; \
                   better support for Foswiki:Extensions/DiffPlugin; \
@@ -184,7 +185,7 @@ See NatSkin#Installation_Instructions
 
 %META:FORM{name="PackageForm"}%
 %META:FIELD{name="Author" title="Author" value="Michael Daum"}%
-%META:FIELD{name="Copyright" title="Copyright" value="2003-2017, Michael Daum http://michaeldaumconsulting.com"}%
+%META:FIELD{name="Copyright" title="Copyright" value="2003-2019, Michael Daum http://michaeldaumconsulting.com"}%
 %META:FIELD{name="Description" title="Description" value="%25$SHORTDESCRIPTION%25"}%
 %META:FIELD{name="Home" title="Home" value="Foswiki:Extensions/NatSkinPlugin"}%
 %META:FIELD{name="License" title="License" value="GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]])"}%

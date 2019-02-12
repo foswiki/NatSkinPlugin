@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2017 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2019 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -27,11 +27,132 @@ use Foswiki::Plugins::NatSkinPlugin ();
 use Foswiki::Plugins::NatSkinPlugin::Utils ();
 
 ###############################################################################
-sub render {
-  my ($session, $params, $topic, $web) = @_;
+sub new {
+  my $class = shift;
+  my $session = shift || $Foswiki::Plugins::SESSION;
 
-  my $baseTopic = $session->{topicName};
-  my $baseWeb = $session->{webName};
+  my $this = {
+    session => $session,
+    @_
+  };
+
+  bless($this, $class);
+
+
+  return $this;
+}
+
+###############################################################################
+sub finish {
+  my $this = shift;
+
+  foreach my $key (keys %$this) {
+    undef $this->{$key};
+  }
+}
+
+
+###############################################################################
+sub init {
+  my ($this, $session, $params, $web, $topic) = @_;
+
+  $this->{session} = $session;
+  $this->{topic} = $topic;
+  $this->{web} = $web;
+  $this->{baseTopic} = $this->{session}{topicName};
+  $this->{baseWeb} = $this->{session}{webName};
+  $this->{menu} = $params->{menu};
+  $this->{menu_header} = $params->{menu_header};
+  $this->{menu_footer} = $params->{menu_footer};
+  $this->{hiderestricted} = Foswiki::Func::isTrue($params->{hiderestricted}, 0);
+  $this->{mode} = $params->{mode} || 'short';
+  $this->{sep} = $params->{sep} || $params->{separator} || '';
+
+  my $context = Foswiki::Func::getContext();
+
+  # get restrictions
+  my $restrictedActions = $params->{restrictedactions};
+  $restrictedActions = 'attach,delete,diff,edit,harvest,managetags,more,move,raw,restore'
+    unless defined $restrictedActions;
+  %{$this->{isRestrictedAction}} = map { $_ => 1 } split(/\s*,\s*/, $restrictedActions);
+
+  # set can_generate_pdf context
+  # SMELL: how do we detect GenPDFAddOn...see also getPdfUrl
+
+  if ( $context->{GenPDFPrincePluginEnabled}
+    || $context->{GenPDFWebkitPluginEnabled}
+    || $context->{GenPDFOfficePluginEnabled}
+    || $context->{GenPDFWeasyPluginEnabled}
+    || $context->{PdfPluginEnabled})
+  {
+    $context->{can_generate_pdf} = 1;
+  }
+
+  # a guest can't subscribe to changes
+  if (Foswiki::Func::isGuest()) {
+    $this->{isRestrictedAction}{'subscribe'} = 1;
+  }
+
+  # list all actions that need edit rights
+  if ($this->{isRestrictedAction}{'edit'}) {
+    $this->{isRestrictedAction}{'attach'} = 1;
+    $this->{isRestrictedAction}{'delete'} = 1;
+    $this->{isRestrictedAction}{'edit_form'} = 1;
+    $this->{isRestrictedAction}{'edit_raw'} = 1;
+    $this->{isRestrictedAction}{'edit_settings'} = 1;
+    $this->{isRestrictedAction}{'edit_text'} = 1;
+    $this->{isRestrictedAction}{'harvest'} = 1;
+    $this->{isRestrictedAction}{'move'} = 1;
+    $this->{isRestrictedAction}{'restore'} = 1;
+    $this->{isRestrictedAction}{'webdavdir'} = 1;
+  }
+
+  # if you've got access to this topic then all actions are allowed
+  my $wikiName = Foswiki::Func::getWikiName();
+  my $gotAccess = Foswiki::Func::checkAccessPermission('CHANGE', $wikiName, undef, $this->{baseTopic}, $this->{baseWeb});
+
+  # support for old WorkflowPlugin 
+# if ($gotAccess && Foswiki::Func::getContext()->{WorkflowPluginEnabled}) {
+#   require Foswiki::Plugins::WorkflowPlugin;
+#   my $controlledTopic = Foswiki::Plugins::WorkflowPlugin::_initTOPIC($this->{baseWeb}, $this->{baseTopic});
+#   if ($controlledTopic && !$controlledTopic->canEdit()) {
+#     $gotAccess = 0;
+#   }
+# }
+
+  my $gotWebAccess = Foswiki::Func::checkAccessPermission('CHANGE', $wikiName, undef, undef, $this->{baseWeb});
+  
+  $this->{isRestrictedAction} = () if $gotAccess;
+  $this->{isRestrictedAction}{'new'} = 1 unless $gotWebAccess;
+
+  my $request = Foswiki::Func::getCgiQuery();
+  $this->{isRaw} = ($request) ? $request->param('raw') : '';
+
+  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
+  $this->{isHistory} = ($themeEngine->{skinState}{"history"})?1:0;
+
+  my $isCompare = ($themeEngine->{skinState}{'action'} eq 'compare') ? 1 : 0;
+  my $isRdiff = ($themeEngine->{skinState}{'action'} eq 'rdiff') ? 1 : 0;
+  my $isDiff = ($themeEngine->{skinState}{'action'} eq 'diff') ? 1 : 0;
+  $this->{action} = 'view';
+  $this->{action} = 'compare' if $isCompare;
+  $this->{action} = 'rdiff' if $isRdiff;
+  $this->{action} = 'diff' if $isDiff;
+
+  # disable registration
+  unless ($context->{registration_enabled}) {
+    $this->{isRestrictedAction}{'register'} = 1;
+  }
+
+
+  return $this;
+}
+
+###############################################################################
+sub render {
+  my ($this, $session, $params, $topic, $web) = @_;
+
+  $this->init($session, $params, $web, $topic);
 
   my $header = $params->{header} || '';
   my $footer = $params->{footer} || '';
@@ -43,104 +164,17 @@ sub render {
   my $context = Foswiki::Func::getContext();
 
   my $guestText = $params->{guest};
-  $guestText = '$login$sep$register'
-    unless defined $guestText;
+  $guestText = '$login$sep$register' unless defined $guestText;
 
   $text = $guestText unless $context->{authenticated};
 
-  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
-  if ($themeEngine->{skinState}{"history"}) {
+  if ($this->{isHistory}) {
     my $historyText = $params->{history};
     $text = $historyText if defined $historyText;
   }
-
   return '' unless $text;
 
-  if ( $context->{GenPDFPrincePluginEnabled}
-    || $context->{GenPDFWebkitPluginEnabled}
-    || $context->{GenPDFOfficePluginEnabled}
-    || $context->{GenPDFWeasyPluginEnabled}
-    || $context->{PdfPluginEnabled})
-  {
-    # SMELL: how do we detect GenPDFAddOn...see also getPdfUrl
-    $context->{can_generate_pdf} = 1;
-  }
-
-  # params used by all actions
-  my $actionParams = ();
-
-  $actionParams->{topic} = $topic;
-  $actionParams->{web} = $web;
-  $actionParams->{baseTopic} = $baseTopic;
-  $actionParams->{baseWeb} = $baseWeb;
-  $actionParams->{menu} = $params->{menu};
-  $actionParams->{menu_header} = $params->{menu_header};
-  $actionParams->{menu_footer} = $params->{menu_footer};
-  $actionParams->{hiderestricted} = Foswiki::Func::isTrue($params->{hiderestricted}, 0);
-  $actionParams->{mode} = $params->{mode} || 'short';
-  $actionParams->{sep} = $params->{sep} || $params->{separator} || '';
-
-  # get restrictions
-  my $restrictedActions = $params->{restrictedactions};
-  $restrictedActions = 'attach,delete,diff,edit,harvest,managetags,more,move,raw,restore'
-    unless defined $restrictedActions;
-  %{$actionParams->{isRestrictedAction}} = map { $_ => 1 } split(/\s*,\s*/, $restrictedActions);
-
-  # a guest can't subscribe to changes
-  if (Foswiki::Func::isGuest()) {
-    $actionParams->{isRestrictedAction}{'subscribe'} = 1;
-  }
-
-  # list all actions that need edit rights
-  if ($actionParams->{isRestrictedAction}{'edit'}) {
-    $actionParams->{isRestrictedAction}{'attach'} = 1;
-    $actionParams->{isRestrictedAction}{'delete'} = 1;
-    $actionParams->{isRestrictedAction}{'edit_form'} = 1;
-    $actionParams->{isRestrictedAction}{'edit_raw'} = 1;
-    $actionParams->{isRestrictedAction}{'edit_settings'} = 1;
-    $actionParams->{isRestrictedAction}{'edit_text'} = 1;
-    $actionParams->{isRestrictedAction}{'harvest'} = 1;
-    $actionParams->{isRestrictedAction}{'move'} = 1;
-    $actionParams->{isRestrictedAction}{'restore'} = 1;
-    $actionParams->{isRestrictedAction}{'webdavdir'} = 1;
-  }
-
-  # if you've got access to this topic then all actions are allowed
-  my $wikiName = Foswiki::Func::getWikiName();
-  my $gotAccess = Foswiki::Func::checkAccessPermission('CHANGE', $wikiName, undef, $baseTopic, $baseWeb);
-
-  # support for old WorkflowPlugin 
-# if ($gotAccess && Foswiki::Func::getContext()->{WorkflowPluginEnabled}) {
-#   require Foswiki::Plugins::WorkflowPlugin;
-#   my $controlledTopic = Foswiki::Plugins::WorkflowPlugin::_initTOPIC($baseWeb, $baseTopic);
-#   if ($controlledTopic && !$controlledTopic->canEdit()) {
-#     $gotAccess = 0;
-#   }
-# }
-
-  my $gotWebAccess = Foswiki::Func::checkAccessPermission('CHANGE', $wikiName, undef, undef, $baseWeb);
-
-  $actionParams->{isRestrictedAction} = () if $gotAccess;
-  $actionParams->{isRestrictedAction}{'new'} = 1 unless $gotWebAccess;
-
-  # disable registration
-  unless ($context->{registration_enabled}) {
-    $actionParams->{isRestrictedAction}{'register'} = 1;
-  }
-
-  my $request = Foswiki::Func::getCgiQuery();
-  $actionParams->{isRaw} = ($request) ? $request->param('raw') : '';
-
-  my $isCompare = ($themeEngine->{skinState}{'action'} eq 'compare') ? 1 : 0;
-  my $isRdiff = ($themeEngine->{skinState}{'action'} eq 'rdiff') ? 1 : 0;
-  my $isDiff = ($themeEngine->{skinState}{'action'} eq 'diff') ? 1 : 0;
-  $actionParams->{action} = 'view';
-  $actionParams->{action} = 'compare' if $isCompare;
-  $actionParams->{action} = 'rdiff' if $isRdiff;
-  $actionParams->{action} = 'diff' if $isDiff;
-
-  $text = formatResult($text, $actionParams);
-
+  $text = $this->formatResult($text);
   return '' unless $text;
 
   return Foswiki::Func::decodeFormatTokens($header . $text . $footer);
@@ -148,58 +182,61 @@ sub render {
 
 ###############################################################################
 sub formatResult {
-  my ($text, $params, $mode) = @_;
+  my ($this, $text, $mode) = @_;
 
-  $mode ||= $params->{mode} || 'short';
+  $mode ||= $this->{mode} || 'short';
 
   # menu can contain actions. so it goes first
-  $text =~ s/\$menu/renderMenu($params, $mode)/ge;
+  $text =~ s/\$menu/$this->renderMenu($mode)/ge;
 
   # special actions
-  $text =~ s/\$(?:edit_form\b|action\(edit_form(?:,\s*(.*?))?\))/renderEditForm($params, $1, $mode)/ge;
-  $text =~ s/\$(?:edit_raw\b|action\(edit_raw(?:,\s*(.*?))?\))/renderEditRaw($params, $1, $mode)/ge;
-  $text =~ s/\$(?:edit\b|action\(edit(?:,\s*(.*?))?\))/renderEdit($params, $1, $mode)/ge;
-  $text =~ s/\$(?:account\b|action\(account(?:,\s*(.*?))?\))/renderAccount($params, $1, $mode)/ge;
-  $text =~ s/\$(?:diff\b|action\(diff(?:,\s*(.*?))?\))/renderDiff($params, $1, $mode)/ge;
-  $text =~ s/\$(?:view\b|action\(view(?:,\s*(.*?))?\))/renderView($params, $1, $mode)/ge;
-  $text =~ s/\$(?:first\b|action\(first(?:,\s*(.*?))?\))/renderFirst($params, $1, $mode)/ge;
-  $text =~ s/\$(?:last\b|action\(last(?:,\s*(.*?))?\))/renderLast($params, $1, $mode)/ge;
-  $text =~ s/\$(?:login\b|action\(login(?:,\s*(.*?))?\))/renderLogin($params, $1, $mode)/ge;
-  $text =~ s/\$(?:next\b|action\(next(?:,\s*(.*?))?\))/renderNext($params, $1, $mode)/ge;
-  $text =~ s/\$(?:prev\b|action\(prev(?:,\s*(.*?))?\))/renderPrev($params, $1, $mode)/ge;
-  $text =~ s/\$(?:raw\b|action\(raw(?:,\s*(.*?))?\))/renderRaw($params, $1, $mode)/ge;
-  $text =~ s/(\$sep)?\$(?:logout\b|action\(logout(?:,\s*(.*?))?\))/renderLogout($params, $1, $2, $mode)/ge;
+  $text =~ s/\$(?:edit_form\b|action\(edit_form(?:,\s*(.*?))?\))/$this->renderEditForm($1, $mode)/ge;
+  $text =~ s/\$(?:edit_raw\b|action\(edit_raw(?:,\s*(.*?))?\))/$this->renderEditRaw($1, $mode)/ge;
+  $text =~ s/\$(?:edit\b|action\(edit(?:,\s*(.*?))?\))/$this->renderEdit($1, $mode)/ge;
+  $text =~ s/\$(?:account\b|action\(account(?:,\s*(.*?))?\))/$this->renderAccount($1, $mode)/ge;
+  $text =~ s/\$(?:diff\b|action\(diff(?:,\s*(.*?))?\))/$this->renderDiff($1, $mode)/ge;
+  $text =~ s/\$(?:view\b|action\(view(?:,\s*(.*?))?\))/$this->renderView($1, $mode)/ge;
+  $text =~ s/\$(?:first\b|action\(first(?:,\s*(.*?))?\))/$this->renderFirst($1, $mode)/ge;
+  $text =~ s/\$(?:last\b|action\(last(?:,\s*(.*?))?\))/$this->renderLast($1, $mode)/ge;
+  $text =~ s/\$(?:login\b|action\(login(?:,\s*(.*?))?\))/$this->renderLogin($1, $mode)/ge;
+  $text =~ s/\$(?:next\b|action\(next(?:,\s*(.*?))?\))/$this->renderNext($1, $mode)/ge;
+  $text =~ s/\$(?:prev\b|action\(prev(?:,\s*(.*?))?\))/$this->renderPrev($1, $mode)/ge;
+  $text =~ s/\$(?:raw\b|action\(raw(?:,\s*(.*?))?\))/$this->renderRaw($1, $mode)/ge;
+  $text =~ s/(\$sep)?\$(?:logout\b|action\(logout(?:,\s*(.*?))?\))/$this->renderLogout($1, $2, $mode)/ge;
 
   # normal actions 
-  $text =~ s/\$(attach|copytopic|delete|edit_settings|edit_text|help|history|more|move|new|pdf|print|register|restore|users|share|like)\b/renderAction($1, $params, undef, undef, undef, $mode)/ge;
+  $text =~ s/\$(attach|copytopic|delete|edit_settings|edit_text|help|history|more|move|new|pdf|print|register|restore|users|share|like)\b/$this->renderAction($1, undef, undef, undef, $mode)/ge;
 
   # generic actions
-  $text =~ s/\$action\((.*?)(?:,\s*(.*?))?\)/renderAction($1, $params, undef, undef, $2, $mode)/ge;
+  $text =~ s/\$action\((.*?)(?:,\s*(.*?))?\)/$this->renderAction($1, undef, undef, $2, $mode)/ge;
 
   # action urls
-  $text =~ s/\$diffurl\b/getDiffUrl($params)/ge;
-  $text =~ s/\$editurl\b/getEditUrl($params)/ge;
-  $text =~ s/\$restoreurl\b/getRestoreUrl($params)/ge;
-  $text =~ s/\$firsturl\b/getFirstUrl($params)/ge;
-  $text =~ s/\$prevurl\b/getPrevUrl($params)/ge;
-  $text =~ s/\$nexturl\b/getNextUrl($params)/ge;
-  $text =~ s/\$lasturl\b/getLastUrl($params)/ge;
-  $text =~ s/\$helpurl\b/getHelpUrl($params)/ge;
-  $text =~ s/\$loginurl\b/getLoginUrl($params)/ge;
-  $text =~ s/\$logouturl/getLogoutUrl($params)/ge;
-  $text =~ s/\$registerurl/getRegisterUrl($params)/ge;
-  $text =~ s/\$pdfurl\b/getPdfUrl($params)/ge;
+  $text =~ s/\$diffurl\b/$this->getDiffUrl()/ge;
+  $text =~ s/\$editurl\b/$this->getEditUrl()/ge;
+  $text =~ s/\$restoreurl\b/$this->getRestoreUrl()/ge;
+  $text =~ s/\$firsturl\b/$this->getFirstUrl()/ge;
+  $text =~ s/\$prevurl\b/$this->getPrevUrl()/ge;
+  $text =~ s/\$nexturl\b/$this->getNextUrl()/ge;
+  $text =~ s/\$lasturl\b/$this->getLastUrl()/ge;
+  $text =~ s/\$helpurl\b/$this->getHelpUrl()/ge;
+  $text =~ s/\$loginurl\b/$this->getLoginUrl()/ge;
+  $text =~ s/\$logouturl/$this->getLogoutUrl()/ge;
+  $text =~ s/\$registerurl/$this->getRegisterUrl()/ge;
+  $text =~ s/\$pdfurl\b/$this->getPdfUrl()/ge;
 
-  $text =~ s/\$sep\b/$params->{sep}/g;
-  $text =~ s/\$restorerev\b/getRestoreRev($params)/ge;
-  $text =~ s/\$rev\b/getRev($params)/ge;
+  $text =~ s/\$sep\b/$this->{sep}/g;
+  $text =~ s/\$restorerev\b/$this->getRestoreRev()/ge;
+  $text =~ s/\$rev\b/$this->getRev()/ge;
+
+  $mode = uc($mode);
+  $text =~ s/\$mode\b/$mode/g;
 
   return $text;
 }
 
 ###############################################################################
 sub renderAction {
-  my ($action, $params, $template, $restrictedTemplate, $context, $mode) = @_;
+  my ($this, $action, $template, $restrictedTemplate, $context, $mode) = @_;
 
   #print STDERR "called renderAction($action,".($context?"'".$context."'":'').")\n";
 
@@ -209,14 +246,14 @@ sub renderAction {
   $restrictedTemplate = uc($action) . "_ACTION_RESTRICTED" unless defined $restrictedTemplate;
 
   my $result = '';
-  if ($params->{isRestrictedAction}{$action}) {
-    return '' if $params->{hiderestricted};
+  if ($this->{isRestrictedAction}{$action}) {
+    return '' if $this->{hiderestricted};
     $result = Foswiki::Func::expandTemplate($restrictedTemplate);
   } else {
     $result = Foswiki::Func::expandTemplate($template);
   }
 
-  my $label = getLabelForAction(uc($action), $mode);
+  my $label = $this->getLabelForAction(uc($action), $mode);
   $result =~ s/\$label/$label/g;
 
   return $result;
@@ -224,30 +261,29 @@ sub renderAction {
 
 ###############################################################################
 sub renderEdit {
-  my ($params, $context, $mode) = @_;
+  my ($this, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
   my $result = '';
   my $label;
-  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
 
-  if ($params->{isRestrictedAction}{'edit'}) {
-    return '' if $params->{hiderestricted};
-    if ($themeEngine->{skinState}{"history"}) {
+  if ($this->{isRestrictedAction}{'edit'}) {
+    return '' if $this->{hiderestricted};
+    if ($this->{isHistory}) {
       $result = Foswiki::Func::expandTemplate('RESTORE_ACTION_RESTRICTED');
-      $label = getLabelForAction("RESTORE", $mode);
+      $label = $this->getLabelForAction("RESTORE", $mode);
     } else {
       $result = Foswiki::Func::expandTemplate('EDIT_ACTION_RESTRICTED');
-      $label = getLabelForAction("EDIT", $mode);
+      $label = $this->getLabelForAction("EDIT", $mode);
     }
   } else {
-    if ($themeEngine->{skinState}{"history"}) {
+    if ($this->{isHistory}) {
       $result = Foswiki::Func::expandTemplate('RESTORE_ACTION');
-      $label = getLabelForAction("RESTORE", $mode);
+      $label = $this->getLabelForAction("RESTORE", $mode);
     } else {
       $result = Foswiki::Func::expandTemplate('EDIT_ACTION');
-      $label = getLabelForAction("EDIT", $mode);
+      $label = $this->getLabelForAction("EDIT", $mode);
     }
   }
 
@@ -258,30 +294,29 @@ sub renderEdit {
 
 ###############################################################################
 sub renderEditRaw {
-  my ($params, $context, $mode) = @_;
+  my ($this, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
   my $result = '';
   my $label;
-  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
 
-  if ($params->{isRestrictedAction}{'edit_raw'}) {
-    return '' if $params->{hiderestricted};
-    if ($themeEngine->{skinState}{"history"}) {
+  if ($this->{isRestrictedAction}{'edit_raw'}) {
+    return '' if $this->{hiderestricted};
+    if ($this->{isHistory}) {
       $result = Foswiki::Func::expandTemplate('RESTORE_ACTION_RESTRICTED');
-      $label = getLabelForAction("RESTORE", $mode);
+      $label = $this->getLabelForAction("RESTORE", $mode);
     } else {
       $result = Foswiki::Func::expandTemplate('EDIT_RAW_ACTION_RESTRICTED');
-      $label = getLabelForAction("EDIT_RAW", $mode);
+      $label = $this->getLabelForAction("EDIT_RAW", $mode);
     }
   } else {
-    if ($themeEngine->{skinState}{"history"}) {
+    if ($this->{isHistory}) {
       $result = Foswiki::Func::expandTemplate('RESTORE_ACTION');
-      $label = getLabelForAction("RESTORE", $mode);
+      $label = $this->getLabelForAction("RESTORE", $mode);
     } else {
       $result = Foswiki::Func::expandTemplate('EDIT_RAW_ACTION');
-      $label = getLabelForAction("EDIT_RAW", $mode);
+      $label = $this->getLabelForAction("EDIT_RAW", $mode);
     }
   }
 
@@ -292,17 +327,17 @@ sub renderEditRaw {
 
 ###############################################################################
 sub renderView {
-  my ($params, $context, $mode) = @_;
+  my ($this, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
   my $result = '';
-  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
 
-  if ($params->{isRestrictedAction}{'view'}) {
-    return '' if $params->{hiderestricted};
+  if ($this->{isRestrictedAction}{'view'}) {
+    return '' if $this->{hiderestricted};
     $result = Foswiki::Func::expandTemplate('VIEW_ACTION_RESTRICTED');
   } else {
+    my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
     if ($themeEngine->{skinState}{"action"} eq 'view') {
       return '';
     } else {
@@ -310,7 +345,7 @@ sub renderView {
     }
   }
 
-  my $label = getLabelForAction("VIEW", $mode);
+  my $label = $this->getLabelForAction("VIEW", $mode);
   $result =~ s/\$label/$label/g;
 
   return $result;
@@ -318,14 +353,15 @@ sub renderView {
 
 ###############################################################################
 sub getEditUrl {
+  my $this = shift;
   return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath("edit", undef, undef, 't' => time(),);
 }
 
 ###############################################################################
 sub getRestoreRev {
-  my $params = shift;
+  my $this = shift;
 
-  my $rev = getCurRev($params) - 1;
+  my $rev = $this->getCurRev() - 1;
   $rev = 1 if $rev < 1;
 
   return $rev;
@@ -333,40 +369,40 @@ sub getRestoreRev {
 
 ###############################################################################
 sub getRestoreUrl {
-  my $params = shift;
+  my $this = shift;
 
   return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
     "edit", undef, undef,
     't' => time(),
-    'rev' => getRestoreRev($params)
+    'rev' => $this->getRestoreRev()
   );
 }
 
 ###############################################################################
 sub renderRaw {
-  my ($params, $context, $mode) = @_;
+  my ($this, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
   my $result = '';
   my $label;
 
-  if ($params->{isRestrictedAction}{'raw'}) {
-    return '' if $params->{hiderestricted};
-    if ($params->{isRaw}) {
+  if ($this->{isRestrictedAction}{'raw'}) {
+    return '' if $this->{hiderestricted};
+    if ($this->{isRaw}) {
       $result = Foswiki::Func::expandTemplate('VIEW_ACTION_RESTRICTED');
-      $label = getLabelForAction("VIEW", $mode);
+      $label = $this->getLabelForAction("VIEW", $mode);
     } else {
       $result = Foswiki::Func::expandTemplate('RAW_ACTION_RESTRICTED');
-      $label = getLabelForAction("RAW", $mode);
+      $label = $this->getLabelForAction("RAW", $mode);
     }
   } else {
-    if ($params->{isRaw}) {
+    if ($this->{isRaw}) {
       $result = Foswiki::Func::expandTemplate('VIEW_ACTION');
-      $label = getLabelForAction("VIEW", $mode);
+      $label = $this->getLabelForAction("VIEW", $mode);
     } else {
       $result = Foswiki::Func::expandTemplate('RAW_ACTION');
-      $label = getLabelForAction("RAW", $mode);
+      $label = $this->getLabelForAction("RAW", $mode);
     }
   }
 
@@ -377,31 +413,32 @@ sub renderRaw {
 
 ###############################################################################
 sub renderMenu {
-  my ($params, $mode) = @_;
+  my ($this, $mode) = @_;
 
   my $result = '';
 
-  if ($params->{isRestrictedAction}{'menu'}) {
-    return '' if $params->{hiderestricted};
+  if ($this->{isRestrictedAction}{'menu'}) {
+    return '' if $this->{hiderestricted};
     $result = Foswiki::Func::expandTemplate('MENU_RESTRICTED');
   } else {
-    my $menu = $params->{menu};
-    my $header = $params->{menu_header};
-    my $footer = $params->{menu_footer};
+    my $menu = $this->{menu};
+    my $header = $this->{menu_header};
+    my $footer = $this->{menu_footer};
     $menu = Foswiki::Func::expandTemplate('MENU_FORMAT') unless defined $menu;
     $header = Foswiki::Func::expandTemplate('MENU_HEADER') unless defined $header;
     $footer = Foswiki::Func::expandTemplate('MENU_FOOTER') unless defined $footer;
     $result = $header . $menu . $footer;
   }
 
-  my $label = getLabelForAction("MENU", $mode);
+  my $label = $this->getLabelForAction("MENU", $mode);
   $result =~ s/\$label/$label/g;
 
-  return formatResult($result, $params, "long");
+  return $this->formatResult($result, "long");
 }
 
 ###############################################################################
 sub getPdfUrl {
+  my $this = shift;
 
   my $url;
   my $context = Foswiki::Func::getContext();
@@ -430,7 +467,7 @@ sub getPdfUrl {
 
 ###############################################################################
 sub getLabelForAction {
-  my ($action, $mode) = @_;
+  my ($this, $action, $mode) = @_;
 
   my $label = Foswiki::Func::expandTemplate($action . "_" . uc($mode));
   $label = Foswiki::Func::expandTemplate($action) unless $label;
@@ -440,24 +477,23 @@ sub getLabelForAction {
 
 ###############################################################################
 sub renderEditForm {
-  my ($params, $context, $mode) = @_;
+  my ($this, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
   my $result = '';
 
-  my $session = $Foswiki::Plugins::SESSION;
-  my ($topicObj) = Foswiki::Func::readTopic($params->{baseWeb}, $params->{baseTopic});
+  my ($topicObj) = Foswiki::Func::readTopic($this->{baseWeb}, $this->{baseTopic});
   if ($topicObj && $topicObj->getFormName) {
-    if ($params->{isRestrictedAction}{'edit_form'}) {
-      return '' if $params->{hiderestricted};
+    if ($this->{isRestrictedAction}{'edit_form'}) {
+      return '' if $this->{hiderestricted};
       $result = Foswiki::Func::expandTemplate("EDIT_FORM_ACTION_RESTRICTED");
     } else {
       $result = Foswiki::Func::expandTemplate("EDIT_FORM_ACTION");
     }
   }
 
-  my $label = getLabelForAction("EDIT_FORM", $mode);
+  my $label = $this->getLabelForAction("EDIT_FORM", $mode);
   $result =~ s/\$label/$label/g;
 
   return $result;
@@ -465,7 +501,7 @@ sub renderEditForm {
 
 ###############################################################################
 sub renderAccount {
-  my ($params, $context, $mode) = @_;
+  my ($this, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
@@ -479,7 +515,7 @@ sub renderAccount {
     $result = Foswiki::Func::expandTemplate('ACCOUNT_ACTION_RESTRICTED');
   }
 
-  my $label = getLabelForAction("ACCOUNT", $mode);
+  my $label = $this->getLabelForAction("ACCOUNT", $mode);
   $result =~ s/\$label/$label/g;
 
   return $result;
@@ -487,9 +523,9 @@ sub renderAccount {
 
 ###############################################################################
 sub getHelpUrl {
-  my $params = shift;
+  my $this = shift;
 
-  my $helpTopic = $params->{help} || "UsersGuide";
+  my $helpTopic = $this->{help} || "UsersGuide";
   my $helpWeb = $Foswiki::cfg{SystemWebName};
 
   ($helpWeb, $helpTopic) = Foswiki::Func::normalizeWebTopicName($helpWeb, $helpTopic);
@@ -499,19 +535,19 @@ sub getHelpUrl {
 
 ###############################################################################
 sub renderFirst {
-  my ($params, $context, $mode) = @_;
+  my ($this, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
   my $result = '';
 
-  if ($params->{isRestrictedAction}{'first'} || getCurRev($params) == getNrRev($params) + 1) {
+  if ($this->{isRestrictedAction}{'first'} || $this->getCurRev() <= $this->getNrRev()) {
     $result = Foswiki::Func::expandTemplate('FIRST_ACTION_RESTRICTION');
   } else {
     $result = Foswiki::Func::expandTemplate('FIRST_ACTION');
   }
 
-  my $label = getLabelForAction("FIRST", $mode);
+  my $label = $this->getLabelForAction("FIRST", $mode);
   $result =~ s/\$label/$label/g;
 
   return $result;
@@ -519,15 +555,15 @@ sub renderFirst {
 
 ###############################################################################
 sub getFirstUrl {
-  my $params = shift;
+  my $this = shift;
 
-  if ($params->{action} eq 'view') {
+  if ($this->{action} eq 'view') {
     return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath('view', undef, undef, 'rev' => 1);
   } else {
     my $request = Foswiki::Func::getCgiQuery();
     return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
-      $params->{action}, undef, undef,
-      'rev1' => (1 + getNrRev($params)),
+      $this->{action}, undef, undef,
+      'rev1' => (1 + $this->getNrRev()),
       'rev2' => 1,
       'render' => $request->param("render") || Foswiki::Func::getPreferencesValue("DIFFRENDERSTYLE") || '',
     );
@@ -536,62 +572,69 @@ sub getFirstUrl {
 
 ###############################################################################
 sub renderLogin {
-  my ($params, $context, $mode) = @_;
+  my ($this, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
   my $result = '';
 
-  my $loginUrl = getLoginUrl();
+  my $loginUrl = $this->getLoginUrl();
   if ($loginUrl) {
-    if ($params->{isRestrictedAction}{'login'}) {
-      return '' if $params->{hiderestricted};
+    if ($this->{isRestrictedAction}{'login'}) {
+      return '' if $this->{hiderestricted};
       $result = Foswiki::Func::expandTemplate('LOG_IN_ACTION_RESTRICTED');
     } else {
       $result = Foswiki::Func::expandTemplate('LOG_IN_ACTION');
     }
   }
 
-  my $label = getLabelForAction("LOG_IN", $mode);
+  my $label = $this->getLabelForAction("LOG_IN", $mode);
   $result =~ s/\$label/$label/g;
 
   return $result;
 }
 
 ###############################################################################
+sub getLoginManager {
+  my $this = shift;
+
+  return $this->{session}{loginManager} ||    # TMwiki-4.2
+    $this->{session}{users}->{loginManager} ||    # TMwiki-4.???
+    $this->{session}{client} ||                   # TMwiki-4.0
+    $this->{session}{users}->{loginManager};      # Foswiki
+}
+
+###############################################################################
 sub getLoginUrl {
-  my $session = $Foswiki::Plugins::SESSION;
+  my $this = shift;
 
-  return '' unless $session;
+  return '' unless $this->{session};
 
-  my $loginManager = $session->{loginManager} ||    # TMwiki-4.2
-    $session->{users}->{loginManager} ||            # TMwiki-4.???
-    $session->{client} ||                           # TMwiki-4.0
-    $session->{users}->{loginManager};              # Foswiki
-
+  my $loginManager = $this->getLoginManager();
+  return '' unless $loginManager;
   return $loginManager->loginUrl();
 }
 
 ###############################################################################
 sub renderLogout {
-  my ($params, $sep, $context, $mode) = @_;
+  my ($this, $sep, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
   my $result = '';
   $sep ||= '';
 
-  my $logoutUrl = getLogoutUrl();
+  my $logoutUrl = $this->getLogoutUrl();
   if ($logoutUrl) {
-    if ($params->{isRestrictedAction}{'logout'}) {
-      return '' if $params->{hiderestricted};
+    if ($this->{isRestrictedAction}{'logout'}) {
+      return '' if $this->{hiderestricted};
       $result = $sep . Foswiki::Func::expandTemplate('LOG_OUT_ACTION_RESTRICTED');
     } else {
       $result = $sep . Foswiki::Func::expandTemplate('LOG_OUT_ACTION');
     }
   }
 
-  my $label = getLabelForAction("LOG_OUT", $mode);
+  my $label = $this->getLabelForAction("LOG_OUT", $mode);
   $result =~ s/\$label/$label/g;
 
   return $result;
@@ -599,10 +642,9 @@ sub renderLogout {
 
 ###############################################################################
 sub getLogoutUrl {
+  my $this = shift;
 
-  my $session = $Foswiki::Plugins::SESSION;
-  my $loginManager = $session->{users}->{loginManager};
-
+  my $loginManager = $this->getLoginManager();
   return '' unless $loginManager;
 
   # SMELL: I'd like to do this
@@ -620,10 +662,9 @@ sub getLogoutUrl {
 
 ###############################################################################
 sub getRegisterUrl {
+  my $this = shift;
 
-  my $session = $Foswiki::Plugins::SESSION;
-  my $loginManager = $session->{users}->{loginManager};
-
+  my $loginManager = $this->getLoginManager();
   return '' unless $loginManager;
 
   # SMELL: I'd like to do this
@@ -637,16 +678,16 @@ sub getRegisterUrl {
 
 ###############################################################################
 sub renderLast {
-  my ($params, $context, $mode) = @_;
+  my ($this, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
   my $result =
-    ($params->{isRestrictedAction}{'last'} || getCurRev($params) == getMaxRev($params))
+    ($this->{isRestrictedAction}{'last'} || $this->getCurRev() >= $this->getMaxRev() - $this->getNrRev())
     ? Foswiki::Func::expandTemplate('LAST_ACTION_RESTRICTED')
     : Foswiki::Func::expandTemplate('LAST_ACTION');
 
-  my $label = getLabelForAction("LAST", $mode);
+  my $label = $this->getLabelForAction("LAST", $mode);
   $result =~ s/\$label/$label/g;
 
   return $result;
@@ -654,18 +695,18 @@ sub renderLast {
 
 ###############################################################################
 sub getLastUrl {
-  my $params = shift;
+  my $this = shift;
 
-  if ($params->{action} eq 'view') {
-    return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath('view', undef, undef, 'rev' => getMaxRev($params));
+  if ($this->{action} eq 'view') {
+    return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath('view', undef, undef, 'rev' => $this->getMaxRev());
   } else {
-    my $rev2 = getMaxRev($params) - getNrRev($params);
+    my $rev2 = $this->getMaxRev() - $this->getNrRev();
     $rev2 = 1 if $rev2 < 1;
     my $request = Foswiki::Func::getCgiQuery();
 
     return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
-      $params->{action}, undef, undef,
-      'rev1' => getMaxRev($params),
+      $this->{action}, undef, undef,
+      'rev1' => $this->getMaxRev(),
       'rev2' => $rev2,
       'render' => $request->param("render") || Foswiki::Func::getPreferencesValue("DIFFRENDERSTYLE") || '',
     );
@@ -674,16 +715,16 @@ sub getLastUrl {
 
 ###############################################################################
 sub renderNext {
-  my ($params, $context, $mode) = @_;
+  my ($this, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
   my $result =
-    ($params->{isRestrictedAction}{'next'} || getNextRev($params) > getMaxRev($params))
+    ($this->{isRestrictedAction}{'next'} || $this->getNextRev() > $this->getMaxRev() - $this->getNrRev())
     ? Foswiki::Func::expandTemplate('NEXT_ACTION_RESTRICTED')
     : Foswiki::Func::expandTemplate('NEXT_ACTION');
 
-  my $label = getLabelForAction("NEXT", $mode);
+  my $label = $this->getLabelForAction("NEXT", $mode);
   $result =~ s/\$label/$label/g;
 
   return $result;
@@ -691,19 +732,19 @@ sub renderNext {
 
 ###############################################################################
 sub getNextUrl {
-  my $params = shift;
+  my $this = shift;
 
   my $request = Foswiki::Func::getCgiQuery();
   my $context = $request->param("context");
   $context = 1 unless defined $context;
 
-  if ($params->{action} eq 'view') {
-    return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath('view', undef, undef, 'rev' => getRev($params) + getNrRev($params));
+  if ($this->{action} eq 'view') {
+    return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath('view', undef, undef, 'rev' => $this->getRev() + $this->getNrRev());
   } else {
     return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
-      $params->{action}, undef, undef,
-      'rev1' => getNextRev($params),
-      'rev2' => getCurRev($params),
+      $this->{action}, undef, undef,
+      'rev1' => $this->getNextRev(),
+      'rev2' => $this->getCurRev(),
       'context' => $context,
       'render' => $request->param("render") || Foswiki::Func::getPreferencesValue("DIFFRENDERSTYLE") || '',
     );
@@ -712,16 +753,16 @@ sub getNextUrl {
 
 ###############################################################################
 sub renderPrev {
-  my ($params, $context, $mode) = @_;
+  my ($this, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
   my $result =
-    ($params->{isRestrictedAction}{'prev'} || getPrevRev($params) <= 1)
+    ($this->{isRestrictedAction}{'prev'} || $this->getCurRev() <= $this->getNrRev())
     ? Foswiki::Func::expandTemplate('PREV_ACTION_RESTRICTED')
     : Foswiki::Func::expandTemplate('PREV_ACTION');
 
-  my $label = getLabelForAction("PREV", $mode);
+  my $label = $this->getLabelForAction("PREV", $mode);
   $result =~ s/\$label/$label/g;
 
   return $result;
@@ -729,24 +770,24 @@ sub renderPrev {
 
 ###############################################################################
 sub getPrevUrl {
-  my $params = shift;
+  my $this = shift;
 
   my $request = Foswiki::Func::getCgiQuery();
   my $context = $request->param("context");
   $context = 1 unless defined $context;
 
-  if ($params->{action} eq 'view') {
-    my $rev = getRev($params) - getNrRev($params);
+  if ($this->{action} eq 'view') {
+    my $rev = $this->getRev() - $this->getNrRev();
     $rev = 1 if $rev < 1;
     return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath('view', undef, undef, 'rev' => $rev);
   } else {
 
-    my $rev2 = getPrevRev($params) - getNrRev($params);
+    my $rev2 = $this->getPrevRev() - $this->getNrRev();
     $rev2 = 1 if $rev2 < 1;
 
     return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
-      $params->{action}, undef, undef,
-      'rev1' => getPrevRev($params),
+      $this->{action}, undef, undef,
+      'rev1' => $this->getPrevRev(),
       'rev2' => $rev2,
       'context' => $context,
       'render' => $request->param("render") || Foswiki::Func::getPreferencesValue("DIFFRENDERSTYLE") || '',
@@ -756,19 +797,19 @@ sub getPrevUrl {
 
 ###############################################################################
 sub renderDiff {
-  my ($params, $context, $mode) = @_;
+  my ($this, $context, $mode) = @_;
 
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
   my $result = '';
-  if ($params->{isRestrictedAction}{'diff'}) {
-    return '' if $params->{hiderestricted};
+  if ($this->{isRestrictedAction}{'diff'}) {
+    return '' if $this->{hiderestricted};
     $result = Foswiki::Func::expandTemplate('DIFF_ACTION_RESTRICTED');
   } else {
     $result = Foswiki::Func::expandTemplate('DIFF_ACTION');
   }
 
-  my $label = getLabelForAction("DIFF", $mode);
+  my $label = $this->getLabelForAction("DIFF", $mode);
   $result =~ s/\$label/$label/g;
 
   return $result;
@@ -776,12 +817,12 @@ sub renderDiff {
 
 ###############################################################################
 sub getDiffUrl {
-  my $params = shift;
+  my $this = shift;
 
-  my $rev2 = getCurRev($params) - getNrRev($params);
+  my $rev2 = $this->getCurRev() - $this->getNrRev();
   $rev2 = 1 if $rev2 < 1;
 
-  my $action = $params->{action};
+  my $action = $this->{action};
   my $context = Foswiki::Func::getContext();
   if ($action !~ /^(compare|rdiff|diff)$/) {
     $action = $context->{DiffPluginEnabled} ? "diff": $context->{CompareRevisionsAddonPluginEnabled} ? "compare" : "rdiff";
@@ -793,7 +834,7 @@ sub getDiffUrl {
   } else {
     return Foswiki::Plugins::NatSkinPlugin::Utils::getScriptUrlPath(
       $action, undef, undef,
-      'rev1' => getCurRev($params),
+      'rev1' => $this->getCurRev(),
       'rev2' => $rev2,
       'context' => 2,
       'render' => $request->param("render") || Foswiki::Func::getPreferencesValue("DIFFRENDERSTYLE") || '',
@@ -804,34 +845,34 @@ sub getDiffUrl {
 
 ###############################################################################
 sub getMaxRev {
-  my $params = shift;
+  my $this = shift;
 
-  unless (defined $params->{maxRev}) {
-    $params->{maxRev} = Foswiki::Plugins::NatSkinPlugin::Utils::getMaxRevision();
+  unless (defined $this->{maxRev}) {
+    $this->{maxRev} = Foswiki::Plugins::NatSkinPlugin::Utils::getMaxRevision();
   }
 
-  return $params->{maxRev};
+  return $this->{maxRev};
 }
 
 ###############################################################################
 sub getCurRev {
-  my $params = shift;
+  my $this = shift;
 
-  unless (defined $params->{curRev}) {
-    $params->{curRev} =
+  unless (defined $this->{curRev}) {
+    $this->{curRev} =
          Foswiki::Plugins::NatSkinPlugin::Utils::getCurRevision()
-      || getMaxRev($params)
+      || $this->getMaxRev()
       || 1;
   }
 
-  return $params->{curRev};
+  return $this->{curRev};
 }
 
 ###############################################################################
 sub getRev {
-  my $params = shift;
+  my $this = shift;
 
-  unless (defined $params->{rev}) {
+  unless (defined $this->{rev}) {
     my $request = Foswiki::Func::getCgiQuery();
     if ($request) {
       my $rev = $request->param('rev');
@@ -840,64 +881,64 @@ sub getRev {
 
       if (defined($rev)) {
         $rev =~ s/[^\d]//g;
-        $params->{rev} = $rev;
+        $this->{rev} = $rev;
       } elsif (!defined($rev1) && !defined($rev2)) {
-        $params->{rev} = getCurRev($params);
+        $this->{rev} = $this->getCurRev();
       } else {
         $rev1 ||= 1;
         $rev2 ||= 1;
         $rev1 =~ s/[^\d]//g;
         $rev2 =~ s/[^\d]//g;
-        $params->{rev} = $rev1 > $rev2 ? $rev1 : $rev2;
+        $this->{rev} = $rev1 > $rev2 ? $rev1 : $rev2;
       }
     }
 
   }
 
-  return $params->{rev};
+  return $this->{rev};
 }
 
 ###############################################################################
 sub getNrRev {
-  my $params = shift;
+  my $this = shift;
 
-  unless (defined $params->{nrRev}) {
+  unless (defined $this->{nrRev}) {
     my $request = Foswiki::Func::getCgiQuery();
     if ($request) {
       my $rev1 = $request->param('rev1') || 1;
       my $rev2 = $request->param('rev2') || 1;
       $rev1 =~ s/[^\d]//g;
       $rev2 =~ s/[^\d]//g;
-      $params->{nrRev} = abs($rev1 - $rev2);
+      $this->{nrRev} = abs($rev1 - $rev2);
     }
-    #$params->{nrRev} = $Foswiki::cfg{NumberOfRevisions} unless $params->{nrRev};
-    $params->{nrRev} = 1 unless $params->{nrRev};
+    #$this->{nrRev} = $Foswiki::cfg{NumberOfRevisions} unless $this->{nrRev};
+    $this->{nrRev} = 1 unless $this->{nrRev};
   }
 
-  return $params->{nrRev};
+  return $this->{nrRev};
 }
 
 ###############################################################################
 sub getPrevRev {
-  my $params = shift;
+  my $this = shift;
 
-  unless (defined $params->{prevRev}) {
-    $params->{prevRev} = getCurRev($params) - getNrRev($params);
-    $params->{prevRev} = 1 if $params->{prevRev} < 1;
+  unless (defined $this->{prevRev}) {
+    $this->{prevRev} = $this->getCurRev() - $this->getNrRev();
+    $this->{prevRev} = 1 if $this->{prevRev} < 1;
   }
 
-  return $params->{prevRev};
+  return $this->{prevRev};
 }
 
 ###############################################################################
 sub getNextRev {
-  my $params = shift;
+  my $this = shift;
 
-  unless (defined $params->{nextRev}) {
-    $params->{nextRev} = getCurRev($params) + getNrRev($params);
+  unless (defined $this->{nextRev}) {
+    $this->{nextRev} = $this->getCurRev() + $this->getNrRev();
   }
 
-  return $params->{nextRev};
+  return $this->{nextRev};
 }
 
 1;

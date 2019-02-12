@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2017 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2019 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -22,20 +22,19 @@ use warnings;
 
 use Foswiki::Func ();
 use Foswiki::Plugins ();
-use Foswiki::Plugins::NatSkinPlugin::ThemeEngine ();
 use Foswiki::Plugins::NatSkinPlugin::Utils ();
 use Foswiki::Plugins::NatSkinPlugin::WebComponent ();
 
 our $START = '(?:^|(?<=[\w\b\s]))';
 our $STOP = '(?:$|(?=[\w\b\s\,\.\;\:\!\?\)\(]))';
 our $doneInjectRevinfo = 0;
+our $donePrintOptions = 0;
 
 ###############################################################################
-our $VERSION = '5.00';
-our $RELEASE = '23 Jan 2017';
+our $VERSION = '6.00';
+our $RELEASE = '12 Feb 2019';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Support plugin for <nop>NatSkin';
-our $themeEngine;
 
 ###############################################################################
 sub initPlugin {
@@ -96,16 +95,14 @@ sub initPlugin {
   Foswiki::Func::registerTagHandler(
     'USERACTIONS',
     sub {
-      require Foswiki::Plugins::NatSkinPlugin::UserActions;
-      return Foswiki::Plugins::NatSkinPlugin::UserActions::render(@_);
+      return getUserActions()->render(@_);
     }
   );
 
   Foswiki::Func::registerTagHandler(
     'NATWEBLOGO',
     sub {
-      require Foswiki::Plugins::NatSkinPlugin::WebLogo;
-      return Foswiki::Plugins::NatSkinPlugin::WebLogo::render(@_);
+      return return getWebLogo()->render(@_);
     }
   );
 
@@ -165,10 +162,25 @@ sub initPlugin {
   return 1;
 }
 
+###############################################################################
+sub finishPlugin {
+
+  my $session = $Foswiki::Plugins::SESSION;
+
+  if (exists $session->{_NatSkin}) {
+    foreach my $component (values %{$session->{_NatSkin}}) {
+      $component->finish();
+    }
+  }
+
+  undef $session->{_NatSkin};
+}
+
+###############################################################################
 sub init {
 
   $doneInjectRevinfo = 0;
-  $themeEngine = undef;
+  $donePrintOptions = 0;
   getThemeEngine()->init();
 
   # setting default topictitle
@@ -178,41 +190,43 @@ sub init {
 
   Foswiki::Plugins::NatSkinPlugin::Utils::init();
   Foswiki::Plugins::NatSkinPlugin::WebComponent::init();
-
-  # print options
-  my $request = Foswiki::Func::getCgiQuery();
-  my $contenttype = $request->param("contenttype") || 'text/html';
-  if ($contenttype eq "application/pdf") {
-    my $paperSize = $request->param("pdfpagesize");
-    my $orientation = $request->param("pdforientation");
-    my $watermark = $request->param("pdfwatermark");
-    $watermark = $watermark?"<div class='natWatermark'>$watermark</div>":"";
-
-    my $styleText = "";
-
-    if ($paperSize && $orientation) {
-      $styleText = <<HERE;
-<style type="text/css" media="print">
-\@page {
-  size: $paperSize $orientation;
-}
-</style>
-HERE
-    }
-
-    Foswiki::Func::addToZone("body", "NATSKIN::PRINTOPTIONS", <<HERE);
-$styleText$watermark
-HERE
-  }
 }
 
 ###############################################################################
 sub getThemeEngine {
-  unless (defined $themeEngine) {
-    $themeEngine = new Foswiki::Plugins::NatSkinPlugin::ThemeEngine();
+
+  my $session = $Foswiki::Plugins::SESSION;
+
+  unless (defined $session->{_NatSkin}{ThemeEngine}) {
+    require Foswiki::Plugins::NatSkinPlugin::ThemeEngine;
+    $session->{_NatSkin}{ThemeEngine} = Foswiki::Plugins::NatSkinPlugin::ThemeEngine->new();
   }
 
-  return $themeEngine;
+  return $session->{_NatSkin}{ThemeEngine};
+}
+
+###############################################################################
+sub getUserActions {
+  my $session = $Foswiki::Plugins::SESSION;
+
+  unless (defined $session->{_NatSkin}{UserActions}) {
+    require Foswiki::Plugins::NatSkinPlugin::UserActions;
+    $session->{_NatSkin}{UserActions} = Foswiki::Plugins::NatSkinPlugin::UserActions->new();
+  }
+
+  return $session->{_NatSkin}{UserActions};
+}
+
+###############################################################################
+sub getWebLogo {
+  my $session = $Foswiki::Plugins::SESSION;
+
+  unless (defined $session->{_NatSkin}{WebLogo}) {
+    require Foswiki::Plugins::NatSkinPlugin::WebLogo;
+    $session->{_NatSkin}{WebLogo} = Foswiki::Plugins::NatSkinPlugin::WebLogo->new();
+  }
+
+  return $session->{_NatSkin}{WebLogo};
 }
 
 ###############################################################################
@@ -224,19 +238,70 @@ sub endRenderingHandler {
   }
 
   if ($Foswiki::cfg{NatSkin}{FixTypograpghy}) {
-    $_[0] =~ s((?<=[^\w\-])\-\-\-(?=[^\w\-\+]))(&#8212;)go;         # emdash
-    $_[0] =~ s/$START``$STOP/&#8220;/go;
-    $_[0] =~ s/$START''$STOP/&#8221;/go;
-    $_[0] =~ s/$START,,$STOP/&#8222;/go;
-    $_[0] =~ s/$START\(c\)$STOP/&#169;/go;
-    $_[0] =~ s/$START\(r\)$STOP/&#174;/go;
-    $_[0] =~ s/$START\(tm\)$STOP/&#8482;/go;
-    $_[0] =~ s/$START\.\.\.$STOP/&#8230;/go;
-    $_[0] =~ s/$START\->$STOP/&#8594;/go;
-    $_[0] =~ s/$START<\-$STOP/&#8592;/go;
-    $_[0] =~ s/\-&gt;/&#8594;/go;
-    $_[0] =~ s/&lt;\-/&#8592;/go;
+    $_[0] =~ s/$START``$STOP/&#8220;/g;
+    $_[0] =~ s/$START''$STOP/&#8221;/g;
+    $_[0] =~ s/$START,,$STOP/&#8222;/g;
+    $_[0] =~ s/$START\(c\)$STOP/&#169;/g;
+    $_[0] =~ s/$START\(r\)$STOP/&#174;/g;
+    $_[0] =~ s/$START\(tm\)$STOP/&#8482;/g;
+    $_[0] =~ s/$START\.\.\.$STOP/&#8230;/g;
+    $_[0] =~ s/$START\->$STOP/&#8594;/g;
+    $_[0] =~ s/$START<\-$STOP/&#8592;/g;
+    $_[0] =~ s/\-&gt;/&#8594;/g;
+    $_[0] =~ s/&lt;\-/&#8592;/g;
   }
+
+  # print options
+  unless ($donePrintOptions) {
+    $donePrintOptions = 1;
+    my $request = Foswiki::Func::getCgiQuery();
+    my $contenttype = $request->param("contenttype") || 'text/html';
+    if ($contenttype eq "application/pdf") {
+      my $paperSize = $request->param("pdfpagesize");
+      my $orientation = $request->param("pdforientation");
+
+      my $watermarkText = $request->param("pdfwatermark") || '';
+      $watermarkText =~ s/\"/\\"/g;
+
+      my $watermarkDom = "";
+      if ($watermarkText && !Foswiki::Func::getContext()->{GenPDFPrincePluginEnabled}) {
+        $watermarkDom = "<div class='natWatermark'>$watermarkText</div>";
+      }
+
+      my $styleText = "";
+      my $pageSetup = "";
+
+      if ($paperSize && $orientation) {
+        $pageSetup = "size: $paperSize $orientation;";
+      }
+
+      $styleText = <<HERE;
+<style type="text/css" media="print">
+\@page {
+  \@prince-overlay {
+     color: rgba(0,0,0,0.2);
+     content: "$watermarkText";
+     line-height:1.1;
+     text-align: center;
+     top:50%;
+     left:50%;
+     width:100%;
+     transform: rotate(-45deg);
+     font-size:5em;
+     font-weight:bold;
+     text-transform:uppercase;
+  }
+  $pageSetup
+}
+</style>
+HERE
+
+      Foswiki::Func::addToZone("body", "NATSKIN::PRINTOPTIONS", <<HERE);
+$styleText$watermarkDom
+HERE
+    }
+  }
+
 }
 
 ###############################################################################
@@ -247,7 +312,6 @@ sub completePageHandler {
     my $flag = Foswiki::Func::isTrue(Foswiki::Func::getPreferencesValue("DISPLAYREVISIONINFO"), 1);
     if ($flag && $_[0] =~ s/(<h1[^>]*>.*<\/h1>)/$1.&_insertRevInfo()/e) {
       $doneInjectRevinfo = 1;
-    } else {
     }
   }
 }

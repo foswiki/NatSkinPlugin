@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2017 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2019 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -69,7 +69,7 @@ sub getPrevRevision {
   $numberOfRevisions ||= $Foswiki::cfg{NumberOfRevisions};
 
   $rev = getMaxRevision($thisWeb, $thisTopic) unless $rev;
-  $rev =~ s/r?1\.//go;    # cut major
+  $rev =~ s/r?1\.//g;    # cut major
   if ($rev > $numberOfRevisions) {
     $rev -= $numberOfRevisions;
     $rev = 1 if $rev < 1;
@@ -94,7 +94,7 @@ sub getMaxRevision {
   (undef, undef, $maxRev) = Foswiki::Func::getRevisionInfo($thisWeb, $thisTopic);
   $maxRev = 1 unless defined $maxRev;
 
-  $maxRev =~ s/r?1\.//go;    # cut 'r' and major
+  $maxRev =~ s/r?1\.//g;    # cut 'r' and major
   $maxRevs{"$thisWeb.$thisTopic"} = $maxRev;
   return $maxRev;
 }

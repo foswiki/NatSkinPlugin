@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2017 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2019 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -27,6 +27,7 @@ sub render {
 
   my $theSep = $params->{separator} || ' - ';
   my $theWikiToolName = $params->{wikitoolname} || 'on';
+  my ($web, $topic) = Foswiki::Func::normalizeWebTopicName($theWeb, $params->{topic} || $theTopic);
 
   if ($theWikiToolName eq 'on') {
     $theWikiToolName = Foswiki::Func::getPreferencesValue("WIKITOOLNAME") || 'Wiki';
@@ -45,11 +46,10 @@ sub render {
     return $htmlTitle if $htmlTitle;
   }
 
-  my ($web, $topic) = Foswiki::Func::normalizeWebTopicName($theWeb, $params->{topic} || $theTopic);
   my $webTitle = join($theSep, reverse split(/[\.\/]/, $web));
 
   my $topicTitle = $params->{title};
-  $topicTitle = getTopicTitle($web, $topic) unless defined $topicTitle;
+  $topicTitle = Foswiki::Func::getTopicTitle($web, $topic) unless defined $topicTitle;
 
   $theFormat = '$title$sep$webtitle$wikitoolname' unless defined $theFormat;
   $theFormat =~ s/\$sep\b/$theSep/g;
@@ -60,51 +60,6 @@ sub render {
   $theFormat =~ s/\$topic\b/$topic/g;
 
   return Foswiki::Func::decodeFormatTokens($theFormat);
-}
-
-sub getTopicTitle {
-  my ($web, $topic) = @_;
-
-  if (Foswiki::Func::getContext()->{DBCachePluginEnabled}) {
-    #print STDERR "using DBCachePlugin\n";
-    require Foswiki::Plugins::DBCachePlugin;
-    return Foswiki::Plugins::DBCachePlugin::getTopicTitle($web, $topic);
-  }
-
-  #print STDERR "using foswiki core means\n";
-
-  my ($meta, $text) = Foswiki::Func::readTopic($web, $topic);
-
-  if ($Foswiki::cfg{SecureTopicTitles}) {
-    my $wikiName = Foswiki::Func::getWikiName();
-    return $topic
-      unless Foswiki::Func::checkAccessPermission('VIEW', $wikiName, $text, $topic, $web, $meta);
-  }
-
-  # read the formfield value
-  my $title = $meta->get('FIELD', 'TopicTitle');
-  $title = $title->{value} if $title;
-
-  # read the topic preference
-  unless ($title) {
-    $title = $meta->get('PREFERENCE', 'TOPICTITLE');
-    $title = $title->{value} if $title;
-  }
-
-  # read the preference
-  unless ($title) {
-    Foswiki::Func::pushTopicContext($web, $topic);
-    $title = Foswiki::Func::getPreferencesValue('TOPICTITLE');
-    Foswiki::Func::popTopicContext();
-  }
-
-  # default to topic name
-  $title ||= $topic;
-
-  $title =~ s/\s*$//;
-  $title =~ s/^\s*//;
-
-  return $title;
 }
 
 1;

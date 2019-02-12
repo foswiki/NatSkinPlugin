@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2017 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2019 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -30,7 +30,7 @@ sub render {
   my $text = $thePrefix . $theUrl;
   my $urlHost = Foswiki::Func::getUrlHost();
   my $httpsUrlHost = $urlHost;
-  $httpsUrlHost =~ s/^http:\/\//https:\/\//go;
+  $httpsUrlHost =~ s/^http:\/\//https:\/\//g;
 
   $theUrl =~ /^http/i && ($addClass = 1);    # only for http and hhtps
   $theUrl =~ /^$urlHost/i && ($addClass = 0);    # not for own host

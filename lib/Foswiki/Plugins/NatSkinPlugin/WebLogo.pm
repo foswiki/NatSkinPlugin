@@ -1,7 +1,7 @@
 ###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2017 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2019 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -23,6 +23,30 @@ use Foswiki::Func ();
 use Foswiki::Plugins::NatSkinPlugin();
 
 ###############################################################################
+sub new {
+  my $class = shift;
+  my $session = shift || $Foswiki::Plugins::SESSION;
+
+  my $this = {
+    session => $session,
+    @_
+  };
+
+  bless($this, $class);
+
+  return $this;
+}
+
+###############################################################################
+sub finish {
+  my $this = shift;
+
+  foreach my $key (grep {/^_/} keys %$this) {
+    undef $this->{$key};
+  }
+}
+
+###############################################################################
 # returns the weblogo for the header bar.
 # this will check for a couple of preferences:
 #    * return %NATSKIN_LOGO% if defined
@@ -41,25 +65,24 @@ use Foswiki::Plugins::NatSkinPlugin();
 # the *IMG cases will return a full <img src /> tag
 #
 sub render {
-  my ($session, $params) = @_;
+  my ($this, $session, $params) = @_;
 
-  my $format = $params->{format};
-  $format = '<a href="$url" title="$alt">$logo</a>' unless defined $format;
+  my $result = $params->{format};
+  $result = '<a href="$url" title="$alt">$logo</a>' unless defined $result;
   my $height = $params->{height} || 60;
 
-  my $result = $format;
-  $result =~ s/\$logo/renderLogo()/ge;
-  $result =~ s/\$src/renderSrc()/ge;
-  $result =~ s/\$url/renderUrl()/ge;
-  $result =~ s/\$path/renderPath()/ge;
-  $result =~ s/\$variation/renderVariation()/ge;
-  $result =~ s/\$style/renderStyle()/ge;
-  $result =~ s/\$alt/renderAlt()/ge;
+  $result =~ s/\$logo/$this->renderLogo($params)/ge;
+  $result =~ s/\$src/$this->renderSrc($params)/ge;
+  $result =~ s/\$url/$this->renderUrl($params)/ge;
+  $result =~ s/\$path/$this->renderPath($params)/ge;
+  $result =~ s/\$variation/$this->renderVariation($params)/ge;
+  $result =~ s/\$style/$this->renderStyle($params)/ge;
+  $result =~ s/\$alt/$this->renderAlt($params)/ge;
   $result =~ s/\$height/$height/g;
-  $result =~ s/\$perce?nt/\%/go;
-  $result =~ s/\$nop//go;
-  $result =~ s/\$n/\n/go;
-  $result =~ s/\$dollar/\$/go;
+  $result =~ s/\$perce?nt/\%/g;
+  $result =~ s/\$nop//g;
+  $result =~ s/\$n/\n/g;
+  $result =~ s/\$dollar/\$/g;
 
   return $result;
 
@@ -67,75 +90,121 @@ sub render {
 
 ###############################################################################
 sub renderAlt {
-  return
+  my ($this, $params) = @_;
+
+  unless (defined $this->{_alt}) {
+    $this->{_alt} =
        Foswiki::Func::getPreferencesValue('WEBLOGOALT')
     || Foswiki::Func::getPreferencesValue('WIKILOGOALT')
     || Foswiki::Func::getPreferencesValue('WIKITOOLNAME')
     || 'Logo';
+  }
+
+  return $this->{_alt};
 }
 
 ###############################################################################
 sub renderStyle {
+  my ($this, $params) = @_;
 
-  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
-  return lc $themeEngine->{skinState}{style};
+  unless (defined $this->{_style}) {
+    my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
+    $this->{_style} = $themeEngine->{skinState}{style};
+  }
+
+  return $this->{_style};
 }
 
 ###############################################################################
 sub renderVariation {
+  my ($this, $params) = @_;
 
-  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
-  my $variation = lc $themeEngine->{skinState}{variation};
-  $variation = '' if $variation eq 'off';
-  return $variation;
+  unless (defined $this->{_variation}) {
+    my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
+    my $result = lc $themeEngine->{skinState}{variation};
+    $result = '' if $result eq 'off';
+
+    $this->{_variation} = $result;
+  }
+
+  return $this->{_variation};
 }
 
 ###############################################################################
 sub renderPath {
+  my ($this, $params) = @_;
 
-  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
-  my $themeRecord = $themeEngine->getThemeRecord($themeEngine->{skinState}{'style'});
-  return $themeRecord ? $themeRecord->{baseUrl} : '';
+  unless (defined $this->{_path}) {
+    my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
+    my $themeRecord = $themeEngine->getThemeRecord($themeEngine->{skinState}{'style'});
+    $this->{_path} = $themeRecord ? $themeRecord->{baseUrl} : '';
+  }
+
+  return $this->{_path};
 }
 
 ###############################################################################
 sub renderUrl {
+  my ($this, $params) = @_;
 
-  my $url =
-       Foswiki::Func::getPreferencesValue('NATSKIN_LOGOURL')
-    || Foswiki::Func::getPreferencesValue('WEBLOGOURL')
-    || Foswiki::Func::getPreferencesValue('WIKILOGOURL')
-    || Foswiki::Func::getPreferencesValue('%SCRIPTURLPATH{"view"}%/%USERSWEB%/%HOMETOPIC%');
+  unless (defined $this->{_url}) {
+    $this->{_url} =
+         Foswiki::Func::getPreferencesValue('NATSKIN_LOGOURL')
+      || Foswiki::Func::getPreferencesValue('WEBLOGOURL')
+      || Foswiki::Func::getPreferencesValue('WIKILOGOURL')
+      || Foswiki::Func::getPreferencesValue('%SCRIPTURLPATH{"view"}%/%USERSWEB%/%HOMETOPIC%');
+  }
 
-  return $url;
+  return $this->{_url};
 }
 
 ###############################################################################
 sub renderSrc {
+  my ($this, $params) = @_;
 
-  my $wikiLogoImage = Foswiki::Func::getPreferencesValue('WIKILOGOIMG');
+  unless (defined $this->{_src}) {
+    my $result = $params->{src};
 
-  my $result =
-       Foswiki::Func::getPreferencesValue('NATSKIN_LOGO')
-    || Foswiki::Func::getPreferencesValue('WEBLOGOIMG')
-    || $wikiLogoImage;
+    unless ($result) {
+      my $wikiLogoImage = Foswiki::Func::getPreferencesValue('WIKILOGOIMG');
 
-  $result =~ s/\%WIKILOGOIMG%/$wikiLogoImage/g;
+      $result =
+           Foswiki::Func::getPreferencesValue('NATSKIN_LOGO')
+        || Foswiki::Func::getPreferencesValue('WEBLOGOIMG')
+        || $wikiLogoImage;
 
-  # HACK: override ProjectLogos with own version
-  my $theme = Foswiki::Plugins::NatSkinPlugin::getThemeEngine->getThemeRecord;
-  my $logoUrl = $theme->{logoUrl} || '%PUBURLPATH%/%SYSTEMWEB%/NatSkin/foswiki-logo.png';
-  $result = $logoUrl if $result =~ /ProjectLogos\/foswiki-logo/;
+      $result =~ s/\%WIKILOGOIMG%/$wikiLogoImage/g;
 
-  return $result;
+      # HACK: override ProjectLogos with own version
+      my $theme = Foswiki::Plugins::NatSkinPlugin::getThemeEngine->getThemeRecord;
+      my $logoUrl = $theme->{logoUrl} || '%PUBURLPATH%/%SYSTEMWEB%/NatSkin/foswiki-logo.png';
+      $result = $logoUrl if $result =~ /ProjectLogos\/foswiki-logo/;
+    }
+
+    $result =~ s/^\s+|\s+$//g;
+    $this->{_src} = $result;
+  }
+
+  return $this->{_src};
 }
 
 ###############################################################################
 sub renderLogo {
+  my ($this, $params) = @_;
 
-  my $image = renderSrc();
-  return '<img class="natWebLogo natWebLogoImage" src="$src" alt="$alt" height="$height" />' if $image;
-  return '<span class="natWebLogo natWebLogoName">%WIKITOOLNAME%</span>';
+  unless (defined $this->{_logo}) {
+    my $src = $this->renderSrc($params);
+    my $result;
+    if ($src) {
+      $result = '<img class="natWebLogo natWebLogoImage" src="$src" alt="$alt" height="$height" />';
+    } else {
+      $result = '<span class="natWebLogo natWebLogoName">%WIKITOOLNAME%</span>';
+    }
+
+    $this->{_logo} = $result;
+  }
+
+  return $this->{_logo};
 }
 
 1;

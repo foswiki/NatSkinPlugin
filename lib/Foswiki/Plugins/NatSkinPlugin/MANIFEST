@@ -1,3 +1,4 @@
+!noci
 data/System/NatSkinPlugin.txt 0644
 lib/Foswiki/Plugins/NatSkinPlugin/Config.spec 0644
 lib/Foswiki/Plugins/NatSkinPlugin/DEPENDENCIES 0644

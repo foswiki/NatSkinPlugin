@@ -5,7 +5,7 @@
 # **STRING**
 # This is the default style used for this site. Note, that theming and layout can be configured using preference settings
 # per web, topic and user thus overriding settings specified here.
-$Foswiki::cfg{NatSkin}{Style} = 'customato';
+$Foswiki::cfg{NatSkin}{Style} = 'matter';
 
 # **STRING**
 # Choose a default style variation. Note, that only variations shipped within the same theme package can be used,
@@ -45,4 +45,10 @@ $Foswiki::cfg{NatSkin}{DetectExternalLinks} = 1;
 # ellipsis.
 $Foswiki::cfg{NatSkin}{FixTypograpghy} = 1;
 
+
+# **SELECT on,guest,off**
+# This setting enables a cookie warning required by european law. On intranets you most probably can disable it.
+# Note that this value can override be overwritten using the NATSKIN_COOKIEINFO preference flag. Setting it to "guest"
+# will dislay a cookie warning for unauthenticated visitors only.
+$Foswiki::cfg{NatSkin}{DisplayCookieInfo} = 'on';
 1;
