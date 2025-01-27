@@ -1,6 +1,7 @@
 Foswiki::Contrib::CopyContrib,>=2.0,perl,Required
 Foswiki::Contrib::FamFamFamContrib,>=2075,perl,Required
 Foswiki::Contrib::JQSelect2Contrib,>1.01,perl,Required
+Foswiki::Contrib::JQAjaxFormContrib,>=0,perl,Required
 Foswiki::Contrib::WebFontsContrib,>=1,perl,Required
 Foswiki::Plugins::AutoTemplatePlugin,>=2.01,perl,Required
 Foswiki::Plugins::BreadCrumbsPlugin,>=4318,perl,Required
@@ -19,12 +20,13 @@ Foswiki::Plugins::MimeIconPlugin,>=1,perl,Required
 Foswiki::Plugins::MoreFormfieldsPlugin,>=4.00,perl,Required
 Foswiki::Plugins::MultiLingualPlugin,>=2.00,perl,Required
 Foswiki::Plugins::NatEditPlugin,>=8.00,perl,Required
-Foswiki::Plugins::PageOptimizerPlugin,>=0.10,perl,Optional
 Foswiki::Plugins::RedDotPlugin,>=1,perl,Required
-Foswiki::Plugins::RenderPlugin,>=4.00,perl,Required
+Foswiki::Plugins::RenderPlugin,>=6.00,perl,Required
 Foswiki::Plugins::SecurityHeadersPlugin,>=2.00,perl,Optional
+Foswiki::Plugins::PixabayPlugin,>=0,perl,Optional
 Foswiki::Plugins::TopicInteractionPlugin,>=1340,perl,Required
-Foswiki::Plugins::WebLinkPlugin,>=1,perl,Required
+Foswiki::Plugins::WebLinkPlugin,>=2.1,perl,Required
+Foswiki::Plugins::WebCreatorPlugin,>=1,perl,Required
 ONLYIF ( $Foswiki::Plugins::VERSION < 2.1)
 Foswiki::Plugins::ZonePlugin,>=3.1,perl,Required. required for Foswiki < 1.1
 ONLYIF ( $Foswiki::Plugins::VERSION < 2.6)

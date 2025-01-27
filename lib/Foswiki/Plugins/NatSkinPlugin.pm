@@ -1,7 +1,6 @@
-###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2019 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2025 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -13,31 +12,54 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details, published at
 # http://www.gnu.org/copyleft/gpl.html
-#
-###############################################################################
 
 package Foswiki::Plugins::NatSkinPlugin;
+
+=begin TML
+
+---+ package Foswiki::Plugins::NatSkinPlugin
+
+base class to hook into the foswiki core
+
+=cut
+
 use strict;
 use warnings;
 
 use Foswiki::Func ();
 use Foswiki::Plugins ();
-use Foswiki::Plugins::NatSkinPlugin::Utils ();
-use Foswiki::Plugins::NatSkinPlugin::WebComponent ();
+use Foswiki::Contrib::MailerContrib ();
+use Foswiki::Contrib::JsonRpcContrib ();
+use Foswiki::Plugins::NatSkinPlugin::Utils qw(getPrevRevision getCurRevision getMaxRevision);
 
-our $START = '(?:^|(?<=[\w\b\s]))';
-our $STOP = '(?:$|(?=[\w\b\s\,\.\;\:\!\?\)\(]))';
-our $doneInjectRevinfo = 0;
-our $donePrintOptions = 0;
-
-###############################################################################
-our $VERSION = '6.00';
-our $RELEASE = '12 Feb 2019';
+our $VERSION = '6.999';
+our $RELEASE = '%$RELEASE%';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Support plugin for <nop>NatSkin';
+our $LICENSECODE = '%$LICENSECODE%';
 
-###############################################################################
+our $START = qr/^|(?<=[\s\(])/m;
+our $STOP  = qr/$|(?=[\w\s,.;:!\?\)])/m;
+
+our $doneInjectRevinfo = 0;
+our $donePrintOptions = 0;
+our %modules = ();
+
+=begin TML
+
+---++ initPlugin($topic, $web, $user) -> $boolean
+
+initialize the plugin, automatically called during the core initialization process
+
+=cut
+
 sub initPlugin {
+  my ($topic, $web) = @_;
+
+  # flag topic context
+  my $context = Foswiki::Func::getContext();
+  $context->{$web} = 1;
+  $context->{$topic} = 1;
 
   #print STDERR "### Perl Version $]\n";
 
@@ -45,21 +67,21 @@ sub initPlugin {
   Foswiki::Func::registerTagHandler(
     'SKINSTATE',
     sub {
-      return getThemeEngine()->renderSkinState(@_);
+      return getModule("ThemeEngine", shift)->renderSkinState(@_);
     }
   );
 
   Foswiki::Func::registerTagHandler(
     'KNOWNSTYLES',
     sub {
-      return getThemeEngine()->renderStyles(@_);
+      return getModule("ThemeEngine", shift)->renderStyles(@_);
     }
   );
 
   Foswiki::Func::registerTagHandler(
     'KNOWNVARIATIONS',
     sub {
-      return getThemeEngine()->renderVariations(@_);
+      return getModule("ThemeEngine", shift)->renderVariations(@_);
     }
   );
 
@@ -69,7 +91,7 @@ sub initPlugin {
     sub {
       my ($session, $params, $topic, $web) = @_;
       ($web, $topic) = Foswiki::Func::normalizeWebTopicName($params->{web} || $session->{webName}, $params->{topic} || $session->{topicName});
-      return Foswiki::Plugins::NatSkinPlugin::Utils::getPrevRevision($web, $topic, 1);
+      return getPrevRevision($web, $topic, 1);
     }
   );
 
@@ -78,7 +100,7 @@ sub initPlugin {
     sub {
       my ($session, $params, $topic, $web) = @_;
       ($web, $topic) = Foswiki::Func::normalizeWebTopicName($params->{web} || $session->{webName}, $params->{topic} || $session->{topicName});
-      return Foswiki::Plugins::NatSkinPlugin::Utils::getCurRevision($web, $topic);
+      return getCurRevision($web, $topic);
     }
   );
 
@@ -87,7 +109,7 @@ sub initPlugin {
     sub {
       my ($session, $params, $topic, $web) = @_;
       ($web, $topic) = Foswiki::Func::normalizeWebTopicName($params->{web} || $session->{webName}, $params->{topic} || $session->{topicName});
-      return Foswiki::Plugins::NatSkinPlugin::Utils::getMaxRevision($web, $topic);
+      return getMaxRevision($web, $topic);
     }
   );
 
@@ -95,158 +117,232 @@ sub initPlugin {
   Foswiki::Func::registerTagHandler(
     'USERACTIONS',
     sub {
-      return getUserActions()->render(@_);
+      return getModule("UserActions", shift)->render(@_);
     }
   );
 
   Foswiki::Func::registerTagHandler(
     'NATWEBLOGO',
     sub {
-      return return getWebLogo()->render(@_);
-    }
-  );
-
-  Foswiki::Func::registerTagHandler(
-    'NATSTYLEURL',
-    sub {
-      return getThemeEngine()->getStyleUrl();
+      return getModule("WebLogo", shift)->render(@_);
     }
   );
 
   Foswiki::Func::registerTagHandler(
     'HTMLTITLE',
     sub {
-      require Foswiki::Plugins::NatSkinPlugin::HtmlTitle;
-      return Foswiki::Plugins::NatSkinPlugin::HtmlTitle::render(@_);
+      return getModule("HtmlTitle", shift)->render(@_);
     }
   );
 
   Foswiki::Func::registerTagHandler(
     'IFSUBSCRIBED',
     sub {
-      require Foswiki::Plugins::NatSkinPlugin::Subscribe;
-      return Foswiki::Plugins::NatSkinPlugin::Subscribe::render(@_);
+      return getModule("Subscribe", shift)->render(@_);
     }
-  );
-
-  Foswiki::Func::registerRESTHandler(
-    'subscribe',
-    sub {
-      require Foswiki::Plugins::NatSkinPlugin::Subscribe;
-      return Foswiki::Plugins::NatSkinPlugin::Subscribe::restSubscribe(@_);
-    },
-    authenticate => 1,
-    validate => 0,
-    http_allow => 'POST',
-  );
-  Foswiki::Func::registerRESTHandler(
-    'unsubscribe',
-    sub {
-      require Foswiki::Plugins::NatSkinPlugin::Subscribe;
-      return Foswiki::Plugins::NatSkinPlugin::Subscribe::restSubscribe(@_);
-    },
-    authenticate => 1,
-    validate => 0,
-    http_allow => 'POST',
   );
 
   Foswiki::Func::registerTagHandler(
     'WEBCOMPONENT',
     sub {
-      return Foswiki::Plugins::NatSkinPlugin::WebComponent::render(@_);
+      return getModule("WebComponent", shift)->render(@_);
     }
   );
+
+  # message boxes 
+  Foswiki::Func::registerTagHandler(
+    'DEPRECATED',
+    sub {
+      my ($session, $params, $topic, $web) = @_;
+      Foswiki::Func::addToZone("body", "flashnote", <<HERE);
+<div class='foswikiHidden foswikiFlashNote'>%MAKETEXT{"[[[_1]]] is deprecated. Please fix your application." args="$web.$topic"}%</div>
+HERE
+      return "";
+    }
+  );
+
+  Foswiki::Func::registerTagHandler('MESSAGEBOX', 
+    sub {
+      return getModule("MessageBox", shift)->render(@_);
+    }
+  );
+
+  # stats macros
+  Foswiki::Func::registerTagHandler('CACHEHITS', \&renderCacheHits);
+
+  # JSON-RPC handlers
+  Foswiki::Contrib::JsonRpcContrib::registerMethod("NatSkinPlugin", "subscribe", sub {
+    return getModule("Subscribe", shift)->jsonRpcSubscribe(@_);
+  });
+
+  Foswiki::Contrib::JsonRpcContrib::registerMethod("NatSkinPlugin", "unsubscribe", sub {
+    return getModule("Subscribe", shift)->jsonRpcUnsubscribe(@_);
+  });
+
+  Foswiki::Contrib::JsonRpcContrib::registerMethod("NatSkinPlugin", "restore", sub {
+    return getModule("Restore", shift)->jsonRpcRestore(@_);
+  });
 
   init();
 
   return 1;
 }
 
-###############################################################################
+=begin TML
+
+---++ finishPlugin
+
+finish the plugin and the core if it has been used,
+automatically called during the core initialization process
+
+=cut
+
 sub finishPlugin {
 
-  my $session = $Foswiki::Plugins::SESSION;
-
-  if (exists $session->{_NatSkin}) {
-    foreach my $component (values %{$session->{_NatSkin}}) {
-      $component->finish();
-    }
+  # TODO: keep modules and just init them per request
+  foreach my $key (keys %modules) {
+    my $module = $modules{$key};
+    $module->finish();
+    undef $modules{$key};
   }
 
-  undef $session->{_NatSkin};
+  %modules = ();
 }
 
-###############################################################################
+=begin TML
+
+---++ init()
+
+secondary initalization of this plugin. 
+
+If the url parameter "unsubscribe" was found will it change the subscription
+status in via Foswiki::Contrib::MailerContrib accordingly.
+
+=cut
+
 sub init {
 
   $doneInjectRevinfo = 0;
   $donePrintOptions = 0;
-  getThemeEngine()->init();
-
-  # setting default topictitle
-  my $topicTitleField = Foswiki::Func::getPreferencesValue("TOPICTITLE_FIELD");
-  Foswiki::Func::setPreferencesValue("TOPICTITLE_FIELD", "TopicTitle")
-    unless defined $topicTitleField;
-
-  Foswiki::Plugins::NatSkinPlugin::Utils::init();
-  Foswiki::Plugins::NatSkinPlugin::WebComponent::init();
-}
-
-###############################################################################
-sub getThemeEngine {
 
   my $session = $Foswiki::Plugins::SESSION;
 
-  unless (defined $session->{_NatSkin}{ThemeEngine}) {
-    require Foswiki::Plugins::NatSkinPlugin::ThemeEngine;
-    $session->{_NatSkin}{ThemeEngine} = Foswiki::Plugins::NatSkinPlugin::ThemeEngine->new();
-  }
+  getModule("ThemeEngine", $session)->init();
 
-  return $session->{_NatSkin}{ThemeEngine};
+  # unsubscribe url param
+  my $request = Foswiki::Func::getRequestObject();
+  my $sub = $request->param("unsubscribe");
+  if (defined $sub) {
+    my $web = $session->{webName};
+    my $topic = $session->{topicName};
+    my $user = Foswiki::Func::getWikiName();
+
+    if (Foswiki::Func::topicExists($web, $topic) && $user ne $Foswiki::cfg{DefaultUserWikiName}) {
+
+      ($web, $sub) = Foswiki::Func::normalizeWebTopicName($web, $sub) if $sub ne '*';
+
+      Foswiki::Contrib::MailerContrib::changeSubscription($web, $user, $sub, "-");
+      my $note;
+      if ($sub eq '*') {
+        $note = $session->i18n->maketext('You have been unsubscribed from [_1].', $web);
+      } else {
+        $note = $session->i18n->maketext('You have been unsubscribed from [_1] in [_2].', $sub, $web);
+      }
+      Foswiki::Func::setPreferencesValue("FLASHNOTE", $note);
+    }
+  }
 }
 
-###############################################################################
-sub getUserActions {
-  my $session = $Foswiki::Plugins::SESSION;
+=begin TML
 
-  unless (defined $session->{_NatSkin}{UserActions}) {
-    require Foswiki::Plugins::NatSkinPlugin::UserActions;
-    $session->{_NatSkin}{UserActions} = Foswiki::Plugins::NatSkinPlugin::UserActions->new();
+---++ getModule($name, $session) -> $impl
+
+get a named singleton module of NatSkin
+
+=cut
+
+sub getModule {
+  my $name = shift;
+  my $session = shift;
+
+  $session ||= $Foswiki::Plugins::SESSION;
+
+  return unless defined $name;
+  unless (defined $modules{$name}) {
+    my $impl = "Foswiki::Plugins::NatSkinPlugin::$name";
+    eval "require $impl";
+    if ($@) {
+      print STDERR "ERROR: $@\n";
+      return;
+    }
+    my $module = $impl->new($session, @_);
+    $modules{$name} = $module;
   }
 
-  return $session->{_NatSkin}{UserActions};
+  return $modules{$name};
 }
 
-###############################################################################
-sub getWebLogo {
-  my $session = $Foswiki::Plugins::SESSION;
+=begin TML
 
-  unless (defined $session->{_NatSkin}{WebLogo}) {
-    require Foswiki::Plugins::NatSkinPlugin::WebLogo;
-    $session->{_NatSkin}{WebLogo} = Foswiki::Plugins::NatSkinPlugin::WebLogo->new();
+---++ beforeCommonTagsHandler($text)
+
+hooks into the named callback to process TMPL:DEF, TMPL:END and TMPL:INCLUDE
+by wrapping them into a verbatim block. this helps visualiziong view templates as
+you don't actually want to render their content visiting them in the browser. instead
+they are only used when rendering the view of topics that have this template applied to.
+
+=cut
+
+sub beforeCommonTagsHandler {
+
+  my $isTemplate = 0;
+
+  # remove dummy comments
+  $isTemplate = 1 if $_[0] =~ s/%\{\}%//g; 
+
+  # improve rendering of view templates
+  $isTemplate = 1 if $_[0] =~ s/(%TMPL:DEF\{"(.*?)"\}%.*?%TMPL:END%)/<verbatim class='tml tmplDef'>$1<\/verbatim>/gs;
+  $isTemplate = 1 if $_[0] =~ s/(%TMPL:INCLUDE\{"(.*?)"\}%)/<verbatim class='tml tmplInclude'>$1<\/verbatim>/g;
+
+  # only process if we detected TMPL: stuff
+  if ($isTemplate) {
+    # comments
+    $_[0] =~ s/(\s*)(%\{.*?\}%)(\s*)/$1<verbatim class='tml tmplComment'>$2<\/verbatim>$3/gs;
+    $_[0] =~ s/(#\{.*?\}#)/<verbatim class='tml tmplComment'>$1<\/verbatim>/gs;
+
+    # backwards compatibility
+    $_[0] =~ s/%\{<verbatim class=["']tml["']>\}%//g;
+    $_[0] =~ s/%\{<\/verbatim>\}%//g;
   }
-
-  return $session->{_NatSkin}{WebLogo};
 }
 
-###############################################################################
+=begin TML
+
+---++ endRenderingHandler($text)
+
+some typographic fixes to optimize the html generated by the foswiki core
+
+=cut
+
 sub endRenderingHandler {
 
+  $_[0] =~ s/\<nop\>//g; # clear these early not to disturb the regexes below
+
   if ($Foswiki::cfg{NatSkin}{DetectExternalLinks}) {
-    require Foswiki::Plugins::NatSkinPlugin::ExternalLink;
-    $_[0] =~ s/<a\s+([^>]*?href=(?:\"|\'|&quot;)?)([^\"\'\s>]+(?:\"|\'|\s|&quot;>)?)/'<a '.Foswiki::Plugins::NatSkinPlugin::ExternalLink::render($1,$2)/geoi;
+    $_[0] =~ s/<a\s+([^>]+?)\s*>(.+?)<\/a>/_externalLink($1, $2)/gei;
   }
 
   if ($Foswiki::cfg{NatSkin}{FixTypograpghy}) {
     $_[0] =~ s/$START``$STOP/&#8220;/g;
-    $_[0] =~ s/$START''$STOP/&#8221;/g;
+    $_[0] =~ s/\w''$STOP/&#8221;/g;
     $_[0] =~ s/$START,,$STOP/&#8222;/g;
     $_[0] =~ s/$START\(c\)$STOP/&#169;/g;
     $_[0] =~ s/$START\(r\)$STOP/&#174;/g;
     $_[0] =~ s/$START\(tm\)$STOP/&#8482;/g;
-    $_[0] =~ s/$START\.\.\.$STOP/&#8230;/g;
+    $_[0] =~ s/$START\.\.\.$STOP/&#8230;/g; 
     $_[0] =~ s/$START\->$STOP/&#8594;/g;
     $_[0] =~ s/$START<\-$STOP/&#8592;/g;
+    $_[0] =~ s/$START<\->$STOP/&#8596;/g;
     $_[0] =~ s/\-&gt;/&#8594;/g;
     $_[0] =~ s/&lt;\-/&#8592;/g;
   }
@@ -254,10 +350,10 @@ sub endRenderingHandler {
   # print options
   unless ($donePrintOptions) {
     $donePrintOptions = 1;
-    my $request = Foswiki::Func::getCgiQuery();
+    my $request = Foswiki::Func::getRequestObject();
     my $contenttype = $request->param("contenttype") || 'text/html';
     if ($contenttype eq "application/pdf") {
-      my $paperSize = $request->param("pdfpagesize");
+      my $paperSize = $request->param("pdfpagesize") // "A4";
       my $orientation = $request->param("pdforientation");
 
       my $watermarkText = $request->param("pdfwatermark") || '';
@@ -276,8 +372,9 @@ sub endRenderingHandler {
       }
 
       $styleText = <<HERE;
-<style type="text/css" media="print">
+<style media="print">
 \@page {
+  $pageSetup
   \@prince-overlay {
      color: rgba(0,0,0,0.2);
      content: "$watermarkText";
@@ -291,7 +388,6 @@ sub endRenderingHandler {
      font-weight:bold;
      text-transform:uppercase;
   }
-  $pageSetup
 }
 </style>
 HERE
@@ -301,33 +397,141 @@ $styleText$watermarkDom
 HERE
     }
   }
-
 }
 
-###############################################################################
+=begin TML
+
+---++ completePageHandler($text, $header)
+
+optimize the html page on an html level. note that this replaces
+similar features of PageOptimizerPlugin
+
+=cut
+
 sub completePageHandler {
   #my $text = $_[0];
+  #my $header = $_[1];
+  
+  my $context = Foswiki::Func::getContext();
+  #return unless $context->{view} || $context->{edit};
+  return unless $_[1] =~ /Content-type: (text\/html|application\/pdf)/;
 
   unless ($doneInjectRevinfo) {
     my $flag = Foswiki::Func::isTrue(Foswiki::Func::getPreferencesValue("DISPLAYREVISIONINFO"), 1);
-    if ($flag && $_[0] =~ s/(<h1[^>]*>.*<\/h1>)/$1.&_insertRevInfo()/e) {
+    if ($flag && $_[0] =~ s/(<h1 id="[^>]*>.*<\/h1>)/$1.&_insertRevInfo()/e) {
       $doneInjectRevinfo = 1;
     }
   }
+
+  # hide link protocol from link text of phone links
+  $_[0] =~ s/(<a href="(?:tel|sip|phone|skype):.+?">)(?:tel|sip|phone|skype):(.+?<\/a>)/$1$2/g;
+
+  return if $context->{PageOptimizerPluginEnabled};
+
+  # some cleanup from PageOptimizerPlugin
+  use bytes;
+
+  # remove non-macros and leftovers
+  $_[0] =~ s/%(?:REVISIONS|REVTITLE|REVARG|QUERYPARAMSTRING)%//g;
+  $_[0] =~ s/^%META:\w+{.*}%$//gm;
+
+  # remove comments
+  $_[0] =~ s/<!--[^\[<].*?-->//g;
+
+  # clean up %{<verbatim>}% ...%{</verbatim>}% ... not required anymore
+  $_[0] =~ s/\%\{(<pre[^>]*>)\}&#37;\s*/$1/g;
+  $_[0] =~ s/\s*&#37;\{(<\/pre>)\}\%/$1/g;
+
+
+  # make empty table cells really empty
+  $_[0] =~ s/(<td[^>]*>)\s+(<\/td>)/$1$2/gs;
+
+  # clean up non-html tags
+  $_[0] =~ s/<\/?(?:nop|noautolink|sticky|literal)>//g;
+
+  # remove type="text/css"
+  $_[0] =~ s/(<style[^>]*?) type=["']text\/css["']/$1/g;
+
+  # remove type="text/javascript"
+  $_[0] =~ s/(<script[^>]*?) type=["']text\/javascript["']/$1/g;
+
+  # remove anything after </html>
+  $_[0] =~ s/(<\/html>).*$/$1/gs;
+
+  # remove empty lines
+  $_[0] =~ s/^\s*$//gms;
+
+  no bytes;
 }
 
-sub _insertRevInfo {
+sub renderCacheHits {
+  my ($session, $params, $topic, $web) = @_;
 
+  my $type = $params->{type} // 'prefs';
+  my $result = '';
+  my $format = '<span class="natCacheHits natCacheHits_$type">$count</span>';
+
+  if ($type eq 'prefs') {
+    $result = $format;
+    my $impl = $Foswiki::cfg{Store}{PrefsBackend};
+    my $count = $impl->cacheHits() if $impl->can("cacheHits");
+
+    $result =~ s/\$type\b/$type/g;
+    $result =~ s/\$count\b/$count/g;
+  }
+
+  return $result;
+}
+
+### static helper
+
+sub _insertRevInfo {
   my $session = $Foswiki::Plugins::SESSION;
   my $web = $session->{webName};
   my $topic = $session->{topicName};
   
   my $text = Foswiki::Func::expandTemplate("revinfo");
-  $text = Foswiki::Func::expandCommonVariables($text, $topic, $web);
+  return "" if $text =~ /^\s*$/;
+
+  $text = Foswiki::Func::expandCommonVariables($text, $topic, $web) if $text =~ /%/;
   $text = Foswiki::Func::renderText($text, $web, $topic);
   $text =~ s/<!--[^\[<].*?-->//g;
+  $text =~ s/^\s+//;
+  $text =~ s/\s+$//;
   return $text;
 }
+
+sub _externalLink {
+  my ($attrs, $text) = @_;
+
+  my $urlHost = Foswiki::Func::getUrlHost();
+  my $httpsUrlHost = $urlHost;
+  $httpsUrlHost =~ s/^http:\/\//https:\/\//g;
+
+  my %attrs = ();
+
+  while ($attrs =~ /([^\s"']+)=(["'])(.*?)\2/g) {
+    $attrs{$1} = $3;
+  }
+
+  my $url = delete $attrs{href} || '';
+
+  my $isExternal = 0;
+  $url =~ /^https?:\/\//i && ($isExternal = 1);    # only for this protocol
+  $url =~ /^$urlHost/i && ($isExternal = 0);    # not for own host
+  $url =~ /^$httpsUrlHost/i && ($isExternal = 0);    # not for own host
+ 
+  if ($isExternal) {
+    $attrs{class} = join(" ", "natExternalLink", sort split(/\s+/, $attrs{class}||''));
+    $attrs{target} ||= $attrs{target} = '_blank';
+    $attrs{rel} ||= $attrs{rel} = 'nofollow noopener noreferrer';
+    return "<a ".($url?"href='$url' ":'').join(" ", map {"$_='$attrs{$_}'"} sort keys %attrs).">$text</a>";
+  }
+
+  # return original
+  return "<a $attrs>$text</a>";
+}
+
 
 1;
 

@@ -1,7 +1,6 @@
-###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2019 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2025 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -14,7 +13,6 @@
 # GNU General Public License for more details, published at
 # http://www.gnu.org/copyleft/gpl.html
 #
-###############################################################################
 
 # SMELL: this is unused code
 
@@ -23,7 +21,7 @@ use strict;
 use warnings;
 
 use Foswiki::Func ();
-use Foswiki::Plugins::NatSkinPlugin::Utils ();
+use Foswiki::Plugins::NatSkinPlugin::Utils qw(:all);
 
 sub render {
   my ($session, $params) = @_;
@@ -44,7 +42,7 @@ sub render {
     $rev1 =~ s/r?1\.//g;    # cut 'r' and major
     $rev2 =~ s/r?1\.//g;    # cut 'r' and major
 
-    my $maxRev = Foswiki::Plugins::NatSkinPlugin::Utils::getMaxRevision();
+    my $maxRev = getMaxRevision();
     $rev1 = $maxRev if $rev1 < 1;
     $rev1 = $maxRev if $rev1 > $maxRev;
     $rev2 = 1 if $rev2 < 1;

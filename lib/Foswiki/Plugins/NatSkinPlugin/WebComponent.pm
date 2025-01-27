@@ -1,7 +1,6 @@
-###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2019 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2025 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -14,9 +13,16 @@
 # GNU General Public License for more details, published at
 # http://www.gnu.org/copyleft/gpl.html
 #
-###############################################################################
 
 package Foswiki::Plugins::NatSkinPlugin::WebComponent;
+
+=begin TML
+
+---+ package Foswiki::Plugins::NatSkinPlugin::WebComponent
+
+service class to render the %WEBCOMPONENT macro
+
+=cut
 
 use strict;
 use warnings;
@@ -25,17 +31,17 @@ use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Plugins::NatSkinPlugin ();
 
-our %seenWebComponent = ();    # cache for get()
+use Foswiki::Plugins::NatSkinPlugin::BaseModule ();
+our @ISA = ('Foswiki::Plugins::NatSkinPlugin::BaseModule');
 
-###############################################################################
-sub init {
+=begin TML
 
-  %seenWebComponent = ();
-}
+---++ render($params) -> $html
 
-###############################################################################
+=cut
+
 sub render {
-  my ($session, $params) = @_;
+  my ($this, $params) = @_;
 
   my $theComponent = $params->{_DEFAULT};
   my $theLinePrefix = $params->{lineprefix};
@@ -46,12 +52,12 @@ sub render {
 
   my $name = lc $theComponent;
 
-  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
+  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getModule("ThemeEngine");
   return '' if $themeEngine->{skinState}{$name} && $themeEngine->{skinState}{$name} eq 'off';
 
   my $text;
 
-  ($text, $theWeb, $theComponent) = getWebComponent($session, $theWeb, $theComponent, $theMultiple);
+  ($text, $theWeb, $theComponent) = $this->getWebComponent($theWeb, $theComponent, $theMultiple);
 
   return '' unless defined $theWeb && defined $theComponent;
 
@@ -68,17 +74,25 @@ sub render {
   return $theHeader . $text . $theFooter;
 }
 
-###############################################################################
-# search path
-# 1. search WebTheComponent in current web
-# 2. search SiteTheComponent in %USERWEB%
-# 3. search SiteTheComponent in %SYSTEMWEB%
-# 4. search WebTheComponent in %SYSTEMWEB% web
-# (like: TheComponent = SideBar)
-sub getWebComponent {
-  my ($session, $web, $component, $multiple) = @_;
+=begin TML
 
-  $web ||= $session->{webName};    # Default to baseWeb
+---++ getWebComponent($web, $component, $multiple) -> $html
+
+search path
+
+   1. search WebTheComponent in current web
+   2. search SiteTheComponent in %USERWEB%
+   3. search SiteTheComponent in %SYSTEMWEB%
+   4. search WebTheComponent in %SYSTEMWEB% web
+
+(like: TheComponent = SideBar)
+
+=cut
+
+sub getWebComponent {
+  my ($this, $web, $component, $multiple) = @_;
+
+  $web ||= $this->{session}{webName};    # Default to baseWeb
   $multiple || 0;
   $component =~ s/^(Web)//;        #compatibility
 
@@ -87,10 +101,11 @@ sub getWebComponent {
   #print STDERR "called getWebComponent($component)\n";
 
   # SMELL: why does preview call for components twice ???
-  if ($seenWebComponent{$component} && $seenWebComponent{$component} > 2 && !$multiple) {
+  my $seenWebComponent = $this->{seenWebComponent}{$component}; # SMELL
+  if ($seenWebComponent && $seenWebComponent > 2 && !$multiple) {
     return ('<span class="foswikiAlert">' . "ERROR: component '$component' already included" . '</span>', $web, $component);
   }
-  $seenWebComponent{$component}++;
+  $this->{seenWebComponent}{$component}++;
 
   # get component for web
   my $text = '';

@@ -1,7 +1,6 @@
-###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2019 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2022 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -14,7 +13,6 @@
 # GNU General Public License for more details, published at
 # http://www.gnu.org/copyleft/gpl.html
 #
-###############################################################################
 
 package Foswiki::Plugins::NatSkinPlugin::WebLogo;
 use strict;
@@ -22,31 +20,9 @@ use warnings;
 use Foswiki::Func ();
 use Foswiki::Plugins::NatSkinPlugin();
 
-###############################################################################
-sub new {
-  my $class = shift;
-  my $session = shift || $Foswiki::Plugins::SESSION;
+use Foswiki::Plugins::NatSkinPlugin::BaseModule ();
+our @ISA = ('Foswiki::Plugins::NatSkinPlugin::BaseModule');
 
-  my $this = {
-    session => $session,
-    @_
-  };
-
-  bless($this, $class);
-
-  return $this;
-}
-
-###############################################################################
-sub finish {
-  my $this = shift;
-
-  foreach my $key (grep {/^_/} keys %$this) {
-    undef $this->{$key};
-  }
-}
-
-###############################################################################
 # returns the weblogo for the header bar.
 # this will check for a couple of preferences:
 #    * return %NATSKIN_LOGO% if defined
@@ -65,7 +41,7 @@ sub finish {
 # the *IMG cases will return a full <img src /> tag
 #
 sub render {
-  my ($this, $session, $params) = @_;
+  my ($this, $params) = @_;
 
   my $result = $params->{format};
   $result = '<a href="$url" title="$alt">$logo</a>' unless defined $result;
@@ -88,7 +64,6 @@ sub render {
 
 }
 
-###############################################################################
 sub renderAlt {
   my ($this, $params) = @_;
 
@@ -103,24 +78,22 @@ sub renderAlt {
   return $this->{_alt};
 }
 
-###############################################################################
 sub renderStyle {
   my ($this, $params) = @_;
 
   unless (defined $this->{_style}) {
-    my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
+    my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getModule("ThemeEngine");
     $this->{_style} = $themeEngine->{skinState}{style};
   }
 
   return $this->{_style};
 }
 
-###############################################################################
 sub renderVariation {
   my ($this, $params) = @_;
 
   unless (defined $this->{_variation}) {
-    my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
+    my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getModule("ThemeEngine");
     my $result = lc $themeEngine->{skinState}{variation};
     $result = '' if $result eq 'off';
 
@@ -130,12 +103,11 @@ sub renderVariation {
   return $this->{_variation};
 }
 
-###############################################################################
 sub renderPath {
   my ($this, $params) = @_;
 
   unless (defined $this->{_path}) {
-    my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
+    my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getModule("ThemeEngine");
     my $themeRecord = $themeEngine->getThemeRecord($themeEngine->{skinState}{'style'});
     $this->{_path} = $themeRecord ? $themeRecord->{baseUrl} : '';
   }
@@ -143,7 +115,6 @@ sub renderPath {
   return $this->{_path};
 }
 
-###############################################################################
 sub renderUrl {
   my ($this, $params) = @_;
 
@@ -158,7 +129,6 @@ sub renderUrl {
   return $this->{_url};
 }
 
-###############################################################################
 sub renderSrc {
   my ($this, $params) = @_;
 
@@ -176,9 +146,9 @@ sub renderSrc {
       $result =~ s/\%WIKILOGOIMG%/$wikiLogoImage/g;
 
       # HACK: override ProjectLogos with own version
-      my $theme = Foswiki::Plugins::NatSkinPlugin::getThemeEngine->getThemeRecord;
-      my $logoUrl = $theme->{logoUrl} || '%PUBURLPATH%/%SYSTEMWEB%/NatSkin/foswiki-logo.png';
-      $result = $logoUrl if $result =~ /ProjectLogos\/foswiki-logo/;
+      my $theme = Foswiki::Plugins::NatSkinPlugin::getModule("ThemeEngine")->getThemeRecord;
+      my $logoUrl = $theme->{logoUrl};
+      $result = $logoUrl if $logoUrl && $result =~ /ProjectLogos\/foswiki-logo/;
     }
 
     $result =~ s/^\s+|\s+$//g;
@@ -188,7 +158,6 @@ sub renderSrc {
   return $this->{_src};
 }
 
-###############################################################################
 sub renderLogo {
   my ($this, $params) = @_;
 

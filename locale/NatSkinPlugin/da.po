@@ -1,0 +1,75 @@
+# Foswiki translation for Danish
+# Translators:
+#   Foswiki:Main/SteffenPoulsen, 2007.
+#   Foswiki:Main/KennethLavrsen, 2008.
+msgid ""
+msgstr ""
+"Project-Id-Version: da\n"
+"Report-Msgid-Bugs-To: foswiki-developers@lists.foswiki.org\n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2018-01-22 22:06+0200\n"
+"Last-Translator: Martin Dahlem <martin@dahlem.dk>\n"
+"Language-Team: Danish <http://translate.foswiki.org/projects/foswiki/"
+"distribution-master/da/>\n"
+"Language: da\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 2.4\n"
+
+#: lib/Foswiki/Plugins/NatSkinPlugin/Restore.pm:60
+msgid "Access denied"
+msgstr ""
+
+#: lib/Foswiki/Plugins/NatSkinPlugin/Subscribe.pm:64
+#: lib/Foswiki/Plugins/NatSkinPlugin/Subscribe.pm:92
+msgid "Bad subscriber"
+msgstr ""
+
+#. ($rev)
+#: lib/Foswiki/Plugins/NatSkinPlugin/Restore.pm:65
+msgid "Invalid revision %1"
+msgstr ""
+
+#: lib/Foswiki/Plugins/NatSkinPlugin/Restore.pm:54
+msgid "No revision parameter"
+msgstr ""
+
+#: lib/Foswiki/Plugins/NatSkinPlugin/Restore.pm:57
+#: lib/Foswiki/Plugins/NatSkinPlugin/Subscribe.pm:61
+#: lib/Foswiki/Plugins/NatSkinPlugin/Subscribe.pm:89
+msgid "Topic does not exist"
+msgstr ""
+
+#: lib/Foswiki/Plugins/NatSkinPlugin/Restore.pm:71
+msgid "Topic is locked"
+msgstr ""
+
+#. ($sub, $web)
+#: lib/Foswiki/Plugins/NatSkinPlugin/Subscribe.pm:76
+msgid "You have been subscribed to %1 in %2."
+msgstr ""
+
+#. ($web)
+#: lib/Foswiki/Plugins/NatSkinPlugin/Subscribe.pm:74
+#, fuzzy
+msgid "You have been subscribed to %1."
+msgstr "Din adgangskode er opdateret til %1."
+
+#. ($sub, $web)
+#: lib/Foswiki/Plugins/NatSkinPlugin.pm:246
+#: lib/Foswiki/Plugins/NatSkinPlugin/Subscribe.pm:104
+msgid "You have been unsubscribed from %1 in %2."
+msgstr ""
+
+#. ($web)
+#: lib/Foswiki/Plugins/NatSkinPlugin.pm:244
+#: lib/Foswiki/Plugins/NatSkinPlugin/Subscribe.pm:102
+msgid "You have been unsubscribed from %1."
+msgstr ""
+
+#: lib/Foswiki/Plugins/NatSkinPlugin.pm:158
+msgid "[[%1]] is deprecated. Please fix your application."
+msgstr ""
+

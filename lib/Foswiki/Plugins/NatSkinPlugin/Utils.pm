@@ -1,7 +1,6 @@
-###############################################################################
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2019 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2025 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -13,10 +12,17 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details, published at
 # http://www.gnu.org/copyleft/gpl.html
-#
-###############################################################################
 
 package Foswiki::Plugins::NatSkinPlugin::Utils;
+
+=begin TML
+
+---+ package Foswiki::Plugins::NatSkinPlugin::Utils
+
+this is a bunch of static helper functions that are imported by various modules of NatSkinPlugin
+
+=cut
+
 use strict;
 use warnings;
 
@@ -25,20 +31,51 @@ use Foswiki::Plugins ();
 use Foswiki::Plugins::NatSkinPlugin ();
 use Encode();
 
-our %maxRevs = ();    # cache for getMaxRevision()
+use Exporter;
+our @ISA = ('Exporter');
+our @EXPORT_OK = qw(makeParams getPrevRevision getMaxRevision getCurRevision getScriptUrlPath getFormName);
+our %EXPORT_TAGS = (
+  all => [qw(makeParams getPrevRevision getMaxRevision getCurRevision getScriptUrlPath getFormName)]
+);
 
-###############################################################################
-sub init {
+=begin TML
 
-  # init caches
-  %maxRevs = ();
+---++ getFormName($web, $topic) -> $formName
+
+returns the form name of a given web.topic
+
+=cut
+
+sub getFormName {
+  my ($web, $topic) = @_;
+
+  return unless defined $web && defined $topic;
+
+  $web =~ s/\//./g;
+  my $key = "$web.$topic";
+
+  my $session = $Foswiki::Plugins::SESSION;
+  my $formName = $session->{_NatSkin}{cache}{formNames}{$key};
+  unless ($formName) {
+    my ($topicObj) = Foswiki::Func::readTopic($web, $topic);
+    $session->{formNames}{$key} = $formName = ($topicObj?$topicObj->getFormName:"");
+  }
+
+  return $formName;
 }
 
-###############################################################################
+=begin TML
+
+---++ makeParams($query) -> $params
+
+returns url parameters 
+
+=cut
+
 sub makeParams {
   my $query = shift;
 
-  $query ||= Foswiki::Func::getCgiQuery();
+  $query ||= Foswiki::Func::getRequestObject();
 
   my @params = ();
   my $anchor = '';
@@ -57,11 +94,18 @@ sub makeParams {
   return join(";", @params) . $anchor;
 }
 
-###############################################################################
+=begin TML
+
+---++ getPrevRevision($web, $topic, $numOfRevs) -> $rev
+
+TODO
+
+=cut
+
 sub getPrevRevision {
   my ($thisWeb, $thisTopic, $numberOfRevisions) = @_;
 
-  my $request = Foswiki::Func::getCgiQuery();
+  my $request = Foswiki::Func::getRequestObject();
   my $rev;
   $rev = $request->param("rev") if $request;
   $rev =~ s/[^\d]//g;
@@ -80,7 +124,15 @@ sub getPrevRevision {
   return $rev;
 }
 
-###############################################################################
+=begin TML
+
+---++ getMaxRevision($web, $topic) -> $rev
+
+returns the max revision available for a given web.topic
+results are cached
+
+=cut
+
 sub getMaxRevision {
   my ($thisWeb, $thisTopic) = @_;
 
@@ -88,18 +140,24 @@ sub getMaxRevision {
   $thisWeb = $session->{webName} unless $thisWeb;
   $thisTopic = $session->{topicName} unless $thisTopic;
 
-  my $maxRev = $maxRevs{"$thisWeb.$thisTopic"};
+  my $maxRev = $session->{_NatSkin}{cache}{maxRevs}{"$thisWeb.$thisTopic"};
   return $maxRev if defined $maxRev;
 
   (undef, undef, $maxRev) = Foswiki::Func::getRevisionInfo($thisWeb, $thisTopic);
   $maxRev = 1 unless defined $maxRev;
 
   $maxRev =~ s/r?1\.//g;    # cut 'r' and major
-  $maxRevs{"$thisWeb.$thisTopic"} = $maxRev;
+  $session->{_NatSkin}{cache}{maxRevs}{"$thisWeb.$thisTopic"} = $maxRev;
   return $maxRev;
 }
 
-###############################################################################
+=begin TML
+
+---++ getCurRevision($web, $topic) -> $rev
+
+
+=cut
+
 sub getCurRevision {
   my ($thisWeb, $thisTopic) = @_;
 
@@ -107,12 +165,12 @@ sub getCurRevision {
   $thisWeb = $session->{webName} unless $thisWeb;
   $thisTopic = $session->{topicName} unless $thisTopic;
 
-  my $request = Foswiki::Func::getCgiQuery();
+  my $request = Foswiki::Func::getRequestObject();
   my $rev;
   if ($request) {
     $rev = $request->param("rev");
     unless (defined $rev) {
-      my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
+      my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getModule("ThemeEngine");
       if ($themeEngine->{skinState}{'action'} =~ /compare|rdiff|diff/) {
         my $rev1 = $request->param("rev1");
         my $rev2 = $request->param("rev2");
@@ -131,7 +189,16 @@ sub getCurRevision {
   return $rev;
 }
 
-###############################################################################
+=begin TML
+
+---++ getScriptUrlPath($script, $web, $topic) -> $url
+
+compatibiliy for Foswiki::getScriptUrlPath(). note that other than
+Foswiki::Func::getScriptUrl() this method always returns relative urls
+no matter in which context the render is
+
+=cut
+
 sub getScriptUrlPath {
   my $script = shift;
   my $web = shift;

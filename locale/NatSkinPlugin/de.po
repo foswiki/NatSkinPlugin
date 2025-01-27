@@ -1,0 +1,71 @@
+# Foswiki translation for Deutsch
+# Translators:
+msgid ""
+msgstr ""
+"Project-Id-Version: Foswiki $Id\n"
+"Report-Msgid-Bugs-To: foswiki-svn@lists.sourceforge.net\n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2016-02-25 16:35+0200\n"
+"Last-Translator: Michael Daum <foswiki@michaeldaumconsulting.com>\n"
+"Language-Team: German <http://translate.foswiki.org/projects/foswiki/"
+"distribution-master/de/>\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 2.4\n"
+
+#: lib/Foswiki/Plugins/NatSkinPlugin/Restore.pm:60
+msgid "Access denied"
+msgstr "Zugriff verweigert"
+
+#: lib/Foswiki/Plugins/NatSkinPlugin/Subscribe.pm:64
+#: lib/Foswiki/Plugins/NatSkinPlugin/Subscribe.pm:92
+msgid "Bad subscriber"
+msgstr "Ungültiger Abonnent"
+
+#. ($rev)
+#: lib/Foswiki/Plugins/NatSkinPlugin/Restore.pm:65
+msgid "Invalid revision %1"
+msgstr "Ungültige Version %1"
+
+#: lib/Foswiki/Plugins/NatSkinPlugin/Restore.pm:54
+msgid "No revision parameter"
+msgstr "Kein Versions-Parameter"
+
+#: lib/Foswiki/Plugins/NatSkinPlugin/Restore.pm:57
+#: lib/Foswiki/Plugins/NatSkinPlugin/Subscribe.pm:61
+#: lib/Foswiki/Plugins/NatSkinPlugin/Subscribe.pm:89
+msgid "Topic does not exist"
+msgstr "Das Topic existiert nicht."
+
+#: lib/Foswiki/Plugins/NatSkinPlugin/Restore.pm:71
+msgid "Topic is locked"
+msgstr "Das Topic ist gelockt."
+
+#. ($sub, $web)
+#: lib/Foswiki/Plugins/NatSkinPlugin/Subscribe.pm:76
+msgid "You have been subscribed to %1 in %2."
+msgstr "Sie haben %1 in %2 abonniert."
+
+#. ($web)
+#: lib/Foswiki/Plugins/NatSkinPlugin/Subscribe.pm:74
+msgid "You have been subscribed to %1."
+msgstr "Sie haben %1 abonniert."
+
+#. ($sub, $web)
+#: lib/Foswiki/Plugins/NatSkinPlugin.pm:246
+#: lib/Foswiki/Plugins/NatSkinPlugin/Subscribe.pm:104
+msgid "You have been unsubscribed from %1 in %2."
+msgstr "Sie sind von %1 in %2 abgemeldet worden."
+
+#. ($web)
+#: lib/Foswiki/Plugins/NatSkinPlugin.pm:244
+#: lib/Foswiki/Plugins/NatSkinPlugin/Subscribe.pm:102
+msgid "You have been unsubscribed from %1."
+msgstr "Sie sind von %1 abgemeldet worden."
+
+#: lib/Foswiki/Plugins/NatSkinPlugin.pm:158
+msgid "[[%1]] is deprecated. Please fix your application."
+msgstr "[[%1]] ist veraltet. Bitte beheben Sie Ihre Applikation."

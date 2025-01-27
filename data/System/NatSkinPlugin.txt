@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" comment="" date="1549973505" format="1.1" version="1"}%
+%META:TOPICINFO{author="ProjectContributor" comment="" date="1737980635" format="1.1"  version="1"}%
 ---+!! The Natural Skin Plugin
 %FORMFIELD{"Description"}%
 %TOC%
@@ -22,8 +22,19 @@ see also:
 [[#NATMAXREV][NATMAXREV]], 
 [[#PREVREV][PREVREV]], 
 
+---+++ MESSAGEBOX
+*Syntax*: =%<nop>MESSAGEBOX{"&lt;text>" type="..." showicon="on/off" sticky="on/off" translate="on/off"}%=
+
+This renders a DIV html element with the appropriate style. See the [[System.NatSkinTypography#Message_styles][examples here]].
+
+   * =text= is the content within the message box
+   * =showicon= toggles the icon of message box types that come with one by default
+   * =type= is one of success, info, error, warning, help, tip, message or alt
+   * =sticky= if switched on will keep the message box sticky to the top while scrolling passed it
+   * =translate= if switched on the text will be translated using MultiLingualPlugin
+
 ---+++ NATFORMBUTTON
-*Syntax*: =%<nop>NATFORMBUTTON{";lt;format>"}%=
+*Syntax*: =%<nop>NATFORMBUTTON{"&lt;format>"}%=
 
 returns a link to add or change the form attached to a topic. This
 will be shown on the edit screen depending on WEBFORMs being defined or not.
@@ -107,6 +118,7 @@ display separate sets of actions for anonymous or authenticated users.
    * restrictedactions="...": list of user actions that are disabled if the user
      has got no write access to the current topic
    * help="...": help topic used for =$help=, defaults to %SYSTEMWEB%.UsersGuide (see below)
+   * unique="on/off": actions are rendered only once; if an action has already been rendered in the format string, it will not be rendered in the menu again (default)
 
 The "guest" and "format" format strings can use the following variables
    * $attach: link to "attach" topic action
@@ -117,7 +129,7 @@ The "guest" and "format" format strings can use the following variables
    * $logout: link to log out
    * $more: link to more dialog
    * $move: link to move dialog
-   * $pdf: link to export pdf using the one of <nop>GenPDF...Plugins ([[Foswiki:Extensions/GenPDFWeasyPlugin][weasyprint]], [[Foswiki:Extensions/GenPDFPrincePlugin][prince-xml]] or [[Foswiki:Extensions/GenPDFWebkitPlugin][wkhtmltopdf]])
+   * $pdf: link to export pdf using the one of <nop>GenPDF...Plugins ([[https://foswiki.org/Extensions/GenPDFWeasyPlugin][weasyprint]], [[https://foswiki.org/Extensions/GenPDFPrincePlugin][prince-xml]] or [[https://foswiki.org/Extensions/GenPDFWebkitPlugin][wkhtmltopdf]])
    * $print: link to print action
    * $raw: link to display topic in raw format
    * $register: link to registration
@@ -149,7 +161,7 @@ As a last resort the local components of the %SYSTEMWEB% are used.
 
 By default the NatSkin comes with predefined components 
    * [[%SYSTEMWEB%.SiteBottomBar]]: page bottom
-   * [[%SYSTEMWEB%.SiteButtons]]: horizontal navigation
+   * [[%SYSTEMWEB%.SiteMenu]]: horizontal navigation
    * [[%SYSTEMWEB%.SiteLinks]]: link section inside sidebar component
    * [[%SYSTEMWEB%.SiteSideBar]]: sidebar navigation
    * [[%SYSTEMWEB%.SiteRightBar]]: right sidebar navigation, used in three columns layout (stylesidebar = both)
@@ -167,6 +179,11 @@ See NatSkin#Installation_Instructions
 
 ---++ Change History
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  27 Jan 2025: | new major release |
+|  11 Aug 2023: | added %MESSAGEBOX macro; \
+                  moved some of the basic HTML optimizations from <nop>PageOptimizerPlugin into here; \
+                  support for darkmode feature; \
+                  improved topic restore feature |
 |  12 Feb 2019: | major release for !NatSkin 6.0 |
 |  23 Jan 2017: | better handing of revision infos being attached to a h1; \
                   removed detection of old Internet Explorers as well as warning for unsupported browsers; \
@@ -185,11 +202,11 @@ See NatSkin#Installation_Instructions
 
 %META:FORM{name="PackageForm"}%
 %META:FIELD{name="Author" title="Author" value="Michael Daum"}%
-%META:FIELD{name="Copyright" title="Copyright" value="2003-2019, Michael Daum http://michaeldaumconsulting.com"}%
+%META:FIELD{name="Version" title="Version" value="%25$VERSION%25"}%
+%META:FIELD{name="Release" title="Release" value="%25$RELEASE%25"}%
 %META:FIELD{name="Description" title="Description" value="%25$SHORTDESCRIPTION%25"}%
-%META:FIELD{name="Home" title="Home" value="Foswiki:Extensions/NatSkinPlugin"}%
+%META:FIELD{name="Repository" title="Repository" value="https://github.com/foswiki/%25TOPIC%25"}%
+%META:FIELD{name="Copyright" title="Copyright" value="2003-2025, Michael Daum"}%
 %META:FIELD{name="License" title="License" value="GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]])"}%
-%META:FIELD{name="Release" title="Release" value="%$RELEASE%"}%
-%META:FIELD{name="Repository" title="Repository" value="https://github.com/foswiki/%TOPIC%"}%
+%META:FIELD{name="Home" title="Home" value="Foswiki:Extensions/NatSkinPlugin"}%
 %META:FIELD{name="Support" title="Support" value="Foswiki:Support/NatSkinPlugin"}%
-%META:FIELD{name="Version" title="Version" value="%$VERSION%"}%

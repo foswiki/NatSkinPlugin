@@ -12,11 +12,12 @@ $Foswiki::cfg{NatSkin}{Style} = 'matter';
 # that is you can't combine a {Style} from theme A with {Variation} from theme B.
 $Foswiki::cfg{NatSkin}{Variation} = 'off';
 
-# **SELECT fixed,fluid,bordered **
+# **SELECT fixed,fluid,bordered,fullscreen **
 # Choose from a set of basic page layouts. 'fluid' is a good choice for sites mostly displayed on small display devices
 # and wide content, like large tables. 'fixed' is a typical center aligned blog-like layout that limits
 # the text width to a readable size while the content area will still resize proportional to the font width. 
 # 'Bordered' is very similar to the fluid width layout but adds extra white space around the content.
+# 'Fullscreen' is a reduced page layout giving the content maximum space.
 $Foswiki::cfg{NatSkin}{Layout} = 'fixed';
 
 # **BOOLEAN**
@@ -29,10 +30,20 @@ $Foswiki::cfg{NatSkin}{Menu} = 1;
 # the content area directly instead of being controlled by the template engine.
 $Foswiki::cfg{NatSkin}{SideBar} = 'right';
 
+# **BOOLEAN**
+# Switch to enable the dark mode feature. Note this is still work in progress.
+$Foswiki::cfg{NatSkin}{DarkModeFeature} = 0;
+
 # **STRING**
 # This is a list of actions that switch off the sidebar navigation automatically. Note, these are basically known cgi entry
 # points to Foswiki.
-$Foswiki::cfg{NatSkin}{NoSideBarActions} = 'edit, manage, login, logon, oops, register, compare, rdiff, diff';
+$Foswiki::cfg{NatSkin}{NoSideBarActions} = 'edit, manage, login, logon, oops, register, compare, rdiff, diff, attach';
+
+# **SELECT on,guest,off**
+# This setting enables a cookie warning required by european law. On intranets you most probably can disable it.
+# Note that this value can override be overwritten using the NATSKIN_COOKIEINFO preference flag. Setting it to "guest"
+# will dislay a cookie warning for unauthenticated visitors only.
+$Foswiki::cfg{NatSkin}{DisplayCookieInfo} = 'guest';
 
 # ---+++ HTML post processing
 # **BOOLEAN**
@@ -45,10 +56,4 @@ $Foswiki::cfg{NatSkin}{DetectExternalLinks} = 1;
 # ellipsis.
 $Foswiki::cfg{NatSkin}{FixTypograpghy} = 1;
 
-
-# **SELECT on,guest,off**
-# This setting enables a cookie warning required by european law. On intranets you most probably can disable it.
-# Note that this value can override be overwritten using the NATSKIN_COOKIEINFO preference flag. Setting it to "guest"
-# will dislay a cookie warning for unauthenticated visitors only.
-$Foswiki::cfg{NatSkin}{DisplayCookieInfo} = 'on';
 1;
