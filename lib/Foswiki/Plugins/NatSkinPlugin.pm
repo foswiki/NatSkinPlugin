@@ -32,7 +32,7 @@ use Foswiki::Contrib::MailerContrib ();
 use Foswiki::Contrib::JsonRpcContrib ();
 use Foswiki::Plugins::NatSkinPlugin::Utils qw(getPrevRevision getCurRevision getMaxRevision);
 
-our $VERSION = '7.10';
+our $VERSION = '7.11';
 our $RELEASE = '%$RELEASE%';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Support plugin for <nop>NatSkin';

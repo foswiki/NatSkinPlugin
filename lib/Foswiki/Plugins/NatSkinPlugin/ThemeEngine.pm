@@ -119,16 +119,16 @@ sub init {
   if ($Foswiki::cfg{NatSkin}{DarkModeFeature} && ! $context->{static}) {
     $context->{darkmode_feature_enabled} = 1;
 
-    my $darkMode = Foswiki::Func::getPreferencesValue("NATSKIN_DARKMODE");
+    my $darkMode = $request->cookie("FOSWIKIDARKMODE");
     if (defined $darkMode) {
       $darkMode = Foswiki::Func::isTrue($darkMode)?1:0;
-      $context->{darkmode_forced} = 1;
+      $context->{darkmode_forced} = 0;
     } else {
-      $darkMode = $request->cookie("FOSWIKIDARKMODE");
-      if (defined $darkMode) {
+      $darkMode = Foswiki::Func::getPreferencesValue("NATSKIN_DARKMODE");
+      if (defined $darkMode && $darkMode ne "auto") {
         $darkMode = Foswiki::Func::isTrue($darkMode)?1:0;
-        $context->{darkmode_forced} = 0;
-      }
+        $context->{darkmode_forced} = 1;
+      } 
     }
 
     $context->{darkmode} = $darkMode // 0;
@@ -494,10 +494,10 @@ sub renderSkinStyle {
     my @files = map {_url2FileName($_)} @urls;
     my $cs = Foswiki::Plugins::JQueryPlugin::getCombineService();
     my $url = $cs->combineCssFiles(\@files);
-    $text = "<link rel='stylesheet' href='$url' type='text/css' media='all' />";
+    $text = "<link rel='stylesheet' href='$url' type='text/css' media='all'>";
   } else {
     foreach my $url (@urls) {
-      $text .= "<link rel='stylesheet' href='$url' type='text/css' media='all' />\n";
+      $text .= "<link rel='stylesheet' href='$url' type='text/css' media='all'>\n";
     }
     $text =~ s/^\s+|\s+$//g;
   }

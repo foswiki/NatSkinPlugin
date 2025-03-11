@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" comment="" date="1739281250" format="1.1"  version="1"}%
+%META:TOPICINFO{author="ProjectContributor" comment="" date="1740382506" format="1.1"  version="1"}%
 ---+!! The Natural Skin Plugin
 %FORMFIELD{"Description"}%
 %TOC%
@@ -179,6 +179,7 @@ See NatSkin#Installation_Instructions
 
 ---++ Change History
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  11 Mar 2025: | fixed order of checking for darkmode settings |
 |  11 Feb 2025: | fixed endRenderingHandler introducing newlines |
 |  27 Jan 2025: | new major release |
 |  11 Aug 2023: | added %MESSAGEBOX macro; \
