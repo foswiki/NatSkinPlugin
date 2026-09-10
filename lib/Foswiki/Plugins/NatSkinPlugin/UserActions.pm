@@ -1,6 +1,6 @@
 # NatSeinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2025 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2026 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -57,7 +57,8 @@ sub init {
   $this->{hiderestricted} = Foswiki::Func::isTrue($params->{hiderestricted}, 0);
   $this->{mode} = $params->{mode} || 'short';
   $this->{sep} = $params->{sep} || $params->{separator} || '';
-  $this->{unique} = Foswiki::Func::isTrue($params->{unique}, 1);
+  $this->{unique} = $params->{unique} // 'on';
+  $this->{multiple} = $params->{multiple} // '';
 
   my $context = Foswiki::Func::getContext();
 
@@ -71,7 +72,6 @@ sub init {
   # SMELL: how do we detect GenPDFAddOn...see also getPdfUrl
 
   if ( $context->{GenPDFPrincePluginEnabled}
-    || $context->{GenPDFWebkitPluginEnabled}
     || $context->{GenPDFOfficePluginEnabled}
     || $context->{GenPDFWeasyPluginEnabled}
     || $context->{PdfPluginEnabled})
@@ -258,6 +258,22 @@ sub formatResult {
   return $text;
 }
 
+sub isUnique {
+  my ($this, $action) = @_;
+
+  my $val = 1;
+
+  $val = 0 if $this->{unique} =~ /^(off|false|0)$/;
+  $val = 1 if $this->{unique} =~ /^(on|true|1)$/;
+  $val = 1 if $this->{unique} =~ /\b$action\b/;
+
+  $val = 1 if $this->{multiple} =~ /^(off|false|0)$/;
+  $val = 0 if $this->{multiple} =~ /^(on|true|1)$/;
+  $val = 0 if $this->{multiple} =~ /\b$action\b/;
+
+  return $val;
+}
+
 =begin TML
 
 ---++ renderAction($action, $template, $restrictedTemplate, $context, $mode) -> html
@@ -273,7 +289,7 @@ sub renderAction {
 
   return '' if defined($context) && !Foswiki::Func::getContext()->{$context};
 
-  return '' if $this->{unique} && $this->{seen}{$action};
+  return '' if $this->isUnique($action) && $this->{seen}{$action};
   $this->{seen}{$action} = 1;
 
   return '' 
@@ -321,7 +337,7 @@ sub renderEdit {
 
   return '' if defined($context) && !Foswiki::Func::getContext()->{$context};
 
-  return '' if $this->{unique} && $this->{seen}{edit};
+  return '' if $this->isUnique("edit") && $this->{seen}{edit};
   $this->{seen}{edit} = 1;
 
   my $result = '';
@@ -364,7 +380,7 @@ sub renderEditRaw {
 
   return '' if defined($context) && !Foswiki::Func::getContext()->{$context};
 
-  return '' if $this->{unique} && $this->{seen}{edit_raw};
+  return '' if $this->isUnique("edit_raw") && $this->{seen}{edit_raw};
   $this->{seen}{edit_raw} = 1;
 
   my $result = '';
@@ -407,7 +423,7 @@ sub renderView {
 
   return '' if defined($context) && !Foswiki::Func::getContext()->{$context};
 
-  return '' if $this->{unique} && $this->{seen}{view};
+  return '' if $this->isUnique("view") && $this->{seen}{view};
   $this->{seen}{view} = 1;
 
   my $result = '';
@@ -482,7 +498,7 @@ sub renderRaw {
 
   return '' if defined($context) && !Foswiki::Func::getContext()->{$context};
 
-  return '' if $this->{unique} && $this->{seen}{raw};
+  return '' if $this->isUnique("raw") && $this->{seen}{raw};
   $this->{seen}{raw} = 1;
 
   return '' 
@@ -581,7 +597,6 @@ renders the =$pdf= token. will differ depending the plugins installed. supported
 
    * GenPDFPrincePluginEnabled
    * GenPDFOfficePluginEnabled
-   * GenPDFWebkitPluginEnabled
    * GenPDFWeasyPluginEnabled
 
 =cut
@@ -593,7 +608,6 @@ sub getPdfUrl {
   my $context = Foswiki::Func::getContext();
   if ($context->{GenPDFPrincePluginEnabled} || 
       $context->{GenPDFOfficePluginEnabled} ||
-      $context->{GenPDFWebkitPluginEnabled} || 
       $context->{GenPDFWeasyPluginEnabled}) {
     $url = getScriptUrlPath(
       'view',
@@ -644,12 +658,13 @@ sub renderEditForm {
 
   return '' if defined($context) && !Foswiki::Func::getContext()->{$context};
 
-  return '' if $this->{unique} && $this->{seen}{edit_form};
+  return '' if $this->isUnique("edit_form") && $this->{seen}{edit_form};
   $this->{seen}{edit_form} = 1;
 
   my $result = '';
 
-  if (getFormName($this->{baseWeb}, $this->{baseTopic})) {
+  my $formName = getFormName($this->{baseWeb}, $this->{baseTopic});
+  if ($formName && $formName ne "Applications.WikiTopic") {
     if ($this->{isRestrictedAction}{edit_form}) {
       return '' if $this->{hiderestricted};
       $result = Foswiki::Func::expandTemplate("EDIT_FORM_ACTION_RESTRICTED");
@@ -676,7 +691,7 @@ sub renderArchive {
   my ($this, $context, $mode) = @_;
 
   return '' if defined($context) && !Foswiki::Func::getContext()->{$context};
-  return '' if $this->{unique} && $this->{seen}{archive};
+  return '' if $this->isUnique("archive") && $this->{seen}{archive};
   $this->{seen}{archive} = 1;
 
   my $archiveWeb = "$this->{web}.Archive";
@@ -684,7 +699,8 @@ sub renderArchive {
 
   my $result = '';
 
-  if (Foswiki::Func::topicExists($archiveWeb, $this->{topic})) {
+  if ($this->{isRestrictedAction}{archive}) {
+    return '' if $this->{hiderestricted};
     $result = Foswiki::Func::expandTemplate('ARCHIVE_ACTION_RESTRICTED');
   } else {
     $result = Foswiki::Func::expandTemplate('ARCHIVE_ACTION');
@@ -709,7 +725,7 @@ sub renderAccount {
 
   return '' if defined($context) && !Foswiki::Func::getContext()->{$context};
 
-  return '' if $this->{unique} && $this->{seen}{account};
+  return '' if $this->isUnique("account") && $this->{seen}{account};
   $this->{seen}{account} = 1;
 
   my $result = '';
@@ -759,7 +775,7 @@ sub renderFirst {
 
   return '' if defined($context) && !Foswiki::Func::getContext()->{$context};
 
-  return '' if $this->{unique} && $this->{seen}{first};
+  return '' if $this->isUnique("first") && $this->{seen}{first};
   $this->{seen}{first} = 1;
 
   my $result = '';
@@ -813,7 +829,7 @@ sub renderLogin {
 
   return '' if defined($context) && !Foswiki::Func::getContext()->{$context};
 
-  return '' if $this->{unique} && $this->{seen}{login};
+  return '' if $this->isUnique("login") && $this->{seen}{login};
   $this->{seen}{login} = 1;
 
   my $result = '';
@@ -883,7 +899,7 @@ sub renderLogout {
 
   return '' if defined($context) && !Foswiki::Func::getContext()->{$context};
 
-  return '' if $this->{unique} && $this->{seen}{logout};
+  return '' if $this->isUnique("logout") && $this->{seen}{logout};
   $this->{seen}{logout} = 1;
 
   my $result = '';
@@ -968,7 +984,7 @@ sub renderLast {
 
   return '' if defined($context) && !Foswiki::Func::getContext()->{$context};
 
-  return '' if $this->{unique} && $this->{seen}{last};
+  return '' if $this->isUnique("last") && $this->{seen}{last};
   $this->{seen}{last} = 1;
 
   my $result =
@@ -1024,7 +1040,7 @@ sub renderNext {
 
   return '' if defined($context) && !Foswiki::Func::getContext()->{$context};
 
-  return '' if $this->{unique} && $this->{seen}{next};
+  return '' if $this->isUnique("next") && $this->{seen}{next};
   $this->{seen}{next} = 1;
 
   return '' 
@@ -1083,7 +1099,7 @@ sub renderPrev {
 
   return '' if defined($context) && !Foswiki::Func::getContext()->{$context};
 
-  return '' if $this->{unique} && $this->{seen}{prev};
+  return '' if $this->isUnique("prev") && $this->{seen}{prev};
   $this->{seen}{prev} = 1;
 
   return '' 
@@ -1149,7 +1165,7 @@ sub renderDiff {
 
   return '' if defined($context) && !Foswiki::Func::getContext()->{$context};
 
-  return '' if $this->{unique} && $this->{seen}{diff};
+  return '' if $this->isUnique("diff") && $this->{seen}{diff};
   $this->{seen}{diff} = 1;
 
   my $result = '';

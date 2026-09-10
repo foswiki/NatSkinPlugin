@@ -1,6 +1,6 @@
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2025 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2026 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -66,12 +66,19 @@ sub render {
     return $htmlTitle if $htmlTitle;
   }
 
-  my $webTitle = join($theSep, map {
-    $doTranslate ? Foswiki::Plugins::MultiLingualPlugin::translate($_, $_, $Foswiki::cfg{HomeTopicName}): $_
-  } reverse split(/[\.\/]/, $web));
+  my @webTitles = ();
+  my @webPath = ();
+  foreach my $w (split(/[\.\/]/, $web)) {
+    push @webPath, $w;
+    my $title = getTopicTitle(join(".", @webPath), $Foswiki::cfg{HomeTopicName});
+    $title = Foswiki::Plugins::MultiLingualPlugin::translate($title, $w, $Foswiki::cfg{HomeTopicName});
+    push @webTitles, $title;
+  }
+
+  my $webTitle = join($theSep, reverse @webTitles);
 
   my $topicTitle = $params->{title};
-  $topicTitle = Foswiki::Func::getTopicTitle($web, $topic) unless defined $topicTitle;
+  $topicTitle = getTopicTitle($web, $topic) unless defined $topicTitle;
   $topicTitle = Foswiki::Plugins::MultiLingualPlugin::translate($topicTitle, $web, $topic) if $doTranslate;
 
   $theFormat = '$title$sep$webtitle$wikitoolname' unless defined $theFormat;
@@ -85,6 +92,20 @@ sub render {
   $theFormat =~ s/<\/?noautolink>//g;
 
   return Foswiki::Func::decodeFormatTokens($theFormat);
+}
+
+sub getTopicTitle {
+  my $web = shift;
+  my $topic = shift;
+
+  return Foswiki::Func::getTopicTitle($web, $topic, @_) if $Foswiki::cfg{Plugins}{TopicTitlePlugin}{Enabled};
+
+  return $topic if $topic ne $Foswiki::cfg{HomeTopicName};
+
+  my $webTitle = $web;
+  $webTitle =~ s/^.*[\/\.]//;
+
+  return $webTitle;
 }
 
 1;

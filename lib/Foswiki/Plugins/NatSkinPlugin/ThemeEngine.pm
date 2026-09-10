@@ -1,6 +1,6 @@
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2025 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2026 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -333,6 +333,9 @@ sub init {
     || Foswiki::Func::getPreferencesValue('SKIN')
     || 'nat';
 
+  $skin =~ s/^\s+//;
+  $skin =~ s/\s+$//;
+
   # not using Foswiki::Func::getSkin() to prevent
   # getting the cover as well
 
@@ -347,12 +350,12 @@ sub init {
       Foswiki::Func::readTemplate('sidebar');
       my $viewTemplate = $request->param('template')
         || Foswiki::Func::getPreferencesValue('VIEW_TEMPLATE');
- 
+
       if (!$viewTemplate && $Foswiki::cfg{Plugins}{AutoTemplatePlugin}{Enabled}) {
         require Foswiki::Plugins::AutoTemplatePlugin;
         $viewTemplate = Foswiki::Plugins::AutoTemplatePlugin::getTemplateName($this->{session}{webName}, $this->{session}{topicName});
       }
- 
+
        Foswiki::Func::readTemplate($viewTemplate)
          if $viewTemplate;
 
@@ -528,7 +531,7 @@ sub getCssUrls {
   push @urls, "$themeRecord->{baseUrl}/$themeRecord->{styles}{$style}";
   push @urls, "$themeRecord->{baseUrl}/$themeRecord->{variations}{$variation}"
     if $variation && $themeRecord->{variations}{$variation};
-  
+
   if (defined $themeRecord->{baseStyle}) {
     unshift @urls, $this->getCssUrls($themeRecord->{baseStyle}, $seen);
   } elsif ($style ne 'base') {
@@ -607,7 +610,7 @@ sub getStyleUrls {
 
   $seen->{$style} = 1;
   my @styleUrls = ();
-  
+
   my $themeRecord = $this->getThemeRecord($style);
 
   if ($themeRecord->{baseStyle}) {

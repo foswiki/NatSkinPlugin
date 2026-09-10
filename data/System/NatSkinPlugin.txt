@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" comment="" date="1740382506" format="1.1"  version="1"}%
+%META:TOPICINFO{author="micha" comment="rePref" date="1782815389" format="1.1" reprev="2" version="2"}%
 ---+!! The Natural Skin Plugin
 %FORMFIELD{"Description"}%
 %TOC%
@@ -111,30 +111,34 @@ returns the previous topic revision taking =NumberOfRevisions= into account
 *Syntax*: =%<nop>USERACTIONS{"&lt;format>" ...}%= 
 
 display separate sets of actions for anonymous or authenticated users.
-   * sep="&lt;span> class="natSep">|&lt;/span>": separator between actions
-   * guest="$login$sep$register$sep$print": format string of actions for guests
-   * format="$user$sep$logout$sep$print&lt;br />$edit$sep$attach$sep$move$sep$raw$sep$diff$sep$more":
+   * sep: "&lt;span> class="natSep">|&lt;/span>": separator between actions
+   * guest: "$login$sep$register$sep$print": format string of actions for guests
+   * format: "$user$sep$logout$sep$print&lt;br />$edit$sep$attach$sep$move$sep$raw$sep$diff$sep$more":
      format string of actions for authenticated users
-   * restrictedactions="...": list of user actions that are disabled if the user
+   * restrictedactions: "...": list of user actions that are disabled if the user
      has got no write access to the current topic
    * help="...": help topic used for =$help=, defaults to %SYSTEMWEB%.UsersGuide (see below)
-   * unique="on/off": actions are rendered only once; if an action has already been rendered in the format string, it will not be rendered in the menu again (default)
+   * unique="on/off", unique="_list of actions_": actions are rendered only once if listed; if an action has already been rendered in the format string, it will not be rendered in the menu again (default)
+   * multiple="on/off", multiple="_list of actions_": this setting has the opposite logic of =unique=: actions listed here may occur multiple times
+   * menu, menu_header, menu_footer: format of the dropdown "more" =$menu=
 
 The "guest" and "format" format strings can use the following variables
    * $attach: link to "attach" topic action
    * $diff: link to diff
    * $edit: link to edit
+   * $edit_raw: edit raw mode
    * $help: link to a help page
    * $login: link to log in
    * $logout: link to log out
-   * $more: link to more dialog
+   * $menu: link to more menu
    * $move: link to move dialog
-   * $pdf: link to export pdf using the one of <nop>GenPDF...Plugins ([[https://foswiki.org/Extensions/GenPDFWeasyPlugin][weasyprint]], [[https://foswiki.org/Extensions/GenPDFPrincePlugin][prince-xml]] or [[https://foswiki.org/Extensions/GenPDFWebkitPlugin][wkhtmltopdf]])
+   * $pdf: link to export pdf using the one of <nop>GenPDF...Plugins ([[https://foswiki.org/Extensions/GenPDFWeasyPlugin][weasyprint]] or [[https://foswiki.org/Extensions/GenPDFPrincePlugin][prince-xml]])
    * $print: link to print action
    * $raw: link to display topic in raw format
    * $register: link to registration
    * $sep: separator string
-   * $user: name of current authenticated user
+
+See [[%SYSTEMWEB%.SiteTopicActions]] and [[%SYSTEMWEB%.SiteUserMenu]] 
 
 ---+++ WEBCOMPONENT
 *Syntax*: =%<nop>WEBCOMPONENT{"name" web="&lt;name>" lineprefix="&lt;prefix>" multiple="<anything>"}%=
@@ -160,16 +164,16 @@ local web components that may already be present in the %USERSWEB% and the %SYST
 As a last resort the local components of the %SYSTEMWEB% are used.
 
 By default the NatSkin comes with predefined components 
-   * [[%SYSTEMWEB%.SiteBottomBar]]: page bottom
    * [[%SYSTEMWEB%.SiteMenu]]: horizontal navigation
-   * [[%SYSTEMWEB%.SiteLinks]]: link section inside sidebar component
    * [[%SYSTEMWEB%.SiteSideBar]]: sidebar navigation
+   * [[%SYSTEMWEB%.SiteLinks]]: link section inside sidebar component
+   * [[%SYSTEMWEB%.SiteBottomBar]]: page bottom
    * [[%SYSTEMWEB%.SiteRightBar]]: right sidebar navigation, used in three columns layout (stylesidebar = both)
    * [[%SYSTEMWEB%.SiteTopicActions]]: topic actions
-   * [[%SYSTEMWEB%.SiteHtmlHead]]
+   * [[%SYSTEMWEB%.SiteHtmlHead]]: assets added to the html head area
+   * [[%SYSTEMWEB%.SiteUserMenu]]: dropdown menu under the user menu icon
 
-see also: 
-[[#MYSIDEBAR][MYSIDEBAR]]
+See also [[NatSkin#WebComponents]]
 
 ---++ Installation Instructions
 See NatSkin#Installation_Instructions
@@ -179,6 +183,11 @@ See NatSkin#Installation_Instructions
 
 ---++ Change History
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  10 Sep 2026: | automatically set a proper NEWLINKFORMAT; \
+                  improved rendering of TMPL:INCLUDE linking to the included template if available; \
+                  fixed typographic enhancements in rendering pipeline; \
+                  improved performance of =isSubscriped= api; \
+                  use <nop>DBCachePlugin if available for better performance |
 |  11 Mar 2025: | fixed order of checking for darkmode settings |
 |  11 Feb 2025: | fixed endRenderingHandler introducing newlines |
 |  27 Jan 2025: | new major release |
@@ -208,7 +217,7 @@ See NatSkin#Installation_Instructions
 %META:FIELD{name="Release" title="Release" value="%25$RELEASE%25"}%
 %META:FIELD{name="Description" title="Description" value="%25$SHORTDESCRIPTION%25"}%
 %META:FIELD{name="Repository" title="Repository" value="https://github.com/foswiki/%25TOPIC%25"}%
-%META:FIELD{name="Copyright" title="Copyright" value="2003-2025, Michael Daum"}%
+%META:FIELD{name="Copyright" title="Copyright" value="2003-2026, Michael Daum"}%
 %META:FIELD{name="License" title="License" value="GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]])"}%
 %META:FIELD{name="Home" title="Home" value="Foswiki:Extensions/NatSkinPlugin"}%
 %META:FIELD{name="Support" title="Support" value="Foswiki:Support/NatSkinPlugin"}%

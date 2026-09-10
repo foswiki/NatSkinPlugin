@@ -56,4 +56,8 @@ $Foswiki::cfg{NatSkin}{DetectExternalLinks} = 1;
 # ellipsis.
 $Foswiki::cfg{NatSkin}{FixTypograpghy} = 1;
 
+# **SRTING**
+# Default NEWLINKFORMAT
+$Foswiki::cfg{NatSkin}{NewLinkFormat} = '<a href="#newtopic" class="foswikiNewLink foswikiDialogLink" data-topicparent="%WEB%.%TOPIC%" data-web="$web" data-topic="$web.$topic" data-topictitle="%ENCODE{"$text" type="html"}%">$text</a>';
+
 1;

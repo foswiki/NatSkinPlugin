@@ -1,6 +1,6 @@
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2013-2025 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2013-2026 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -28,7 +28,6 @@ use strict;
 use warnings;
 
 use Foswiki::Func ();
-use Foswiki::Contrib::MailerContrib ();
 use Error qw (:try);
 
 use Foswiki::Plugins::NatSkinPlugin::BaseModule ();
@@ -44,11 +43,64 @@ sub render {
   my $then = $params->{then} // 1;
   my $else = $params->{else} // 0;
 
-  return Foswiki::Contrib::MailerContrib::isSubscribedTo($web, $who, $topic) ? $then : $else;
+  return $this->isSubscribedTo($web, $who, $topic) ? $then : $else; # faster simplified version
+  #return Foswiki::Contrib::MailerContrib::isSubscribedTo($web, $who, $topic) ? $then : $else;
+}
+
+# faster than MailerContrib::isSubscribedTo
+sub isSubscribedTo {
+  my ($this, $web, $who, $topic) = @_;
+
+  my $key = $web . "::" . $topic . "::" . $who;
+  my $found = $this->{_isSubscribedTo}{$key};
+
+  return $found if defined $found;
+  $found = 0;
+
+  my $webNotifyTopicName = $Foswiki::cfg{NotifyTopicName} || 'WebNotify';
+  return 0 unless Foswiki::Func::topicExists($web, $webNotifyTopicName);
+  my ($meta, $text) = Foswiki::Func::readTopic($web, $webNotifyTopicName);
+
+  # join \ terminated lines
+  $text =~ s/\\\r?\n//gs;
+
+  # Let's not do this for the sake of performance
+  #$text = Foswiki::Func::expandCommonVariables($text, $wnTopic, $web, $meta);
+
+  # Instead just take care of these ...
+  my $homeWebName = $Foswiki::cfg{HomeWebName} || $Foswiki::cfg{UsersWebName};
+  $text =~ s/\%USERSWEB\%/$Foswiki::cfg{UsersWebName}/g;
+  $text =~ s/\%SYSTEMWEB\%/$Foswiki::cfg{SystemWebName}/g;
+  $text =~ s/\%MAINWEB\%/$Foswiki::cfg{UsersWebName}/g; # deprecated
+  $text =~ s/\%HOMEWEB\%/$homeWebName/g;
+
+  if ($text =~ /^\s+\*\s(?:$Foswiki::cfg{UsersWebName}\.)?(?:\Q$who\E)\s*(:.*)?$/m) {
+      my $line = $1 || '';
+
+      if ($line =~ /^:\s*$/) {
+        $found = 0;
+      } elsif ($line =~ /^\s*$/) {
+        $found = 1;
+      } else {
+        while ($line =~ s/\s*([-+])?\s*((?:[[:alnum:]]|[*.])+|'.*?'|".*?")([!?]?)\s*(?:\((\d+)\))?//) {
+          my ($us, $spec, $opts, $depth) = ($1 || '+', $2, $3, $4 || 0);
+
+          $spec =~ s/^(['"])(.*)\1$/$2/; # remove quotes
+          $spec =~ s/\*/.*?/g;
+
+          $found = ($us eq '+' ? 1 : 0) if $topic =~ /$spec/;
+        }
+      }
+  }
+
+  $this->{_isSubscribedTo}{$key} = $found;
+
+  return $found;
 }
 
 sub jsonRpcSubscribe {
   my ($this, $request) = @_;
+
 
   my $web = $this->{session}{webName};
   my $topic = $this->{session}{topicName};
@@ -63,6 +115,7 @@ sub jsonRpcSubscribe {
   my $sub = $request->param("subscription") || $topic;
   ($web, $sub) = Foswiki::Func::normalizeWebTopicName($web, $sub) if $sub ne '*';
 
+  require Foswiki::Contrib::MailerContrib;
   Foswiki::Contrib::MailerContrib::changeSubscription($web, $user, $sub);
 
   my $result;
@@ -78,6 +131,7 @@ sub jsonRpcSubscribe {
 sub jsonRpcUnsubscribe {
   my ($this, $request) = @_;
 
+
   my $web = $this->{session}{webName};
   my $topic = $this->{session}{topicName};
   my $user = Foswiki::Func::getWikiName();
@@ -91,6 +145,7 @@ sub jsonRpcUnsubscribe {
   my $sub = $request->param("subscription") || $topic;
   ($web, $sub) = Foswiki::Func::normalizeWebTopicName($web, $sub) if $sub ne '*';
 
+  require Foswiki::Contrib::MailerContrib;
   Foswiki::Contrib::MailerContrib::changeSubscription($web, $user, $sub, "-");
 
   my $result;

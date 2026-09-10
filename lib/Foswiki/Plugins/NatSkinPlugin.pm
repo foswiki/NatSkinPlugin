@@ -1,6 +1,6 @@
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2025 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2026 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -32,7 +32,7 @@ use Foswiki::Contrib::MailerContrib ();
 use Foswiki::Contrib::JsonRpcContrib ();
 use Foswiki::Plugins::NatSkinPlugin::Utils qw(getPrevRevision getCurRevision getMaxRevision);
 
-our $VERSION = '7.11';
+our $VERSION = '8.00';
 our $RELEASE = '%$RELEASE%';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION = 'Support plugin for <nop>NatSkin';
@@ -167,8 +167,9 @@ HERE
     }
   );
 
-  # stats macros
-  Foswiki::Func::registerTagHandler('CACHEHITS', \&renderCacheHits);
+  # add default NEWLINKFORMAT
+  my $newLinkFormat = $context->{authenticated} ? $Foswiki::cfg{NatSkin}{NewLinkFormat} : '<a class="foswikiNewLink">$text</a>';
+  Foswiki::Func::setPreferencesValue("NEWLINKFORMAT", $newLinkFormat) if $newLinkFormat;
 
   # JSON-RPC handlers
   Foswiki::Contrib::JsonRpcContrib::registerMethod("NatSkinPlugin", "subscribe", sub {
@@ -301,8 +302,8 @@ sub beforeCommonTagsHandler {
   $isTemplate = 1 if $_[0] =~ s/%\{\}%//g; 
 
   # improve rendering of view templates
-  $isTemplate = 1 if $_[0] =~ s/(%TMPL:DEF\{"(.*?)"\}%.*?%TMPL:END%)/<verbatim class='tml tmplDef'>$1<\/verbatim>/gs;
-  $isTemplate = 1 if $_[0] =~ s/(%TMPL:INCLUDE\{"(.*?)"\}%)/<verbatim class='tml tmplInclude'>$1<\/verbatim>/g;
+  $isTemplate = 1 if $_[0] =~ s/(%TMPL:DEF\{"(.*?)"\}%.*?%TMPL:END%)/&_tmplDef($1, $2)/ges;
+  $isTemplate = 1 if $_[0] =~ s/(%TMPL:INCLUDE\{"(.*?)"\}%)/&_tmplInclude($1, $2)/ge;
 
   # only process if we detected TMPL: stuff
   if ($isTemplate) {
@@ -314,6 +315,32 @@ sub beforeCommonTagsHandler {
     $_[0] =~ s/%\{<verbatim class=["']tml["']>\}%//g;
     $_[0] =~ s/%\{<\/verbatim>\}%//g;
   }
+}
+
+sub _tmplInclude {
+  my ($include, $topic) = @_;
+
+  my $text = $topic;
+  my $web;
+
+  unless ($text =~ /^[[:lower:]]]/) {
+    # simplified version of Foswiki::Template
+    ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $topic);
+    if (Foswiki::Func::topicExists($web, $topic)) {
+      $text = "[[$web.$topic]]";
+    } elsif (Foswiki::Func::topicExists($web, $topic.'Template')) {
+      $topic .= 'Template';
+      $text = "[[$web.$topic]]";
+    }
+  }
+
+  return "<div class='tmplInclude'>\n<h2><span class='foswikiGrayText'>INCLUDE - </span>$text</h2><verbatim class='tml'>$include</verbatim>\n</div>";
+}
+
+sub _tmplDef {
+  my ($def, $text) = @_;
+
+  return "<div class='tmplDef'>\n<h2><span class='foswikiGrayText'>DEF - </span>$text</h2><verbatim class='tml'>$def</verbatim>\n</div>";
 }
 
 =begin TML
@@ -332,12 +359,11 @@ sub endRenderingHandler {
 
   if ($Foswiki::cfg{NatSkin}{FixTypograpghy}) {
     $_[0] =~ s/$START``$STOP/&#8220;/g;
-    $_[0] =~ s/\w''$STOP/&#8221;/g;
+    $_[0] =~ s/(\w)''$STOP/$1&#8221;/g;
     $_[0] =~ s/$START,,$STOP/&#8222;/g;
     $_[0] =~ s/$START\(c\)$STOP/&#169;/g;
     $_[0] =~ s/$START\(r\)$STOP/&#174;/g;
     $_[0] =~ s/$START\(tm\)$STOP/&#8482;/g;
-    $_[0] =~ s/$START\.\.\.$STOP/&#8230;/g; 
     $_[0] =~ s/$START\->$STOP/&#8594;/g;
     $_[0] =~ s/$START<\-$STOP/&#8592;/g;
     $_[0] =~ s/$START<\->$STOP/&#8596;/g;
@@ -350,7 +376,8 @@ sub endRenderingHandler {
     $donePrintOptions = 1;
     my $request = Foswiki::Func::getRequestObject();
     my $contenttype = $request->param("contenttype") || 'text/html';
-    if ($contenttype eq "application/pdf") {
+    my $cover = $request->param("cover") // '';
+    if ($contenttype eq "application/pdf" || $cover eq 'print') {
       my $paperSize = $request->param("pdfpagesize") // "A4";
       my $orientation = $request->param("pdforientation");
 
@@ -460,25 +487,6 @@ sub completePageHandler {
   $_[0] =~ s/^\s*$//gms;
 
   no bytes;
-}
-
-sub renderCacheHits {
-  my ($session, $params, $topic, $web) = @_;
-
-  my $type = $params->{type} // 'prefs';
-  my $result = '';
-  my $format = '<span class="natCacheHits natCacheHits_$type">$count</span>';
-
-  if ($type eq 'prefs') {
-    $result = $format;
-    my $impl = $Foswiki::cfg{Store}{PrefsBackend};
-    my $count = $impl->cacheHits() if $impl->can("cacheHits");
-
-    $result =~ s/\$type\b/$type/g;
-    $result =~ s/\$count\b/$count/g;
-  }
-
-  return $result;
 }
 
 ### static helper

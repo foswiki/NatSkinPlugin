@@ -1,6 +1,6 @@
 # NatSkinPlugin.pm - Plugin handler for the NatSkin.
 #
-# Copyright (C) 2003-2025 MichaelDaum http://michaeldaumconsulting.com
+# Copyright (C) 2003-2026 MichaelDaum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -29,6 +29,7 @@ use warnings;
 use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Plugins::NatSkinPlugin ();
+use Foswiki::Plugins::DBCachePlugin ();
 use Encode();
 
 use Exporter;
@@ -143,8 +144,9 @@ sub getMaxRevision {
   my $maxRev = $session->{_NatSkin}{cache}{maxRevs}{"$thisWeb.$thisTopic"};
   return $maxRev if defined $maxRev;
 
-  (undef, undef, $maxRev) = Foswiki::Func::getRevisionInfo($thisWeb, $thisTopic);
-  $maxRev = 1 unless defined $maxRev;
+  #(undef, undef, $maxRev) = Foswiki::Func::getRevisionInfo($thisWeb, $thisTopic);
+  $maxRev = Foswiki::Plugins::DBCachePlugin->getCore->getRevisionInfo($thisWeb, $thisTopic);
+  $maxRev //= 1;
 
   $maxRev =~ s/r?1\.//g;    # cut 'r' and major
   $session->{_NatSkin}{cache}{maxRevs}{"$thisWeb.$thisTopic"} = $maxRev;
